@@ -47,6 +47,31 @@ class Http2ServerSettingsSpec extends PekkoSpec {
     }
   }
 
+  "Http2ServerSettings server push" should {
+    "default off and opt in through configuration without changing unrelated limits" in {
+      val defaults = Http2ServerSettings(system)
+      val configured = Http2ServerSettings("pekko.http.server.http2.server-push-enabled = on")
+      defaults.serverPushEnabled shouldBe false
+      configured.serverPushEnabled shouldBe true
+      configured.maxConcurrentStreams shouldBe defaults.maxConcurrentStreams
+    }
+
+    "retain the explicit opt-in when Scala and Java copy ordinary settings" in {
+      val defaults = Http2ServerSettings(system)
+      val scalaEnabled = defaults.withServerPushEnabled(true).withMaxConcurrentStreams(12)
+      scalaEnabled.serverPushEnabled shouldBe true
+      scalaEnabled.maxConcurrentStreams shouldBe 12
+      scalaEnabled.withServerPushEnabled(false).serverPushEnabled shouldBe false
+
+      val javaDefaults: javadsl.settings.Http2ServerSettings = defaults
+      val javaEnabled = javaDefaults.withServerPushEnabled(true).withMaxConcurrentStreams(24)
+      javaDefaults.isServerPushEnabled shouldBe false
+      javaEnabled.isServerPushEnabled shouldBe true
+      javaEnabled.getMaxConcurrentStreams shouldBe 24
+      javaEnabled.withServerPushEnabled(false).isServerPushEnabled shouldBe false
+    }
+  }
+
   "Http2ServerSettings max-connection-age" should {
 
     "be disabled by default" in {

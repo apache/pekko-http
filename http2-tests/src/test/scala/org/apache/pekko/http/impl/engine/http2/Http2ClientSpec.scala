@@ -52,7 +52,7 @@ import pekko.http.scaladsl.model.headers.{
   RawHeader
 }
 import pekko.http.scaladsl.model.headers.CacheDirectives._
-import pekko.http.scaladsl.settings.ClientConnectionSettings
+import pekko.http.scaladsl.settings.{ ClientConnectionSettings, Http2ClientSettings }
 import pekko.stream.Attributes
 import pekko.stream.Attributes.LogLevels
 import pekko.stream.OverflowStrategy
@@ -529,6 +529,36 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
         response.headers should contain(`Cache-Control`(`max-age`(1000)))
         response.headers should contain(`Access-Control-Allow-Origin`.`*`)
       })
+
+      for (programmatic <- List(false, true))
+        s"apply the ${if (programmatic) "programmatic" else "configured"} outbound HPACK insertion policy on the connection"
+          .inAssertAllStagesStopped(
+            new TestSetup with NetProbes {
+              override def settings: ClientConnectionSettings =
+                super.settings.withHttp2Settings(
+                  if (programmatic)
+                    super.settings.http2Settings.withHpackIndexingPolicy((name, value) =>
+                      name == "x-synthetic-trace" && value == "trace-value")
+                  else Http2ClientSettings(
+                    """pekko.http.client.http2.hpack-no-index-headers = ["X-Synthetic-Trace"]"""))
+
+              val selected = "x-synthetic-trace"
+              val normal = "x-label"
+              val request = HttpRequest(uri = "https://www.example.com/",
+                headers = List(
+                  RawHeader("X-Synthetic-Trace", "trace-value"),
+                  RawHeader(normal, "stable-label")))
+              val fields = new Http2FrameProbe.IndexedHeaderProbe(Set(selected, normal))
+
+              for (streamId <- List(1, 3)) {
+                user.emitRequest(request)
+                val seen = fields.read(network.expectHeaderBlock(streamId))
+                seen(selected) shouldBe ("trace-value" -> false)
+                seen(normal) shouldBe ("stable-label" -> (streamId == 3))
+                network.sendHEADERS(streamId, endStream = true, Seq(RawHeader(":status", "204")))
+                user.expectResponse().status shouldBe StatusCodes.NoContent
+              }
+            })
 
       "acknowledge change to SETTINGS_HEADER_TABLE_SIZE in next HEADER frame".inAssertAllStagesStopped(
         new TestSetup with NetProbes {

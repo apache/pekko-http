@@ -69,6 +69,20 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
   def tryPullSubStreams(): Unit
 
   private val streamStates = new mutable.LongMap[StreamState](settings.maxConcurrentStreams)
+  // The local owner is only installed on the explicitly enabled experimental server graph.
+  protected def localPushOwner: Http2ServerPush.Owner = null
+  private lazy val localPushStreams = new mutable.LongMap[StreamState](1)
+
+  protected final def hasLiveOrReservedPush: Boolean = {
+    val owner = localPushOwner
+    owner != null && owner.hasLiveOrReserved
+  }
+
+  private def isOwnedPushId(streamId: Int): Boolean = (streamId & 1) == 0 && {
+    val owner = localPushOwner
+    owner != null && owner.owns(streamId)
+  }
+
   // Stream ids of incoming HEAD requests. The response to a HEAD request must not carry content
   // (RFC 9110 section 9.3.2), but the response path only ever sees an HttpResponse and so cannot know the request
   // method. Entries are removed when the response is created or when the stream is closed.
@@ -155,6 +169,26 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
 
   def activeStreamCount(): Int = streamStates.size
 
+  protected final def awaitsOrdinaryResponse(streamId: Int): Boolean =
+    streamStates.getOrNull(streamId) match {
+      case _: HalfClosedRemoteWaitingForOutgoingStream => true
+      case _                                           => false
+    }
+
+  // The compound control item already opened this child. Only register its data with the existing scheduler.
+  protected final def activateLocalPush(prepared: Http2ServerPush.Prepared): Unit = {
+    localPushOwner.activate(prepared.owned)
+    val stream = prepared.response
+    if (stream.initialHeaders.endStream) closeLocalPush(stream.streamId)
+    else {
+      localPushStreams.put(stream.streamId, HalfClosedRemoteWaitingForOutgoingStream(0))
+      // Constructing an OutStream for a strict response may synchronously mark it ready. Its registration must
+      // precede enqueueing, which the stream transition already defers until the new state has been recorded.
+      updateState(stream.streamId, _.handleOutgoingCreated(OutStream(stream), stream.correlationAttributes),
+        "activateLocalPush")
+    }
+  }
+
   /** Called by Http2ServerDemux to let the state machine handle StreamFrameEvents */
   def handleStreamEvent(e: StreamFrameEvent): Unit =
     updateState(e.streamId, _.handle(e), "handleStreamEvent", e.frameTypeName)
@@ -231,8 +265,11 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
   def incomingStreamPulled(streamId: Int): Unit =
     updateState(streamId, _.incomingStreamPulled(), "incomingStreamPulled")
 
-  private def updateAllStates(handle: StreamState => StreamState, event: String, eventArg: AnyRef = null): Unit =
+  private def updateAllStates(handle: StreamState => StreamState, event: String, eventArg: AnyRef = null): Unit = {
     streamStates.keys.foreach(streamId => updateState(streamId.toInt, handle, event, eventArg))
+    if (hasLiveOrReservedPush)
+      localPushStreams.keys.foreach(streamId => updateState(streamId.toInt, handle, event, eventArg))
+  }
 
   private def updateState(
       streamId: Int, handle: StreamState => StreamState, event: String, eventArg: AnyRef = null): Unit =
@@ -256,8 +293,14 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     streamStates.remove(streamId)
     headRequestStreamIds -= streamId
     remainingContentLength -= streamId
-    if (streamStates.isEmpty) onAllStreamsClosed()
+    if (streamStates.isEmpty && !hasLiveOrReservedPush) onAllStreamsClosed()
     tryPullSubStreams()
+  }
+
+  private def closeLocalPush(streamId: Int): Unit = {
+    localPushStreams.remove(streamId)
+    if (localPushOwner.retire(streamId) && streamStates.isEmpty)
+      onAllStreamsClosed()
   }
 
   private var stateMachineRunning = false
@@ -266,13 +309,20 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     require(!stateMachineRunning, "State machine already running")
     stateMachineRunning = true
 
-    val oldState = streamFor(streamId)
+    val ownedPush = isOwnedPushId(streamId)
+    val oldState =
+      if (ownedPush) localPushStreams.getOrElse(streamId, Closed)
+      else streamFor(streamId)
 
     val (newState, ret) = handle(oldState)
-    newState match {
-      case Closed   => streamClosed(streamId)
-      case newState => streamStates.put(streamId, newState)
-    }
+    if (ownedPush) {
+      if (newState eq Closed) closeLocalPush(streamId)
+      else localPushStreams.put(streamId, newState)
+    } else
+      newState match {
+        case Closed   => streamClosed(streamId)
+        case newState => streamStates.put(streamId, newState)
+      }
 
     debug(
       s"Incoming side of stream [$streamId] changed state: ${oldState.stateName} -> ${newState.stateName} after handling [$event${if (eventArg ne
@@ -284,7 +334,7 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     if (deferredStreamToEnqueue != -1) {
       val streamId = deferredStreamToEnqueue
       deferredStreamToEnqueue = -1
-      if (streamStates.contains(streamId))
+      if (streamStates.contains(streamId) || (isOwnedPushId(streamId) && localPushStreams.contains(streamId)))
         multiplexer.enqueueOutStream(streamId)
     }
     ret

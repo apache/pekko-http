@@ -29,6 +29,28 @@ import com.typesafe.config.Config
 trait Http2ServerSettings {
   self: scaladsl.settings.Http2ServerSettings
     with pekko.http.scaladsl.settings.Http2ServerSettings.Http2ServerSettingsImpl =>
+
+  /**
+   * Sets the outbound HPACK indexing policy, replacing the configured header-name list or a previously supplied policy.
+   *
+   * @since 2.1.0
+   */
+  def withHpackIndexingPolicy(policy: HpackIndexingPolicy): Http2ServerSettings =
+    (self: scaladsl.settings.Http2ServerSettings).withHpackIndexingPolicy(policy)
+
+  /**
+   * Whether native HTTP/2 connections admit explicit best-effort server push plans. Off by default.
+   *
+   * @since 2.1.0
+   */
+  def isServerPushEnabled: Boolean = serverPushEnabled
+
+  /**
+   * @since 2.1.0
+   */
+  def withServerPushEnabled(enabled: Boolean): Http2ServerSettings =
+    (self: scaladsl.settings.Http2ServerSettings).withServerPushEnabled(enabled)
+
   def getRequestEntityChunkSize: Int = requestEntityChunkSize
   def withRequestEntityChunkSize(newRequestEntityChunkSize: Int): Http2ServerSettings
 

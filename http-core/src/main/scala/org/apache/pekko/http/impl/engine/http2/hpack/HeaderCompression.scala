@@ -14,13 +14,16 @@
 package org.apache.pekko.http.impl.engine.http2.hpack
 
 import org.apache.pekko
+import pekko.NotUsed
 import pekko.annotation.InternalApi
 import pekko.http.impl.engine.http2.FrameEvent._
 import pekko.http.impl.engine.http2.Http2Protocol.SettingIdentifier
 import pekko.http.impl.engine.http2._
 import pekko.http.impl.util.ByteStringOutputStream
+import pekko.http.javadsl.settings.HpackIndexingPolicy
+import pekko.http.scaladsl.settings.Http2CommonSettings.HpackPolicyOptions
 import pekko.stream.stage.{ GraphStage, GraphStageLogic, InHandler, OutHandler, StageLogging }
-import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
+import pekko.stream.{ Attributes, FlowShape, Graph, Inlet, Outlet }
 import pekko.util.ByteString
 
 /**
@@ -32,6 +35,11 @@ private[http2] object HeaderCompression extends GraphStage[FlowShape[FrameEvent,
   val eventsOut = Outlet[FrameEvent]("HeaderCompression.eventsOut")
 
   val shape = FlowShape(eventsIn, eventsOut)
+
+  private final case class Policy(options: HpackPolicyOptions) extends Attributes.Attribute
+
+  def withPolicy(options: Option[HpackPolicyOptions]): Graph[FlowShape[FrameEvent, FrameEvent], NotUsed] =
+    options.fold[Graph[FlowShape[FrameEvent, FrameEvent], NotUsed]](this)(o => addAttributes(Attributes(Policy(o))))
 
   /** RFC 9113 8.2.1: NUL, CR and LF are never valid in an HTTP/2 field name or value. */
   private[http2] def hasIllegalChar(s: String): Boolean =
@@ -56,6 +64,8 @@ private[http2] object HeaderCompression extends GraphStage[FlowShape[FrameEvent,
       setHandlers(eventsIn, eventsOut, this)
       private val currentMaxFrameSize = Http2Protocol.InitialMaxFrameSize
 
+      private val policy: HpackIndexingPolicy = inheritedAttributes.get[Policy].map(_.options.policy).orNull
+
       val encoder = new pekko.http.shaded.com.twitter.hpack.Encoder(Http2Protocol.InitialMaxHeaderTableSize)
       val os = new ByteStringOutputStream(128)
       private var smallestPendingTableSize = Int.MaxValue
@@ -71,23 +81,7 @@ private[http2] object HeaderCompression extends GraphStage[FlowShape[FrameEvent,
           // a HEADERS frame to work around https://github.com/golang/go/issues/47851.
           if (endStream && kvs.isEmpty) push(eventsOut, DataFrame(streamId, endStream, ByteString.empty))
           else {
-            applyPendingTableSize()
-            kvs.foreach {
-              case (key, value: String) =>
-                // RFC 9113 8.2.1: a field name or value carrying a NUL, CR or LF is malformed and must not be sent.
-                // The value can be attacker-controlled (a RawHeader, CustomHeader or a response trailer), so drop the
-                // offending field instead of encoding it, mirroring the HTTP/1.1 renderer's CR/LF guard.
-                if (HeaderCompression.hasIllegalChar(key) || HeaderCompression.hasIllegalChar(value))
-                  // debug, not warning: the value can be attacker-influenced (reflected into a header), so a warning
-                  // here would be a log-flooding vector; the HTTP/1.1 renderer drops such headers silently too
-                  log.debug("Dropping HTTP/2 header [{}] because its name or value contains a CR, LF or NUL", key)
-                else
-                  encoder.encodeHeader(os, key, value, false)
-              case (key, value) =>
-                throw new IllegalStateException(
-                  s"Didn't expect key-value-pair [$key] -> [$value](${value.getClass}) here.")
-            }
-            val result = os.takeByteString() // hands the array over without copying and starts a new block
+            val result = encodeBlock(kvs)
             if (result.size <= currentMaxFrameSize)
               push(eventsOut, HeadersFrame(streamId, endStream, endHeaders = true, result, prioInfo))
             else {
@@ -95,24 +89,87 @@ private[http2] object HeaderCompression extends GraphStage[FlowShape[FrameEvent,
                 HeadersFrame(streamId, endStream, endHeaders = false, result.take(currentMaxFrameSize), prioInfo)
 
               push(eventsOut, first)
-              setHandler(eventsOut,
-                new OutHandler {
-                  private var remainingData = result.drop(currentMaxFrameSize)
-
-                  def onPull(): Unit = {
-                    val thisFragment = remainingData.take(currentMaxFrameSize)
-                    val rest = remainingData.drop(currentMaxFrameSize)
-                    val last = rest.isEmpty
-
-                    push(eventsOut, ContinuationFrame(streamId, endHeaders = last, thisFragment))
-                    if (last) setHandler(eventsOut, logic)
-                    else remainingData = rest
-                  }
-                })
+              pushContinuations(streamId, result.drop(currentMaxFrameSize))
             }
           }
+        case OutboundPushPromise(owned, kvs) =>
+          val parentId = owned.parent.streamId
+          val result = encodeBlock(kvs)
+          // The first frame includes the promised stream identifier. Continuations use the parent stream.
+          val firstCapacity = currentMaxFrameSize - Integer.BYTES
+          val endHeaders = result.size <= firstCapacity
+          val first = if (endHeaders) result else result.take(firstCapacity)
+          push(eventsOut, PushPromiseFrame(parentId, endHeaders, owned.streamId, first))
+          if (!endHeaders) pushContinuations(parentId, result.drop(firstCapacity))
+
+        case OutboundPushStart(promise, child) =>
+          val parentId = promise.owned.parent.streamId
+          val promiseBlock = encodeBlock(promise.keyValuePairs)
+          val childBlock = encodeBlock(child.keyValuePairs)
+          val promiseFrames = blockFrames(parentId, currentMaxFrameSize - Integer.BYTES, promiseBlock) {
+            (last, bytes) =>
+              PushPromiseFrame(parentId, last, promise.owned.streamId, bytes)
+          }
+          val childFrames = blockFrames(child.streamId, currentMaxFrameSize, childBlock) { (last, bytes) =>
+            HeadersFrame(child.streamId, child.endStream, last, bytes, child.priorityInfo)
+          }
+          emitMultiple(eventsOut, promiseFrames ++ childFrames)
+
         case x => push(eventsOut, x)
       }
+
+      private def blockFrames(streamId: Int, firstCapacity: Int, block: ByteString)(
+          firstFrame: (Boolean, ByteString) => FrameEvent): Iterator[FrameEvent] = {
+        val last = block.size <= firstCapacity
+        val first = firstFrame(last, if (last) block else block.take(firstCapacity))
+        if (last) Iterator.single(first)
+        else
+          Iterator.single(first) ++ new Iterator[FrameEvent] {
+            private var remaining = block.drop(firstCapacity)
+            override def hasNext: Boolean = remaining.nonEmpty
+            override def next(): FrameEvent = {
+              val fragment = remaining.take(currentMaxFrameSize)
+              remaining = remaining.drop(currentMaxFrameSize)
+              ContinuationFrame(streamId, remaining.isEmpty, fragment)
+            }
+          }
+      }
+
+      private def encodeBlock(kvs: Seq[(String, AnyRef)]): ByteString = {
+        applyPendingTableSize()
+        kvs.foreach {
+          case (key, value: String) =>
+            // RFC 9113 8.2.1: a field name or value carrying a NUL, CR or LF is malformed and must not be sent.
+            // The value can be attacker-controlled (a RawHeader, CustomHeader or a response trailer), so drop the
+            // offending field instead of encoding it, mirroring the HTTP/1.1 renderer's CR/LF guard.
+            if (HeaderCompression.hasIllegalChar(key) || HeaderCompression.hasIllegalChar(value))
+              // debug, not warning: the value can be attacker-influenced (reflected into a header), so a warning
+              // here would be a log-flooding vector; the HTTP/1.1 renderer drops such headers silently too
+              log.debug("Dropping HTTP/2 header [{}] because its name or value contains a CR, LF or NUL", key)
+            else
+              encoder.encodeHeader(os, key, value, false, policy)
+          case (key, value) =>
+            throw new IllegalStateException(
+              s"Didn't expect key-value-pair [$key] -> [$value](${value.getClass}) here.")
+        }
+        os.takeByteString() // hands the array over without copying and starts a new block
+      }
+
+      private def pushContinuations(streamId: Int, remaining: ByteString): Unit =
+        setHandler(eventsOut,
+          new OutHandler {
+            private var remainingData = remaining
+
+            def onPull(): Unit = {
+              val thisFragment = remainingData.take(currentMaxFrameSize)
+              val rest = remainingData.drop(currentMaxFrameSize)
+              val last = rest.isEmpty
+
+              push(eventsOut, ContinuationFrame(streamId, endHeaders = last, thisFragment))
+              if (last) setHandler(eventsOut, logic)
+              else remainingData = rest
+            }
+          })
 
       // RFC 7541 section 4.2 requires preserving the intervening minimum as well as the final size.
       // Keep only those sizes instead of accumulating encoded updates while no headers are being sent.

@@ -34,6 +34,9 @@ import pekko.stream.stage.StageLogging
 private[http2] trait Http2Multiplexer {
   def pushControlFrame(frame: FrameEvent): Unit
 
+  /** Optional server work may only use currently available demand, never the stock control queue. */
+  def tryPushOptionalControlFrame(frame: => Option[FrameEvent]): Boolean = false
+
   /** Applies received SETTINGS in order, acknowledging only a successful application before sending pending DATA. */
   def applyAndAcknowledgeSettings(settings: Seq[Setting])(applySettings: => Boolean): Unit
   def updateConnectionLevelWindow(increment: Int): Boolean
@@ -117,6 +120,16 @@ private[http2] trait Http2MultiplexerSupport { logic: GraphStageLogic with Stage
       private var connectionWindowLeft: Int = Http2Protocol.InitialWindowSize
 
       override def pushControlFrame(frame: FrameEvent): Unit = updateState(_.pushControlFrame(frame))
+
+      override def tryPushOptionalControlFrame(frame: => Option[FrameEvent]): Boolean =
+        if (!applyingPeerSettings && transitionDepth == 0 && (_state eq WaitingForData))
+          frame match {
+            case Some(event) =>
+              pushControlFrame(event)
+              true
+            case _ => false
+          }
+        else false
 
       private var applyingPeerSettings = false
 

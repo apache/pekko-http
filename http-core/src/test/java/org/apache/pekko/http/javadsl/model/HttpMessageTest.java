@@ -15,6 +15,7 @@ package org.apache.pekko.http.javadsl.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayDeque;
@@ -32,6 +33,16 @@ import org.apache.pekko.http.javadsl.model.headers.RawHeader;
 import org.junit.jupiter.api.Test;
 
 public class HttpMessageTest {
+  @Test
+  public void serverPushPlanKeepsPrimaryOutsideAnEnabledNativeRequest() {
+    HttpResponse.Http2ServerPushPlan plan =
+        HttpResponse.Http2ServerPushPlan.create(
+            Uri.create("/assets/site.css"), HttpResponse.create().withEntity("stylesheet"));
+    HttpRequest request = HttpRequest.create("https://example.org/home");
+    HttpResponse primary = HttpResponse.create().withEntity("document");
+    assertSame(primary, primary.withHttp2ServerPush(request, plan));
+  }
+
   @Test
   public void testJavaScriptMediaType() {
     MediaType.WithOpenCharset javascript = MediaTypes.TEXT_JAVASCRIPT;

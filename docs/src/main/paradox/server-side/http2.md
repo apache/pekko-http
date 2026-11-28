@@ -42,7 +42,7 @@ Java
 
 Note that currently only `newServerAt(...).bind` and `newServerAt(...).bindSync`
 support HTTP/2 but not `bindFlow` or `connectionSource(): Source`.
-The server-side APIs do not expose a way for applications to initiate HTTP/2 server push.
+See @ref[Optional same-origin server push](#optional-same-origin-server-push) for the opt-in server API.
 
 HTTP/2 over TLS uses [Application-Layer Protocol Negotiation (ALPN)](https://www.rfc-editor.org/rfc/rfc7301.html)
 to negotiate whether both client and server support HTTP/2. ALPN support is included in the Java versions supported by
@@ -92,6 +92,48 @@ The downside of this approach is the client must know beforehand that the
 server supports HTTP/2.
 For this reason the approach is known as HTTP/2 with
 [Prior Knowledge](https://www.rfc-editor.org/rfc/rfc9113.html#section-3.3).
+
+For the optional response compression policy, see
+@ref[HPACK dynamic table insertion](../client-side/http2.md#hpack-dynamic-table-insertion).
+
+## Optional same-origin server push
+
+Server push is off by default. To allow an application to offer a push for each response on native HTTP/2
+connections, set:
+
+```hocon
+pekko.http.server.http2.server-push-enabled = on
+```
+
+This does not enable HTTP/2 itself. The normal HTTP/1.1 fallback and HTTP/1.1 upgrade path do not accept push plans.
+The server also respects the peer's HTTP/2 push preference.
+
+Create a plan with a rooted relative URI, without an authority or fragment, and a complete strict `200 OK`
+representation. Attach the plan to the final response with the original request passed to the bound handler:
+
+Scala
+:   ```scala
+    val plan = Http2ServerPushPlan(Uri("/assets/site.css"), HttpResponse(entity = css))
+    val response = page.withHttp2ServerPush(request, plan)
+    ```
+
+Java
+:   ```java
+    HttpResponse.Http2ServerPushPlan plan =
+        HttpResponse.Http2ServerPushPlan.create(
+            Uri.create("/assets/site.css"), HttpResponse.create().withEntity(css));
+    HttpResponse response = page.withHttp2ServerPush(request, plan);
+    ```
+
+Use the returned `response` as the ordinary handler result. For a supported bodyless HTTP/2 GET, the promised GET
+has the same scheme and authority as the original request. No request fields other than the origin are inherited.
+The application must be authoritative for that origin and supply the representation this promised GET should receive.
+A response carries at most one plan; attaching a new eligible plan replaces the previous one.
+
+A push is best effort. If it cannot start immediately, if the peer does not permit it, or if the original request is
+not eligible, only the primary response is sent. The server does not queue it or take ownership of a streaming
+entity. Attaching a plan returns a response, not an admission or delivery acknowledgement. The client can choose
+whether to accept or use the push. See [RFC 9113, §8.4](https://www.rfc-editor.org/rfc/rfc9113.html#section-8.4).
 
 ## Flow-control window updates
 

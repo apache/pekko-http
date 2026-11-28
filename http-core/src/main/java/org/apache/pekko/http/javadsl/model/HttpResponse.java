@@ -40,6 +40,36 @@ public abstract class HttpResponse
    */
   public abstract HttpEncoding encoding();
 
+  /**
+   * A complete strict 200 representation for a same-origin HTTP/2 GET. The application must be
+   * authoritative for the original request's origin and supply an appropriate representation.
+   *
+   * @since 2.1.0
+   */
+  public static final class Http2ServerPushPlan {
+    private final org.apache.pekko.http.scaladsl.model.Http2ServerPushPlan delegate;
+
+    private Http2ServerPushPlan(org.apache.pekko.http.scaladsl.model.Http2ServerPushPlan delegate) {
+      this.delegate = delegate;
+    }
+
+    /** Creates a plan for a rooted relative URI with no authority or fragment. */
+    public static Http2ServerPushPlan create(Uri target, HttpResponse response) {
+      return new Http2ServerPushPlan(JavaAccessors.Http2ServerPushPlan(target, response));
+    }
+  }
+
+  /**
+   * Offer one optional same-origin HTTP/2 push alongside this final response. Use the original
+   * request from the bound handler. The primary response is still sent if push cannot immediately
+   * start or is disabled. This is not a delivery acknowledgement.
+   *
+   * @since 2.1.0
+   */
+  public final HttpResponse withHttp2ServerPush(HttpRequest parent, Http2ServerPushPlan plan) {
+    return JavaAccessors.withHttp2ServerPush(this, parent, plan.delegate);
+  }
+
   /** Returns a default response to be changed using the `withX` methods. */
   public static HttpResponse create() {
     return JavaAccessors.HttpResponse();

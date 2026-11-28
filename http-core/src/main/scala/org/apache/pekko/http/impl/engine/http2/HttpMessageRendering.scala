@@ -16,16 +16,19 @@ package org.apache.pekko.http.impl.engine.http2
 import java.util.concurrent.atomic.AtomicInteger
 
 import scala.collection.immutable.VectorBuilder
+import scala.concurrent.{ Future, Promise }
 
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.event.LoggingAdapter
-import pekko.http.impl.engine.http2.FrameEvent.ParsedHeadersFrame
+import pekko.http.impl.engine.http2.FrameEvent.{ OutboundPushPromise, ParsedHeadersFrame, Setting }
+import pekko.http.impl.engine.http2.Http2Protocol.SettingIdentifier
 import pekko.http.impl.engine.rendering.DateHeaderRendering
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers.{ Host, `Raw-Request-URI` }
 import pekko.http.scaladsl.settings.ClientConnectionSettings
 import pekko.http.scaladsl.settings.ServerSettings
+import pekko.stream.Attributes
 import pekko.util.OptionVal
 
 /** INTERNAL API */
@@ -41,6 +44,11 @@ private[http2] class ResponseRendering(settings: ServerSettings, val log: Loggin
 
   protected override def nextStreamId(response: HttpResponse): Int =
     response.attribute(Http2.streamId).getOrElse(failBecauseOfMissingAttribute)
+
+  private[http2] def forOwnedPush(owned: Http2ServerPush.OwnedPushStream, response: HttpResponse): Http2SubStream = {
+    val stream = assembleOnStream(response, owned.streamId, prepareInitialHeaderPairs(response))
+    if (stream.correlationAttributes.isEmpty) stream else stream.withCorrelationAttributes(Map.empty)
+  }
 
   protected override def initialHeaderPairs(response: HttpResponse): VectorBuilder[(String, String)] = {
     val headerPairs = new VectorBuilder[(String, String)]()
@@ -58,6 +66,195 @@ private[http2] class ResponseRendering(settings: ServerSettings, val log: Loggin
   protected override def contentLengthAllowed(response: HttpResponse): Boolean =
     HttpMethods.GET.contentLengthAllowed(response.status)
 
+}
+
+/**
+ * INTERNAL API
+ *
+ * Server-local push producer. Its owner lives with one enabled connection. It only accepts a plan tied to a
+ * positively admitted parent of that connection; a response's usual stream-id attribute cannot mint a reservation.
+ */
+@InternalApi
+private[http2] object Http2ServerPush {
+  final class AdmittedParent private[Http2ServerPush] (
+      private[Http2ServerPush] val owner: Owner,
+      val streamId: Int)
+
+  private final class Origin(val parent: AdmittedParent, val scheme: String, val authority: Uri.Authority)
+
+  /**
+   * Private prototype observation. HandedOff acknowledges the control item entering the existing outgoing graph;
+   * it does not acknowledge delivery to the client.
+   */
+  sealed trait Admission
+  case object NotOffered extends Admission
+  case object NotStarted extends Admission
+  final class HandedOff(val streamId: Int) extends Admission
+
+  private final class Plan(
+      val origin: Origin, val target: Uri, val response: HttpResponse,
+      val result: Option[Promise[Admission]])
+
+  final class Enabled(val renderer: ResponseRendering) extends Attributes.Attribute
+
+  final class OwnedPushStream private[Http2ServerPush] (val parent: AdmittedParent, val streamId: Int)
+
+  final class Prepared private[Http2ServerPush] (
+      val owned: OwnedPushStream,
+      val promise: OutboundPushPromise,
+      val response: Http2SubStream)
+
+  private val originKey = AttributeKey[Origin]("pekko.http2.push-origin")
+  private val planKey = AttributeKey[Plan]("pekko.http2.push-plan")
+
+  private val admittedParentKey = AttributeKey[AdmittedParent]("pekko.http2.push-admitted-parent")
+
+  def markParent(owner: Owner, substream: Http2SubStream): Http2SubStream =
+    if (substream.initialHeaders.endStream &&
+      substream.initialHeaders.keyValuePairs.exists { case (name, value) =>
+        name == ":method" && (value eq HttpMethods.GET)
+      })
+      substream.withCorrelationAttributes(
+        substream.correlationAttributes.updated(admittedParentKey, owner.admit(substream.streamId)))
+    else substream
+
+  def markParsed(substream: Http2SubStream, parsed: RequestParsing.ParseRequestResult)
+      : RequestParsing.ParseRequestResult =
+    parsed match {
+      case ok @ RequestParsing.OkRequest(request) =>
+        substream.correlationAttributes.get(admittedParentKey) match {
+          case Some(parent: AdmittedParent) => RequestParsing.OkRequest(onAdmittedRequest(request, parent))
+          case _                            => ok
+        }
+      case other => other
+    }
+
+  def onAdmittedRequest(request: HttpRequest, parent: AdmittedParent): HttpRequest = {
+    val uri = request.uri
+    if (request.attribute(Http2.streamId).contains(parent.streamId) &&
+      request.method == HttpMethods.GET && request.entity.isKnownEmpty &&
+      (uri.scheme == "http" || uri.scheme == "https") && !uri.authority.host.isEmpty && uri.authority.userinfo.isEmpty)
+      request.addAttribute(originKey, new Origin(parent, uri.scheme, uri.authority))
+    else request
+  }
+
+  /**
+   * Attach an optional ready response whose entity has not been materialized. The promised method is always GET and
+   * its scheme and authority come from the original request, not the application target.
+   */
+  def offer(request: HttpRequest, target: Uri, pushed: HttpResponse, primary: HttpResponse): HttpResponse =
+    offer(request, target, pushed, primary, None)
+
+  def offerWithOutcome(
+      request: HttpRequest, target: Uri, pushed: HttpResponse, primary: HttpResponse)
+      : (HttpResponse, Future[Admission]) = {
+    val result = Promise[Admission]()
+    val response = offer(request, target, pushed, primary, Some(result))
+    (response, result.future)
+  }
+
+  private def offer(
+      request: HttpRequest, target: Uri, pushed: HttpResponse, primary: HttpResponse,
+      result: Option[Promise[Admission]]): HttpResponse =
+    request.attribute(originKey) match {
+      case Some(origin)
+          if target.isRelative && target.authority.isEmpty && target.path.startsWithSlash &&
+          target.fragment.isEmpty =>
+        primary.addAttribute(planKey, new Plan(origin, target, pushed, result))
+      case _ =>
+        result.foreach(_.trySuccess(NotOffered))
+        primary
+    }
+
+  def renderPrimary(renderer: ResponseRendering, response: HttpResponse): Http2SubStream = {
+    val primary = renderer(response)
+    response.attribute(planKey) match {
+      case Some(plan) if response.status.intValue >= 200 && plan.origin.parent.streamId == primary.streamId =>
+        primary.withCorrelationAttributes(primary.correlationAttributes.updated(planKey, plan))
+      case Some(plan) =>
+        plan.result.foreach(_.trySuccess(NotStarted))
+        primary
+      case _ => primary
+    }
+  }
+
+  def hasPlan(primary: Http2SubStream): Boolean = primary.correlationAttributes.contains(planKey)
+
+  def completeAdmission(primary: Http2SubStream, result: Admission): Unit =
+    primary.correlationAttributes.get(planKey) match {
+      case Some(plan: Plan) => plan.result.foreach(_.trySuccess(result))
+      case _                =>
+    }
+
+  def withoutPlan(primary: Http2SubStream): Http2SubStream =
+    if (primary.correlationAttributes.contains(planKey))
+      primary.withCorrelationAttributes(primary.correlationAttributes - planKey)
+    else primary
+
+  final class Owner {
+    private var receivedSettings = false
+    private var peerAllowsPush = true // RFC 9113 section 6.5.2 default
+    private var peerConcurrentLimit = Http2Protocol.InitialMaxConcurrentStreams.toLong
+    private var lastAssignedId = 0
+    private var reserved: OwnedPushStream = null
+    private var active: OwnedPushStream = null
+
+    def onPeerSettings(settings: Seq[Setting]): Unit = {
+      settings.foreach {
+        case Setting(SettingIdentifier.SETTINGS_ENABLE_PUSH, 0)            => peerAllowsPush = false
+        case Setting(SettingIdentifier.SETTINGS_ENABLE_PUSH, 1)            => peerAllowsPush = true
+        case Setting(SettingIdentifier.SETTINGS_MAX_CONCURRENT_STREAMS, n) =>
+          peerConcurrentLimit = Integer.toUnsignedLong(n)
+        case _ =>
+      }
+      receivedSettings = true
+    }
+
+    // Only the enabled server's ordinary admitted peer GET path calls this.
+    def admit(streamId: Int): AdmittedParent = new AdmittedParent(this, streamId)
+
+    // A retired local stream must remain distinguishable from a never-admitted peer stream.
+    def owns(streamId: Int): Boolean = streamId > 0 && (streamId & 1) == 0 && streamId <= lastAssignedId
+    def hasActive: Boolean = active != null
+    def hasLiveOrReserved: Boolean = hasActive || reserved != null
+
+    // The demux calls this after the control handoff's multiplexer transition has committed.
+    def activate(owned: OwnedPushStream): Unit = {
+      require(reserved eq owned)
+      reserved = null
+      active = owned
+    }
+
+    def retire(streamId: Int): Boolean =
+      if (active != null && active.streamId == streamId) {
+        active = null
+        true
+      } else if (reserved != null && reserved.streamId == streamId) {
+        reserved = null
+        true
+      } else false
+
+    // Called only while the associated peer request still awaits its ordinary response. The first internal slice can
+    // offer one active local response at a time; this is not an application-facing limit.
+    def prepare(primary: Http2SubStream, renderer: ResponseRendering): Option[Prepared] =
+      if (!receivedSettings || !peerAllowsPush || peerConcurrentLimit == 0 || hasLiveOrReserved ||
+        lastAssignedId > Int.MaxValue - 2) None
+      else
+        primary.correlationAttributes.get(planKey) match {
+          case Some(plan: Plan)
+              if (plan.origin.parent.owner eq this) && plan.origin.parent.streamId == primary.streamId =>
+            lastAssignedId += 2
+            val owned = new OwnedPushStream(plan.origin.parent, lastAssignedId)
+            reserved = owned
+            val fields = Vector(
+              ":method" -> HttpMethods.GET.value,
+              ":scheme" -> plan.origin.scheme,
+              ":authority" -> plan.origin.authority.toString,
+              ":path" -> plan.target.toHttpRequestTargetOriginForm.toString)
+            Some(new Prepared(owned, OutboundPushPromise(owned, fields), renderer.forOwnedPush(owned, plan.response)))
+          case _ => None
+        }
+  }
 }
 
 /** INTERNAL API */
@@ -125,14 +322,24 @@ private[http2] sealed abstract class MessageRendering[R <: HttpMessage] extends 
   protected def contentLengthAllowed(r: R): Boolean = true
 
   def apply(r: R): Http2SubStream = {
+    val headerPairs = prepareInitialHeaderPairs(r)
+    assembleOnStream(r, nextStreamId(r), headerPairs)
+  }
+
+  protected final def prepareInitialHeaderPairs(r: R): VectorBuilder[(String, String)] = {
     val headerPairs = initialHeaderPairs(r)
 
     HttpMessageRendering.addContentHeaders(headerPairs, r.entity, contentLengthAllowed(r))
     HttpMessageRendering.renderHeaders(r.headers, headerPairs, peerIdHeader, log,
       isServer = r.isResponse,
       shouldRenderAutoHeaders = true, isTrailer = false, dateHeaderRendering)
+    headerPairs
+  }
 
-    val streamId = nextStreamId(r)
+  protected final def assembleOnStream(
+      r: R,
+      streamId: Int,
+      headerPairs: VectorBuilder[(String, String)]): Http2SubStream = {
     val headersFrame = ParsedHeadersFrame(streamId, endStream = r.entity.isKnownEmpty, headerPairs.result(), None, None)
     val trailingHeadersFrame =
       r.attribute(AttributeKeys.trailer) match {

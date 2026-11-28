@@ -75,6 +75,16 @@ private[http] object FrameEvent {
       promisedStreamId: Int,
       headerBlockFragment: ByteString) extends StreamFrameEvent
 
+  /** Server-only logical event, consumed by the connection's existing header compressor. */
+  private[http2] final case class OutboundPushPromise(
+      owned: Http2ServerPush.OwnedPushStream,
+      keyValuePairs: Seq[(String, String)]) extends FrameEvent
+
+  /** One control handoff expands to the promise and the opening of the already owned child stream. */
+  private[http2] final case class OutboundPushStart(
+      promise: OutboundPushPromise,
+      childHeaders: ParsedHeadersFrame) extends FrameEvent
+
   final case class RstStreamFrame(streamId: Int, errorCode: ErrorCode) extends StreamFrameEvent
   final case class SettingsFrame(settings: Seq[Setting]) extends FrameEvent
   final case class SettingsAckFrame(acked: Seq[Setting]) extends FrameEvent

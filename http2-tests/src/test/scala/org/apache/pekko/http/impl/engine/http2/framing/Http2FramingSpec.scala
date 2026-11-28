@@ -20,9 +20,14 @@ import FrameEvent._
 
 import org.apache.pekko
 import pekko.event.Logging
-import pekko.http.impl.engine.http2.Http2Protocol.ErrorCode
+import pekko.http.impl.engine.http2.Http2Protocol.{ ErrorCode, SettingIdentifier }
+import pekko.http.impl.engine.http2.hpack.HeaderCompression
+import pekko.http.impl.engine.rendering.DateHeaderRendering
 import pekko.http.impl.engine.ws.BitBuilder
 import pekko.http.impl.util._
+import pekko.http.scaladsl.model.{ DateTime, HttpRequest, HttpResponse, Uri }
+import pekko.http.scaladsl.model.headers.{ Date, RawHeader }
+import pekko.http.scaladsl.settings.ServerSettings
 import pekko.stream.scaladsl.{ Sink, Source }
 import pekko.testkit._
 import pekko.util.ByteString
@@ -483,6 +488,85 @@ class Http2FramingSpec extends PekkoSpecWithMaterializer {
             xxxxxxxx=1
          """ should parseTo(GoAwayFrame(0x21, ErrorCode.PROTOCOL_ERROR, hex"1"))
       }
+    }
+  }
+
+  "The outbound server push producer" should {
+    "prepare one same-origin promise and independent response through the ordinary connection encoder" in {
+      val parentId = 5
+      val owner = new Http2ServerPush.Owner
+      owner.onPeerSettings(Seq(Setting(SettingIdentifier.SETTINGS_ENABLE_PUSH, 1)))
+      val request = HttpRequest(uri = "https://example.org/home").addAttribute(Http2.streamId, parentId)
+      val admitted = Http2ServerPush.onAdmittedRequest(request, owner.admit(parentId))
+      val shared = RawHeader("x-response-witness", "ordinary")
+      val date = Date(DateTime(2026, 1, 1, 0, 0, 0))
+      val mainResponse = HttpResponse(entity = "home", headers = List(date, shared))
+      val assetResponse = HttpResponse(entity = "asset", headers = List(date, shared))
+      val offered = Http2ServerPush.offer(admitted, Uri("/asset.css"), assetResponse, mainResponse)
+        .addAttribute(Http2.streamId, parentId)
+      val renderer = new ResponseRendering(ServerSettings(system), system.log, DateHeaderRendering.Unavailable)
+      val preparedPrimary = Http2ServerPush.renderPrimary(renderer, offered)
+      val pushed = owner.prepare(preparedPrimary, renderer).get
+      val primary = Http2ServerPush.withoutPlan(preparedPrimary)
+      val assetId = pushed.owned.streamId
+
+      primary shouldBe renderer(offered)
+      primary.streamId shouldBe parentId
+      primary.data shouldBe Left(ByteString("home"))
+      pushed.response.streamId shouldBe assetId
+      pushed.response.data shouldBe Left(ByteString("asset"))
+      pushed.response.correlationAttributes shouldBe empty
+      owner.owns(assetId) shouldBe true
+      owner.owns(parentId) shouldBe false
+
+      val probe = Http2FrameProbe()
+      val decoder = new pekko.http.shaded.com.twitter.hpack.Decoder(8192, 4096)
+      val sharedName = shared.lowercaseName
+      val marker = new Object
+
+      def readHeaders(block: ByteString): (Map[String, String], Boolean) = {
+        val fields = Map.newBuilder[String, String]
+        var reused = false
+        decoder.decode(block.asInputStream,
+          (name: String, value: String, cached: AnyRef, _: Boolean) => {
+            fields += name -> value
+            // Track only the test's dynamic entry; preserve the cache for shared static entries.
+            if (name == sharedName) {
+              reused = cached eq marker
+              marker
+            } else cached
+          })
+        decoder.endHeaderBlock() shouldBe false
+        fields.result() -> reused
+      }
+
+      Source(List[FrameEvent](pushed.promise, primary.initialHeaders, pushed.response.initialHeaders))
+        .via(HeaderCompression)
+        .map(FrameRenderer.render)
+        .runWith(probe.sink)
+
+      val promise = probe.expect[PushPromiseFrame]()
+      promise.streamId shouldBe parentId
+      promise.promisedStreamId shouldBe assetId
+      promise.endHeaders shouldBe true
+      val (promiseHeaders, _) = readHeaders(promise.headerBlockFragment)
+      promiseHeaders shouldBe Map(
+        ":method" -> "GET",
+        ":scheme" -> "https",
+        ":authority" -> "example.org",
+        ":path" -> "/asset.css")
+
+      val (primaryHeaders, primaryReused) = readHeaders(probe.expectHeaderBlock(parentId, endStream = false))
+      val (pushedHeaders, pushedReused) = readHeaders(probe.expectHeaderBlock(assetId, endStream = false))
+      primaryHeaders(":status") shouldBe "200"
+      pushedHeaders(":status") shouldBe "200"
+      (primaryHeaders(sharedName) -> primaryReused) shouldBe ("ordinary" -> false)
+      (pushedHeaders(sharedName) -> pushedReused) shouldBe ("ordinary" -> true)
+      probe.expectComplete()
+
+      owner.retire(assetId)
+      owner.hasActive shouldBe false
+      owner.owns(assetId) shouldBe true
     }
   }
 

@@ -29,6 +29,7 @@ import org.apache.pekko
 import pekko.Done
 import pekko.actor.ClassicActorSystemProvider
 import pekko.http.impl.util._
+import pekko.http.impl.engine.http2.Http2Blueprint
 import pekko.http.javadsl.{ model => jm }
 import pekko.http.scaladsl.model.headers._
 import pekko.http.scaladsl.util.FastFuture._
@@ -570,6 +571,17 @@ final class HttpResponse(
   override def withStatus(statusCode: pekko.http.javadsl.model.StatusCode): HttpResponse =
     copyImpl(status = statusCode.asInstanceOf[StatusCode])
 
+  /**
+   * Offer one optional same-origin HTTP/2 push alongside this final response. Use the original request from the
+   * bound handler. The primary response is still sent if the server or peer has not enabled push, the connection
+   * cannot immediately start it, or the original request is not eligible. This is not a delivery acknowledgement.
+   *
+   * @since 2.1.0
+   */
+  def withHttp2ServerPush(parent: HttpRequest, plan: Http2ServerPushPlan): HttpResponse =
+    if (status.intValue >= 200) Http2Blueprint.offerServerPush(parent, plan, this)
+    else this
+
   override def withHeadersAndEntity(headers: Seq[HttpHeader], entity: MessageEntity): HttpResponse =
     withHeadersAndEntity(headers, entity: ResponseEntity)
   def withHeadersAndEntity(headers: Seq[HttpHeader], entity: ResponseEntity): HttpResponse =
@@ -619,6 +631,33 @@ final class HttpResponse(
   def _3 = this.entity
   def _4 = this.protocol
 
+}
+
+/**
+ * A complete strict 200 representation to offer for a same-origin HTTP/2 GET. No fields are inherited from the
+ * parent request other than the origin. The application must be authoritative for that origin and supply an
+ * appropriate representation for the promised GET.
+ *
+ * @since 2.1.0
+ */
+final class Http2ServerPushPlan private (
+    private[http] val target: Uri,
+    private[http] val response: HttpResponse)
+
+object Http2ServerPushPlan {
+
+  /**
+   * Create a push plan for a rooted relative URI with no authority or fragment and a strict 200 response.
+   *
+   * @since 2.1.0
+   */
+  def apply(target: Uri, response: HttpResponse): Http2ServerPushPlan = {
+    require(target.isRelative && target.authority.isEmpty && target.path.startsWithSlash && target.fragment.isEmpty,
+      "A server push plan requires a rooted relative URI without an authority or fragment")
+    require(response.status == StatusCodes.OK && response.entity.isStrict,
+      "A server push plan requires a complete strict 200 response")
+    new Http2ServerPushPlan(target, response)
+  }
 }
 
 object HttpResponse {
