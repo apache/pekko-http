@@ -359,8 +359,8 @@ final class HttpRequest(
   override def isResponse = false
 
   /**
-   * Resolve this request's URI according to the logic defined at
-   * http://tools.ietf.org/html/rfc7230#section-5.5
+   * Resolve this request's URI. For HTTP/1.1 target URI reconstruction, see
+   * https://www.rfc-editor.org/rfc/rfc9112.html#section-3.3.
    *
    * Throws an [[IllegalUriException]] if the URI is relative and the `headers` don't
    * include a valid [[pekko.http.scaladsl.model.headers.Host]] header or if URI authority and [[pekko.http.scaladsl.model.headers.Host]] header don't match.
@@ -369,8 +369,8 @@ final class HttpRequest(
     HttpRequest.effectiveUri(uri, headers, securedConnection, defaultHostHeader)
 
   /**
-   * Returns a copy of this request with the URI resolved according to the logic defined at
-   * http://tools.ietf.org/html/rfc7230#section-5.5
+   * Returns a copy of this request with the effective URI. For HTTP/1.1 target URI reconstruction, see
+   * https://www.rfc-editor.org/rfc/rfc9112.html#section-3.3.
    */
   def withEffectiveUri(securedConnection: Boolean, defaultHostHeader: Host = Host.empty): HttpRequest =
     copyImpl(uri = effectiveUri(securedConnection, defaultHostHeader))
@@ -462,8 +462,8 @@ final class HttpRequest(
 object HttpRequest {
 
   /**
-   * Determines the effective request URI according to the logic defined at
-   * http://tools.ietf.org/html/rfc7230#section-5.5
+   * Determines the effective request URI. For HTTP/1.1 target URI reconstruction, see
+   * https://www.rfc-editor.org/rfc/rfc9112.html#section-3.3.
    *
    * Throws an [[IllegalUriException]] if the URI is relative and the `headers` don't
    * include a valid [[pekko.http.scaladsl.model.headers.Host]] header or if URI authority and [[pekko.http.scaladsl.model.headers.Host]] header don't match.
@@ -496,7 +496,7 @@ object HttpRequest {
         if (isWebsocket) Uri.websocketScheme(securedConnection)
         else Uri.httpScheme(securedConnection)
       uri.toEffectiveRequestUri(hostHeaderHost, hostHeaderPort, defaultScheme)
-    } else // http://tools.ietf.org/html/rfc7230#section-5.4
+    } else // Pekko checks that the Host field agrees with the request-target authority.
     if (hostHeader.isEmpty || uri.authority.isEmpty && hostHeader.get.isEmpty ||
       hostHeader.get.host.equalsIgnoreCase(uri.authority.host) && hostHeader.get.port == uri.authority.port) uri
     else throw IllegalUriException(

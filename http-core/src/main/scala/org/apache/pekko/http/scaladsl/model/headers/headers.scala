@@ -148,7 +148,7 @@ abstract class ModeledCustomHeader[H <: ModeledCustomHeader[H]] extends CustomHe
 
 import pekko.http.impl.util.JavaMapping.Implicits._
 
-// https://tools.ietf.org/html/rfc7231#section-5.3.2
+// https://www.rfc-editor.org/rfc/rfc9110.html#section-12.5.1
 object Accept extends ModeledCompanion[Accept] {
   def apply(firstMediaRange: MediaRange, otherMediaRanges: MediaRange*): Accept =
     apply(firstMediaRange +: otherMediaRanges)
@@ -164,7 +164,7 @@ final case class Accept(mediaRanges: Seq[MediaRange]) extends jm.headers.Accept 
   def getMediaRanges: Iterable[jm.MediaRange] = mediaRanges.asJava
 }
 
-// https://tools.ietf.org/html/rfc7231#section-5.3.3
+// https://www.rfc-editor.org/rfc/rfc9110.html#section-12.5.2
 object `Accept-Charset` extends ModeledCompanion[`Accept-Charset`] {
   def apply(first: HttpCharsetRange, more: HttpCharsetRange*): `Accept-Charset` =
     apply(Seq(first +: more: _*))
@@ -182,7 +182,7 @@ final case class `Accept-Charset`(charsetRanges: Seq[HttpCharsetRange]) extends 
   def getCharsetRanges: Iterable[jm.HttpCharsetRange] = charsetRanges.asJava
 }
 
-// https://tools.ietf.org/html/rfc7231#section-5.3.4
+// https://www.rfc-editor.org/rfc/rfc9110.html#section-12.5.3
 object `Accept-Encoding` extends ModeledCompanion[`Accept-Encoding`] {
   def apply(): `Accept-Encoding` =
     apply(Seq.empty)
@@ -201,7 +201,7 @@ final case class `Accept-Encoding`(encodings: Seq[HttpEncodingRange]) extends jm
   def getEncodings: Iterable[jm.headers.HttpEncodingRange] = encodings.asJava
 }
 
-// https://tools.ietf.org/html/rfc7231#section-5.3.5
+// https://www.rfc-editor.org/rfc/rfc9110.html#section-12.5.4
 object `Accept-Language` extends ModeledCompanion[`Accept-Language`] {
   def apply(first: LanguageRange, more: LanguageRange*): `Accept-Language` = apply(Seq(first +: more: _*))
   implicit val languagesRenderer: Renderer[immutable.Iterable[LanguageRange]] =
@@ -218,7 +218,7 @@ final case class `Accept-Language`(languages: Seq[LanguageRange]) extends jm.hea
   def getLanguages: Iterable[jm.headers.LanguageRange] = languages.asJava
 }
 
-// https://tools.ietf.org/html/rfc7233#section-2.3
+// https://www.rfc-editor.org/rfc/rfc9110.html#section-14.3
 object `Accept-Ranges` extends ModeledCompanion[`Accept-Ranges`] {
   def apply(): `Accept-Ranges` =
     apply(Seq.empty)
@@ -399,14 +399,14 @@ final case class `Access-Control-Request-Method`(method: HttpMethod) extends jm.
   protected def companion = `Access-Control-Request-Method`
 }
 
-// https://tools.ietf.org/html/rfc7234#section-5.1
+// https://www.rfc-editor.org/rfc/rfc9111.html#section-5.1
 object Age extends ModeledCompanion[Age]
 final case class Age(deltaSeconds: Long) extends jm.headers.Age with ResponseHeader {
   def renderValue[R <: Rendering](r: R): r.type = r ~~ deltaSeconds
   protected def companion = Age
 }
 
-// https://tools.ietf.org/html/rfc7231#section-7.4.1
+// https://www.rfc-editor.org/rfc/rfc9110.html#section-10.2.1
 object Allow extends ModeledCompanion[Allow] {
   def apply(): `Allow` =
     apply(Seq.empty)
@@ -423,7 +423,7 @@ final case class Allow(methods: Seq[HttpMethod]) extends jm.headers.Allow with R
   def getMethods: Iterable[jm.HttpMethod] = methods.asJava
 }
 
-// https://tools.ietf.org/html/rfc7235#section-4.2
+// https://www.rfc-editor.org/rfc/rfc9110.html#section-11.6.2
 object Authorization extends ModeledCompanion[Authorization]
 final case class Authorization(credentials: HttpCredentials) extends jm.headers.Authorization with RequestHeader
     with SensitiveHttpHeader {
@@ -431,7 +431,7 @@ final case class Authorization(credentials: HttpCredentials) extends jm.headers.
   protected def companion = Authorization
 }
 
-// https://tools.ietf.org/html/rfc7234#section-5.2
+// https://www.rfc-editor.org/rfc/rfc9111.html#section-5.2
 object `Cache-Control` extends ModeledCompanion[`Cache-Control`] {
   def apply(first: CacheDirective, more: CacheDirective*): `Cache-Control` = apply(Seq(first +: more: _*))
   implicit val directivesRenderer: Renderer[immutable.Iterable[CacheDirective]] =
@@ -448,7 +448,7 @@ final case class `Cache-Control`(directives: Seq[CacheDirective]) extends jm.hea
   def getDirectives: Iterable[jm.headers.CacheDirective] = directives.asJava
 }
 
-// https://tools.ietf.org/html/rfc7230#section-6.1
+// https://www.rfc-editor.org/rfc/rfc9110.html#section-7.6.1
 object Connection extends ModeledCompanion[Connection] {
   def apply(first: String, more: String*): Connection = apply(Seq(first +: more: _*))
   implicit val tokensRenderer: Renderer[immutable.Iterable[String]] = Renderer.defaultSeqRenderer[String] // cache
@@ -473,7 +473,7 @@ final case class Connection(tokens: Seq[String]) extends jm.headers.Connection
   def getTokens: Iterable[String] = tokens.asJava
 }
 
-// https://tools.ietf.org/html/rfc7230#section-3.3.2
+// https://www.rfc-editor.org/rfc/rfc9110.html#section-8.6
 object `Content-Length` extends ModeledCompanion[`Content-Length`]
 
 /**
@@ -500,11 +500,10 @@ final case class `Content-Location`(uri: Uri) extends jm.headers.ContentLocation
 }
 
 /**
- * Document https://tools.ietf.org/html/rfc6266 updates document https://www.w3.org/Protocols/rfc2616/rfc2616-sec19.html . Between these
- * two there is slight but important difference regarding how parameter values are formatted. In RFC6266 parameters values are without quotes and
- * in RFC2616 they are quoted. Since common practice among http servers is to understand quoted values, we use older document
- * as reference here.
- * Extended (i.e. encoded) parameter values are not quoted, see ext-parameter - https://tools.ietf.org/html/rfc5987#section-3.2.1
+ * RFC 6266 allows a token or a quoted string for `filename` (see https://www.rfc-editor.org/rfc/rfc6266.html#section-4.1).
+ * Pekko HTTP emits quoted filenames for interoperability, as the older RFC 2616 grammar specified
+ * (see https://www.rfc-editor.org/rfc/rfc2616.html#section-19.5.1). Extended parameter values such as `filename*` use the unquoted
+ * `ext-value` syntax described in https://www.rfc-editor.org/rfc/rfc8187.html#section-3.2.1.
  *
  * Note: Pekko HTTP uses "filename" key to store filename and handles encoding/decoding automatically.
  * To output customized ASCII fallback version of filename provide "filename*" for unicode and "filename" for ASCII.
@@ -543,7 +542,7 @@ final case class `Content-Disposition`(dispositionType: ContentDispositionType, 
   def getParams: util.Map[String, String] = params.asJava
 }
 
-// https://tools.ietf.org/html/rfc7231#section-3.1.2.2
+// https://www.rfc-editor.org/rfc/rfc9110.html#section-8.4
 object `Content-Encoding` extends ModeledCompanion[`Content-Encoding`] {
   def apply(first: HttpEncoding, more: HttpEncoding*): `Content-Encoding` = apply(Seq(first +: more: _*))
   implicit val encodingsRenderer: Renderer[immutable.Iterable[HttpEncoding]] = Renderer.defaultSeqRenderer[HttpEncoding] // cache
@@ -559,7 +558,7 @@ final case class `Content-Encoding`(encodings: Seq[HttpEncoding]) extends jm.hea
   def getEncodings: Iterable[jm.headers.HttpEncoding] = encodings.asJava
 }
 
-// https://tools.ietf.org/html/rfc7233#section-4.2
+// https://www.rfc-editor.org/rfc/rfc9110.html#section-14.4
 object `Content-Range` extends ModeledCompanion[`Content-Range`] {
   def apply(byteContentRange: ByteContentRange): `Content-Range` = apply(RangeUnits.Bytes, byteContentRange)
 }
@@ -569,7 +568,7 @@ final case class `Content-Range`(rangeUnit: RangeUnit, contentRange: ContentRang
   protected def companion = `Content-Range`
 }
 
-// https://tools.ietf.org/html/rfc7231#section-3.1.1.5
+// https://www.rfc-editor.org/rfc/rfc9110.html#section-8.3
 object `Content-Type` extends ModeledCompanion[`Content-Type`]
 
 /**
@@ -601,7 +600,7 @@ final case class Cookie(cookies: Seq[HttpCookiePair]) extends jm.headers.Cookie 
   def getCookies: Iterable[jm.headers.HttpCookiePair] = cookies.asJava
 }
 
-// https://tools.ietf.org/html/rfc7231#section-7.1.1.2
+// https://www.rfc-editor.org/rfc/rfc9110.html#section-6.6.1
 object Date extends ModeledCompanion[Date]
 final case class Date(date: DateTime) extends jm.headers.Date with RequestResponseHeader {
   def renderValue[R <: Rendering](r: R): r.type = date.renderRfc1123DateTimeString(r)
@@ -623,7 +622,7 @@ private[http] object EmptyHeader extends SyntheticHeader {
   protected def companion: ModeledCompanion[EmptyHeader.type] = EmptyCompanion
 }
 
-// https://tools.ietf.org/html/rfc7232#section-2.3
+// https://www.rfc-editor.org/rfc/rfc9110.html#section-8.8.3
 object ETag extends ModeledCompanion[ETag] {
   def apply(tag: String, weak: Boolean = false): ETag = ETag(EntityTag(tag, weak))
 
@@ -633,7 +632,7 @@ final case class ETag(etag: EntityTag) extends jm.headers.ETag with ResponseHead
   protected def companion = ETag
 }
 
-// https://tools.ietf.org/html/rfc7231#section-5.1.1
+// https://www.rfc-editor.org/rfc/rfc9110.html#section-10.1.1
 object Expect extends ModeledCompanion[Expect] {
   val `100-continue` = new Expect() {}
 }
@@ -642,14 +641,14 @@ sealed abstract case class Expect private () extends RequestHeader {
   protected def companion = Expect
 }
 
-// https://tools.ietf.org/html/rfc7234#section-5.3
+// https://www.rfc-editor.org/rfc/rfc9111.html#section-5.3
 object Expires extends ModeledCompanion[Expires]
 final case class Expires(date: DateTime) extends jm.headers.Expires with ResponseHeader {
   def renderValue[R <: Rendering](r: R): r.type = date.renderRfc1123DateTimeString(r)
   protected def companion = Expires
 }
 
-// https://tools.ietf.org/html/rfc7230#section-5.4
+// https://www.rfc-editor.org/rfc/rfc9110.html#section-7.2
 object Host extends ModeledCompanion[Host] {
   def apply(authority: Uri.Authority): Host = apply(authority.host, authority.port)
   def apply(address: InetSocketAddress): Host = apply(address.getHostString, address.getPort)
@@ -667,7 +666,7 @@ final case class Host(host: Uri.Host, port: Int = 0) extends jm.headers.Host wit
   def equalsIgnoreCase(other: Host): Boolean = host.equalsIgnoreCase(other.host) && port == other.port
 }
 
-// https://tools.ietf.org/html/rfc7232#section-3.1
+// https://www.rfc-editor.org/rfc/rfc9110.html#section-13.1.1
 object `If-Match` extends ModeledCompanion[`If-Match`] {
   val `*` = `If-Match`(EntityTagRange.`*`)
   def apply(first: EntityTag, more: EntityTag*): `If-Match` =
@@ -678,14 +677,14 @@ final case class `If-Match`(m: EntityTagRange) extends jm.headers.IfMatch with R
   protected def companion = `If-Match`
 }
 
-// https://tools.ietf.org/html/rfc7232#section-3.3
+// https://www.rfc-editor.org/rfc/rfc9110.html#section-13.1.3
 object `If-Modified-Since` extends ModeledCompanion[`If-Modified-Since`]
 final case class `If-Modified-Since`(date: DateTime) extends jm.headers.IfModifiedSince with RequestHeader {
   def renderValue[R <: Rendering](r: R): r.type = date.renderRfc1123DateTimeString(r)
   protected def companion = `If-Modified-Since`
 }
 
-// https://tools.ietf.org/html/rfc7232#section-3.2
+// https://www.rfc-editor.org/rfc/rfc9110.html#section-13.1.2
 object `If-None-Match` extends ModeledCompanion[`If-None-Match`] {
   val `*` = `If-None-Match`(EntityTagRange.`*`)
   def apply(first: EntityTag, more: EntityTag*): `If-None-Match` =
@@ -696,7 +695,7 @@ final case class `If-None-Match`(m: EntityTagRange) extends jm.headers.IfNoneMat
   protected def companion = `If-None-Match`
 }
 
-// https://tools.ietf.org/html/rfc7233#section-3.2
+// https://www.rfc-editor.org/rfc/rfc9110.html#section-13.1.5
 object `If-Range` extends ModeledCompanion[`If-Range`] {
   def apply(tag: EntityTag): `If-Range` = apply(Left(tag))
   def apply(timestamp: DateTime): `If-Range` = apply(Right(timestamp))
@@ -710,7 +709,7 @@ final case class `If-Range`(entityTagOrDateTime: Either[EntityTag, DateTime]) ex
   protected def companion = `If-Range`
 }
 
-// https://tools.ietf.org/html/rfc7232#section-3.4
+// https://www.rfc-editor.org/rfc/rfc9110.html#section-13.1.4
 object `If-Unmodified-Since` extends ModeledCompanion[`If-Unmodified-Since`]
 final case class `If-Unmodified-Since`(date: DateTime) extends jm.headers.IfUnmodifiedSince with RequestHeader {
   def renderValue[R <: Rendering](r: R): r.type = date.renderRfc1123DateTimeString(r)
@@ -724,14 +723,14 @@ final case class `Last-Event-ID`(id: String) extends jm.headers.LastEventId with
   override protected def companion = `Last-Event-ID`
 }
 
-// https://tools.ietf.org/html/rfc7232#section-2.2
+// https://www.rfc-editor.org/rfc/rfc9110.html#section-8.8.2
 object `Last-Modified` extends ModeledCompanion[`Last-Modified`]
 final case class `Last-Modified`(date: DateTime) extends jm.headers.LastModified with ResponseHeader {
   def renderValue[R <: Rendering](r: R): r.type = date.renderRfc1123DateTimeString(r)
   protected def companion = `Last-Modified`
 }
 
-// https://tools.ietf.org/html/rfc5988#section-5
+// https://www.rfc-editor.org/rfc/rfc8288.html#section-3
 object Link extends ModeledCompanion[Link] {
   def apply(uri: Uri, first: LinkParam, more: LinkParam*): Link =
     apply(Seq(LinkValue(uri, first +: more.toList)))
@@ -748,7 +747,7 @@ final case class Link(values: Seq[LinkValue]) extends jm.headers.Link with Reque
   def getValues: Iterable[jm.headers.LinkValue] = values.asJava
 }
 
-// https://tools.ietf.org/html/rfc7231#section-7.1.2
+// https://www.rfc-editor.org/rfc/rfc9110.html#section-10.2.2
 object Location extends ModeledCompanion[Location]
 final case class Location(uri: Uri) extends jm.headers.Location with ResponseHeader {
   def renderValue[R <: Rendering](r: R): r.type = { import UriRendering.UriRenderer; r ~~ uri }
@@ -772,7 +771,7 @@ final case class Origin(origins: Seq[HttpOrigin]) extends jm.headers.Origin with
   def getOrigins: Iterable[jm.headers.HttpOrigin] = origins.asJava
 }
 
-// https://tools.ietf.org/html/rfc7235#section-4.3
+// https://www.rfc-editor.org/rfc/rfc9110.html#section-11.7.1
 object `Proxy-Authenticate` extends ModeledCompanion[`Proxy-Authenticate`] {
   def apply(first: HttpChallenge, more: HttpChallenge*): `Proxy-Authenticate` = apply(Seq(first +: more: _*))
   implicit val challengesRenderer: Renderer[immutable.Iterable[HttpChallenge]] =
@@ -789,7 +788,7 @@ final case class `Proxy-Authenticate`(challenges: Seq[HttpChallenge]) extends jm
   def getChallenges: Iterable[jm.headers.HttpChallenge] = challenges.asJava
 }
 
-// https://tools.ietf.org/html/rfc7235#section-4.4
+// https://www.rfc-editor.org/rfc/rfc9110.html#section-11.7.2
 object `Proxy-Authorization` extends ModeledCompanion[`Proxy-Authorization`]
 final case class `Proxy-Authorization`(credentials: HttpCredentials) extends jm.headers.ProxyAuthorization
     with RequestHeader with SensitiveHttpHeader {
@@ -797,7 +796,7 @@ final case class `Proxy-Authorization`(credentials: HttpCredentials) extends jm.
   protected def companion = `Proxy-Authorization`
 }
 
-// https://tools.ietf.org/html/rfc7233#section-3.1
+// https://www.rfc-editor.org/rfc/rfc9110.html#section-14.2
 object Range extends ModeledCompanion[Range] {
   def apply(first: ByteRange, more: ByteRange*): Range = apply(Seq(first +: more: _*))
   def apply(ranges: Seq[ByteRange]): Range = Range(RangeUnits.Bytes, ranges)
@@ -860,7 +859,7 @@ final case class `Raw-Request-URI`(uri: String) extends jm.headers.RawRequestURI
   protected def companion = `Raw-Request-URI`
 }
 
-// https://tools.ietf.org/html/rfc7231#section-5.5.2
+// https://www.rfc-editor.org/rfc/rfc9110.html#section-10.1.3
 object Referer extends ModeledCompanion[Referer]
 final case class Referer(uri: Uri) extends jm.headers.Referer with RequestHeader with SensitiveHttpHeader {
   require(uri.fragment.isEmpty, "Referer header URI must not contain a fragment")
@@ -899,10 +898,10 @@ final case class `Retry-After`(delaySecondsOrDateTime: RetryAfterParameter) exte
 /**
  * INTERNAL API
  */
-// https://tools.ietf.org/html/rfc6455#section-4.3
+// https://www.rfc-editor.org/rfc/rfc6455.html#section-4.3
 @InternalApi
 private[http] object `Sec-WebSocket-Accept` extends ModeledCompanion[`Sec-WebSocket-Accept`] {
-  // Defined at https://tools.ietf.org/html/rfc6455#section-4.2.2
+  // Defined at https://www.rfc-editor.org/rfc/rfc6455.html#section-4.2.2
   val MagicGuid = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
   private val magicGuidBytes = MagicGuid.asciiBytes
 
@@ -929,7 +928,7 @@ private[http] final case class `Sec-WebSocket-Accept`(key: String) extends Respo
 /**
  * INTERNAL API
  */
-// https://tools.ietf.org/html/rfc6455#section-4.3
+// https://www.rfc-editor.org/rfc/rfc6455.html#section-4.3
 @InternalApi
 private[http] object `Sec-WebSocket-Extensions` extends ModeledCompanion[`Sec-WebSocket-Extensions`] {
   implicit val extensionsRenderer: Renderer[immutable.Iterable[WebSocketExtension]] =
@@ -948,7 +947,7 @@ private[http] final case class `Sec-WebSocket-Extensions`(extensions: Seq[WebSoc
   protected def companion = `Sec-WebSocket-Extensions`
 }
 
-// https://tools.ietf.org/html/rfc6455#section-4.3
+// https://www.rfc-editor.org/rfc/rfc6455.html#section-4.3
 /**
  * INTERNAL API
  */
@@ -976,7 +975,7 @@ private[http] final case class `Sec-WebSocket-Key`(key: String) extends RequestH
   def isValid: Boolean = Try(Base64.rfc2045().decode(key.toCharArray)).toOption.exists(_.length == 16)
 }
 
-// https://tools.ietf.org/html/rfc6455#section-4.3
+// https://www.rfc-editor.org/rfc/rfc6455.html#section-4.3
 /**
  * INTERNAL API
  */
@@ -1000,7 +999,7 @@ private[http] final case class `Sec-WebSocket-Protocol`(protocols: Seq[String])
   override def getProtocols: Iterable[String] = protocols.asJava
 }
 
-// https://tools.ietf.org/html/rfc6455#section-4.3
+// https://www.rfc-editor.org/rfc/rfc6455.html#section-4.3
 /**
  * INTERNAL API
  */
@@ -1024,7 +1023,7 @@ private[http] final case class `Sec-WebSocket-Version`(versions: Seq[Int])
   protected def companion = `Sec-WebSocket-Version`
 }
 
-// https://tools.ietf.org/html/rfc7231#section-7.4.2
+// https://www.rfc-editor.org/rfc/rfc9110.html#section-10.2.4
 object Server extends ModeledCompanion[Server] {
   def apply(products: String): Server = apply(ProductVersion.parseMultiple(products))
   def apply(first: ProductVersion, more: ProductVersion*): Server = apply(Seq(first +: more: _*))
@@ -1076,7 +1075,7 @@ final case class `Set-Cookie`(cookie: HttpCookie) extends jm.headers.SetCookie w
   protected def companion = `Set-Cookie`
 }
 
-// https://tools.ietf.org/html/rfc7230#section-4.3
+// https://www.rfc-editor.org/rfc/rfc9110.html#section-10.1.4
 object TE extends ModeledCompanion[TE] {
   def apply(first: TransferEncoding, more: TransferEncoding*): TE = apply(Seq(first +: more: _*))
 }
@@ -1116,7 +1115,7 @@ final case class `Tls-Session-Info`(session: SSLSession) extends jm.headers.TlsS
   def getSession: SSLSession = session
 }
 
-// https://tools.ietf.org/html/rfc7230#section-3.3.1
+// https://www.rfc-editor.org/rfc/rfc9112.html#section-6.1
 object `Transfer-Encoding` extends ModeledCompanion[`Transfer-Encoding`] {
   def apply(first: TransferEncoding, more: TransferEncoding*): `Transfer-Encoding` =
     apply(Seq(first +: more: _*))
@@ -1145,7 +1144,7 @@ final case class `Transfer-Encoding`(encodings: Seq[TransferEncoding]) extends j
   def getEncodings: Iterable[jm.TransferEncoding] = encodings.asJava
 }
 
-// https://tools.ietf.org/html/rfc7230#section-6.7
+// https://www.rfc-editor.org/rfc/rfc9110.html#section-7.8
 object Upgrade extends ModeledCompanion[Upgrade] {
   implicit val protocolsRenderer: Renderer[immutable.Iterable[UpgradeProtocol]] =
     Renderer.defaultSeqRenderer[UpgradeProtocol]
@@ -1159,7 +1158,7 @@ final case class Upgrade(protocols: Seq[UpgradeProtocol]) extends RequestRespons
   def hasWebSocket: Boolean = protocols.exists(_.name.equalsIgnoreCase("websocket"))
 }
 
-// https://tools.ietf.org/html/rfc7231#section-5.5.3
+// https://www.rfc-editor.org/rfc/rfc9110.html#section-10.1.5
 object `User-Agent` extends ModeledCompanion[`User-Agent`] {
   def apply(products: String): `User-Agent` = apply(ProductVersion.parseMultiple(products))
   def apply(first: ProductVersion, more: ProductVersion*): `User-Agent` = apply(Seq(first +: more: _*))
@@ -1176,7 +1175,7 @@ final case class `User-Agent`(products: Seq[ProductVersion]) extends jm.headers.
   def getProducts: Iterable[jm.headers.ProductVersion] = products.asJava
 }
 
-// https://tools.ietf.org/html/rfc7235#section-4.1
+// https://www.rfc-editor.org/rfc/rfc9110.html#section-11.6.1
 object `WWW-Authenticate` extends ModeledCompanion[`WWW-Authenticate`] {
   def apply(first: HttpChallenge, more: HttpChallenge*): `WWW-Authenticate` = apply(Seq(first +: more: _*))
   implicit val challengesRenderer: Renderer[immutable.Iterable[HttpChallenge]] =
@@ -1279,8 +1278,8 @@ object Trailer extends ModeledCompanion[Trailer] {
   }
 
   /**
-   * Non-exhaustive set of header names that are disallowed in the `Trailer` header.
-   * See <a href="https://datatracker.ietf.org/doc/html/rfc7230#section-4.1.2">RFC 7230, Section 4.1.2</a>
+   * Non-exhaustive set of field names that Pekko HTTP disallows in the `Trailer` header.
+   * See <a href="https://www.rfc-editor.org/rfc/rfc9110.html#section-6.5.1">RFC 9110, Section 6.5.1</a> for the general limitations on trailers.
    */
   private val isForbidden: Set[String] =
     Set(
@@ -1314,9 +1313,8 @@ object Trailer extends ModeledCompanion[Trailer] {
 }
 
 /**
- * The `Trailer` header is used before a message body to indicate which fields will be present
- * in the trailers when using chunked transfer encoding.
- * See <a href="https://datatracker.ietf.org/doc/html/rfc7230#section-4.4">RFC 7230, Section 4.4</a>
+ * The `Trailer` header lists fields that the sender expects to include in the trailer section.
+ * See <a href="https://www.rfc-editor.org/rfc/rfc9110.html#section-6.6.2">RFC 9110, Section 6.6.2</a>.
  *
  * @since 1.3.0
  */

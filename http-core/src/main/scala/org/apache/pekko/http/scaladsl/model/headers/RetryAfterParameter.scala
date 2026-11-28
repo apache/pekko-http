@@ -18,7 +18,7 @@ import org.apache.pekko.http.scaladsl.model._
 /**
  * Defines different values admitted to define a [[`Retry-After`]] header.
  *
- * Spec: https://tools.ietf.org/html/rfc7231#section-7.1.3
+ * Spec: https://www.rfc-editor.org/rfc/rfc9110.html#section-10.2.3
  */
 sealed abstract class RetryAfterParameter
 final case class RetryAfterDuration(delayInSeconds: Long) extends RetryAfterParameter {

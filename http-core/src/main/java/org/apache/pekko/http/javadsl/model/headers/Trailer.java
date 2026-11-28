@@ -20,9 +20,9 @@ package org.apache.pekko.http.javadsl.model.headers;
 import org.apache.pekko.http.impl.util.Util;
 
 /**
- * The `Trailer` header is used before a message body to indicate which fields will be present in
- * the trailers when using chunked transfer encoding. See <a
- * href="https://datatracker.ietf.org/doc/html/rfc7230#section-4.4">RFC 7230, Section 4.4</a>
+ * The {@code Trailer} header lists fields that the sender expects to include in the trailer
+ * section. See <a href="https://www.rfc-editor.org/rfc/rfc9110.html#section-6.6.2">RFC 9110,
+ * Section 6.6.2</a>.
  *
  * @since 1.3.0
  */

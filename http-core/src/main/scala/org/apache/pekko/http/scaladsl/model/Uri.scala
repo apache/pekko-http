@@ -178,16 +178,16 @@ sealed abstract case class Uri(scheme: String, authority: Authority, path: Path,
     resolveUnsafe(scheme, authority.userinfo, authority.host, authority.port, path, rawQueryString, fragment, base)
 
   /**
-   * Converts this URI to an "effective HTTP request URI" as defined by
-   * http://tools.ietf.org/html/rfc7230#section-5.5
+   * Converts this URI to an "effective HTTP request URI". For HTTP/1.1 target URI reconstruction, see
+   * https://www.rfc-editor.org/rfc/rfc9112.html#section-3.3.
    */
   def toEffectiveHttpRequestUri(hostHeaderHost: Host, hostHeaderPort: Int, securedConnection: Boolean = false,
       defaultAuthority: Authority = Authority.Empty): Uri =
     toEffectiveRequestUri(hostHeaderHost, hostHeaderPort, httpScheme(securedConnection), defaultAuthority)
 
   /**
-   * Converts this URI to an "effective request URI" as defined by
-   * http://tools.ietf.org/html/rfc7230#section-5.5
+   * Converts this URI to an "effective request URI". For HTTP/1.1 target URI reconstruction, see
+   * https://www.rfc-editor.org/rfc/rfc9112.html#section-3.3.
    */
   def toEffectiveRequestUri(hostHeaderHost: Host, hostHeaderPort: Int, defaultScheme: String,
       defaultAuthority: Authority = Authority.Empty): Uri =
@@ -202,7 +202,7 @@ sealed abstract case class Uri(scheme: String, authority: Authority, path: Path,
 
   /**
    * Converts this URI into an HTTP request target "origin-form" as defined by
-   * https://tools.ietf.org/html/rfc7230#section-5.3.
+   * https://www.rfc-editor.org/rfc/rfc9112.html#section-3.2.1.
    *
    * Note that the resulting URI instance is not a valid RFC 3986 URI! (As it might
    * be a "relative" URI with a part component starting with a double slash.)
@@ -323,7 +323,7 @@ object Uri {
 
   /**
    * Parses the given string into an HTTP request target URI as defined by
-   * http://tools.ietf.org/html/rfc7230#section-5.3.
+   * https://www.rfc-editor.org/rfc/rfc9112.html#section-3.2.
    * If the given string is not a valid URI the method throws an `IllegalUriException`.
    *
    * @param mode if `Relaxed`, accepts unencoded visible 7-bit ASCII characters in addition to the RFC.
@@ -335,7 +335,7 @@ object Uri {
   /**
    * Parses the given string as if it were the value of an HTTP/2 ":path" pseudo-header.
    * The result is a path and a query string as defined in
-   * https://tools.ietf.org/html/rfc7540#section-8.1.2.3
+   * https://www.rfc-editor.org/rfc/rfc9113.html#section-8.3.1
    * If the given string is not a valid path or query string the method throws an `IllegalUriException`.
    *
    * @param mode if `Relaxed`, accepts unencoded visible 7-bit ASCII characters in addition to the RFC.
@@ -348,9 +348,8 @@ object Uri {
 
   /**
    * Parses the given string as if it were the value of an HTTP/2 ":authority" pseudo-header.
-   * The result is an authority object.
-   * https://tools.ietf.org/html/rfc7540#section-8.1.2.3
-   * If the given string is not a valid path or query string the method throws an `IllegalUriException`.
+   * The result is an authority object (https://www.rfc-editor.org/rfc/rfc9113.html#section-8.3.1).
+   * If the given string is not a valid authority the method throws an `IllegalUriException`.
    *
    * @param mode if `Relaxed`, accepts unencoded visible 7-bit ASCII characters in addition to the RFC.
    */
@@ -376,8 +375,8 @@ object Uri {
   }
 
   /**
-   * Converts a set of URI components to an "effective HTTP request URI" as defined by
-   * http://tools.ietf.org/html/rfc7230#section-5.5.
+   * Converts a set of URI components to an "effective HTTP request URI".
+   * For HTTP/1.1 target URI reconstruction, see https://www.rfc-editor.org/rfc/rfc9112.html#section-3.3.
    */
   def effectiveHttpRequestUri(scheme: String, host: Host, port: Int, path: Path, query: Option[String],
       fragment: Option[String],
@@ -387,8 +386,8 @@ object Uri {
       hostHeaderPort, defaultAuthority)
 
   /**
-   * Converts a set of URI components to an "effective request URI" as defined by
-   * http://tools.ietf.org/html/rfc7230#section-5.5.
+   * Converts a set of URI components to an "effective request URI".
+   * For HTTP/1.1 target URI reconstruction, see https://www.rfc-editor.org/rfc/rfc9112.html#section-3.3.
    */
   def effectiveRequestUri(scheme: String, host: Host, port: Int, path: Path, query: Option[String],
       fragment: Option[String],

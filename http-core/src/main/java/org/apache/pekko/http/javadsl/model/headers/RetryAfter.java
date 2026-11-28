@@ -19,7 +19,7 @@ import org.apache.pekko.util.OptionalUtil;
 
 /**
  * Model for the `Retry-After` header. Specification:
- * //https://tools.ietf.org/html/rfc7231#section-7.1.3
+ * https://www.rfc-editor.org/rfc/rfc9110.html#section-10.2.3
  */
 public abstract class RetryAfter extends org.apache.pekko.http.scaladsl.model.HttpHeader {
 

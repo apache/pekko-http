@@ -650,7 +650,7 @@ object Multipart {
 
   /**
    * Model for `multipart/byteranges` content as defined by
-   * https://tools.ietf.org/html/rfc7233#section-5.4.1 and https://tools.ietf.org/html/rfc7233#appendix-A
+   * https://www.rfc-editor.org/rfc/rfc9110.html#section-14.6
    */
   sealed abstract class ByteRanges extends Multipart with jm.Multipart.ByteRanges {
     def mediaType = MediaTypes.`multipart/byteranges`

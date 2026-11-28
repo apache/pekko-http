@@ -47,8 +47,8 @@ object LinkParam {
 }
 
 object LinkParams {
-  // Note rfc5988 only lists " ,;" but we add : to align with rfc8288 which quotes anything not a token as defined
-  // in rfc7230 (but without having to parse token)
+  // Include ':' so URI-valued relations are quoted (see https://www.rfc-editor.org/rfc/rfc8288.html#section-3.3).
+  // The earlier RFC 5988 quoted-form guidance did not list ':'; see https://www.rfc-editor.org/rfc/rfc9110.html#section-5.6.2 for tokens.
   private val reserved = CharPredicate(" ,;:")
 
   // A few convenience rels
@@ -60,9 +60,10 @@ object LinkParams {
 
   /**
    * This can be either a bare word, an absolute URI, or a quoted, space-separated string of zero-or-more of either
+   * in the model.
    *
-   * For a more detailed breakdown of the relation type link parameter, see
-   * http://tools.ietf.org/html/rfc5988#section-5.3
+   * The wire format requires one or more relation types, with non-token values quoted.
+   * See https://www.rfc-editor.org/rfc/rfc8288.html#section-3.3.
    */
   final case class rel(value: String) extends LinkParam {
     def render[R <: Rendering](r: R): r.type = {
@@ -73,7 +74,7 @@ object LinkParams {
 
   /**
    * For a more detailed breakdown of the anchor link parameter, see
-   * http://tools.ietf.org/html/rfc5988#section-5.2
+   * https://www.rfc-editor.org/rfc/rfc8288.html#section-3.2
    */
   final case class anchor(uri: Uri) extends LinkParam {
     def value: AnyRef = uri
@@ -82,10 +83,8 @@ object LinkParams {
   }
 
   /**
-   * This can be either a bare word, an absolute URI, or a quoted, space-separated string of zero-or-more of either.
-   *
-   * For a more detailed breakdown of the reverse relationship link parameter, see
-   * http://tools.ietf.org/html/rfc5988#section-5.3
+   * The legacy reverse relation parameter from https://www.rfc-editor.org/rfc/rfc5988.html#section-5.3.
+   * Its use is deprecated; see https://www.rfc-editor.org/rfc/rfc8288.html#section-3.3.
    */
   final case class rev(value: String) extends LinkParam {
     def render[R <: Rendering](r: R): r.type = {
@@ -95,8 +94,7 @@ object LinkParams {
   }
 
   /**
-   * For a more detailed breakdown of the dereferenced language hint link parameter
-   * http://tools.ietf.org/html/rfc5988#section-5.4
+   * A language hint for the link target. See https://www.rfc-editor.org/rfc/rfc8288.html#section-3.4.1.
    */
   final case class hreflang(lang: Language) extends LinkParam {
     def value: AnyRef = lang
@@ -105,8 +103,7 @@ object LinkParams {
   }
 
   /**
-   * For a more detailed breakdown of how to use the dereferenced language hint link parameter, see
-   * http://tools.ietf.org/html/rfc5988#section-5.4
+   * The intended medium or media for the link target. See https://www.rfc-editor.org/rfc/rfc8288.html#section-3.4.1.
    */
   final case class media(desc: String) extends LinkParam {
     def value: AnyRef = desc
@@ -118,8 +115,7 @@ object LinkParams {
   }
 
   /**
-   * For a more detailed breakdown of how to use the dereferenced language hint link parameter, see
-   * http://tools.ietf.org/html/rfc5988#section-5.4
+   * A human-readable title for the link target. See https://www.rfc-editor.org/rfc/rfc8288.html#section-3.4.1.
    */
   final case class title(title: String) extends LinkParam {
     def value: AnyRef = title
@@ -128,8 +124,7 @@ object LinkParams {
   }
 
   /**
-   * For a more detailed breakdown of how to use the dereferenced language hint link parameter, see
-   * http://tools.ietf.org/html/rfc5988#section-5.4
+   * An extended title for the link target. See https://www.rfc-editor.org/rfc/rfc8288.html#section-3.4.1.
    */
   final case class `title*`(title: String) extends LinkParam {
     def value: AnyRef = title
@@ -141,8 +136,7 @@ object LinkParams {
   }
 
   /**
-   * For a more detailed breakdown of how to use the dereferenced language hint link parameter, see
-   * http://tools.ietf.org/html/rfc5988#section-5.4
+   * A media type hint for the link target. See https://www.rfc-editor.org/rfc/rfc8288.html#section-3.4.1.
    */
   final case class `type`(mediaType: MediaType) extends LinkParam {
     def value: AnyRef = mediaType

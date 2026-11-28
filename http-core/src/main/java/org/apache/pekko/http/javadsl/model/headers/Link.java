@@ -13,7 +13,10 @@
 
 package org.apache.pekko.http.javadsl.model.headers;
 
-/** Model for the `Link` header. Specification: http://tools.ietf.org/html/rfc5988#section-5 */
+/**
+ * Model for the {@code Link} header. Specification:
+ * https://www.rfc-editor.org/rfc/rfc8288.html#section-3
+ */
 public abstract class Link extends org.apache.pekko.http.scaladsl.model.HttpHeader {
   public abstract Iterable<LinkValue> getValues();
 

@@ -70,7 +70,7 @@ object ClientTransport {
    * An HTTP(S) proxy is a proxy that will create one TCP connection to the HTTP(S) proxy for each target connection. The
    * proxy transparently forwards the TCP connection to the target host.
    *
-   * For more information about HTTP CONNECT tunnelling see https://tools.ietf.org/html/rfc7231#section-4.3.6.
+   * For more information about HTTP CONNECT tunnelling see https://www.rfc-editor.org/rfc/rfc9110.html#section-9.3.6.
    */
   def httpsProxy(proxyAddress: InetSocketAddress): ClientTransport =
     HttpsProxyTransport(proxyAddress)
@@ -93,7 +93,7 @@ object ClientTransport {
    * An HTTP(S) proxy is a proxy that will create one TCP connection to the HTTP(S) proxy for each target connection. The
    * proxy transparently forwards the TCP connection to the target host.
    *
-   * For more information about HTTP CONNECT tunnelling see https://tools.ietf.org/html/rfc7231#section-4.3.6.
+   * For more information about HTTP CONNECT tunnelling see https://www.rfc-editor.org/rfc/rfc9110.html#section-9.3.6.
    */
   def httpsProxy(proxyAddress: InetSocketAddress, proxyCredentials: HttpCredentials): ClientTransport =
     HttpsProxyTransport(proxyAddress, proxyCredentials = Some(proxyCredentials))

@@ -15,7 +15,10 @@ package org.apache.pekko.http.javadsl.model.headers;
 
 import org.apache.pekko.http.javadsl.model.DateTime;
 
-/** Model for the `Expires` header. Specification: http://tools.ietf.org/html/rfc7234#section-5.3 */
+/**
+ * Model for the {@code Expires} header. Specification:
+ * https://www.rfc-editor.org/rfc/rfc9111.html#section-5.3
+ */
 public abstract class Expires extends org.apache.pekko.http.scaladsl.model.HttpHeader {
   public abstract DateTime date();
 
