@@ -359,6 +359,23 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
       "Accept-Language: es-419, es" =!= `Accept-Language`(Language("es", "419"), Language("es"))
     }
 
+    "case-insensitive content negotiation weights" in {
+      for (key <- Seq("q", "Q")) {
+        s"Accept: text/plain;Format=flowed;$key=0.5, text/*;$key=0.4" =!=
+          Accept(`text/plain`.withParams(Map("Format" -> "flowed")).withQValue(0.5), `text/*`.withQValue(0.4))
+            .renderedTo("text/plain; Format=flowed;q=0.5, text/*;q=0.4")
+        s"Accept-Charset: UTF-8;$key=0.5" =!=
+          `Accept-Charset`(`UTF-8`.withQValue(0.5)).renderedTo("UTF-8;q=0.5")
+        s"Accept-Encoding: gzip;$key=0.5" =!= `Accept-Encoding`(gzip.withQValue(0.5)).renderedTo("gzip;q=0.5")
+        s"Accept-Language: en-US;$key=0.5" =!=
+          `Accept-Language`(Language("en", "US").withQValue(0.5)).renderedTo("en-US;q=0.5")
+      }
+
+      // Accept-Query is a Structured Field, where q is an ordinary media type parameter.
+      "Accept-Query: application/json;q=quality" =!=
+        `Accept-Query`(MediaRange(`application/json`.withParams(Map("q" -> "quality"))))
+    }
+
     "Age" in {
       "Age: 3600" =!= Age(3600)
     }

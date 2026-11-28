@@ -173,10 +173,10 @@ private[parser] trait CommonRules extends StringBuilding { this: Parser =>
   def date3 = rule { month ~ ' ' ~ (digit2 | ' ' ~ digit) }
 
   // ******************************************************************************************
-  // http://tools.ietf.org/html/rfc7231#section-5.3.1
+  // https://www.rfc-editor.org/rfc/rfc9110.html#section-12.4.2
   // ******************************************************************************************
 
-  def weight = rule { ws(';') ~ ws('q') ~ ws('=') ~ qvalue } // a bit more lenient than the spec
+  def weight = rule { ws(';') ~ anyOf("qQ") ~ OWS ~ ws('=') ~ qvalue } // also allow whitespace around '='
 
   def qvalue = rule { // a bit more lenient than the spec
     capture('0' ~ optional('.' ~ zeroOrMore(DIGIT))
