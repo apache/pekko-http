@@ -95,10 +95,10 @@ class WebSocketDirectivesSpec extends RoutingSpec {
       selectedSubprotocol shouldEqual Some(Some("echo"))
       compressionDecision shouldEqual Some(true)
     }
-    "choose subprotocol from offered ones" in {
+    "prefer the first matching route over the client's subprotocol order" in {
       val wsClient = WSProbe()
 
-      WS("http://localhost/", wsClient.flow, List("other", "echo", "greeter")) ~> websocketMultipleProtocolRoute ~>
+      WS("http://localhost/", wsClient.flow, List("other", "greeter", "echo")) ~> websocketMultipleProtocolRoute ~>
       check {
         expectWebSocketUpgradeWithProtocol { protocol =>
           protocol shouldEqual "echo"
@@ -157,6 +157,20 @@ class WebSocketDirectivesSpec extends RoutingSpec {
         responseAs[String] shouldEqual
         "None of the websocket subprotocols offered in the request are supported. Supported are 'echo','greeter'."
         header[`Sec-WebSocket-Protocol`].get.protocols.toSet shouldEqual Set("greeter", "echo")
+      }
+    }
+    "fall back to a WebSocket route without a subprotocol when none match" in {
+      val wsClient = WSProbe()
+      val route = websocketMultipleProtocolRoute ~ websocketRoute
+
+      WS("http://localhost/", wsClient.flow, List("other")) ~> route ~> check {
+        isWebSocketUpgrade shouldEqual true
+        header[`Sec-WebSocket-Protocol`] shouldBe empty
+
+        wsClient.sendMessage("Peter")
+        wsClient.expectMessage("Hello Peter!")
+        wsClient.sendCompletion()
+        wsClient.expectCompletion()
       }
     }
     "reject non-websocket requests" in {
