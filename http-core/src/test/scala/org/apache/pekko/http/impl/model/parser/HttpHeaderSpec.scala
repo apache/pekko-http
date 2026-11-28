@@ -866,6 +866,19 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
         "expected segment, '/', '?', '#' or 'EOI' (line 1, column 18)", "https://spray.io/ sec\n                 ^")
     }
 
+    "Link anchor accepts quoted and token URI references" in {
+      val quoted = """</page>; anchor="chapter"; rel=next"""
+      val bare = "</page>; anchor=chapter; rel=next"
+      val expected = Link(Uri("/page"), LinkParams.anchor(Uri("chapter")), LinkParams.next)
+
+      Seq(quoted, bare).foreach { value =>
+        s"Link: $value" =!= expected.renderedTo(quoted)
+        val parsed = pekko.http.javadsl.model.HttpHeader.parse("Link", value)
+        parsed shouldBe expected
+        parsed.value shouldBe quoted
+      }
+    }
+
     "Link standard parameter names are case-insensitive" in {
       val encodedTitle = "UTF-8'fr'Caf%C3%A9%20du%20coin"
       val value = """</page>; REL=prev; Anchor="/contents"; Rev=chapter; HREFLANG=de-DE; """ +
