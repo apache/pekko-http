@@ -122,10 +122,17 @@ open requests that only has requests with idempotent methods scheduled to it, if
 
 ## Retrying a Request
 
-If the `max-retries` pool config setting is greater than zero the pool retries idempotent requests for which
-a response could not be successfully retrieved. Idempotent requests are those whose HTTP method is defined to be
-idempotent by the HTTP spec, which are all the ones currently modelled by Apache Pekko HTTP except for the `POST`, `PATCH`
-and `CONNECT` methods.
+The `pekko.http.host-connection-pool.max-retries` setting limits how many additional attempts the pool can make
+for an idempotent request for which it could not obtain a response. The initial attempt does not count toward this
+limit. Receiving an HTTP error response, such as a `4xx` or `5xx`, does not by itself trigger a retry.
+
+The default is `5` for backwards compatibility. To follow the recommendation in
+[RFC 9110 §9.2.2](https://www.rfc-editor.org/rfc/rfc9110.html#section-9.2.2) not to retry a failed automatic retry,
+set `max-retries = 1`. Set it to `0` to disable automatic request retries. You can also set the limit in code with
+`withMaxRetries` on `ConnectionPoolSettings` in either Scala or Java.
+
+Whether a request is eligible depends on its method's idempotence. The predefined Apache Pekko HTTP methods are
+idempotent except for `POST`, `PATCH` and `CONNECT`.
 
 When a response could not be received for a certain request there are essentially three possible error scenarios:
 
