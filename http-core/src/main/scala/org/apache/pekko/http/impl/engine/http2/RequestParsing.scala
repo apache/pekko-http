@@ -76,6 +76,9 @@ private[http2] object RequestParsing {
     }
 
     { subStream =>
+      // `hostHeaders` holds the `host` headers of the request, most recent first. They are also in `headers`, at
+      // their original position. `rec` collects them while it traverses the header block, so that they can be
+      // compared with `:authority` here without scanning all the headers a second time.
       def createRequest(
           method: HttpMethod,
           scheme: String,
@@ -98,6 +101,8 @@ private[http2] object RequestParsing {
 
         if (tlsSessionInfoHeader.isDefined) headers += tlsSessionInfoHeader.get
 
+        // A `host` header must identify the same entity as `:authority`:
+        // https://www.rfc-editor.org/rfc/rfc9113.html#section-8.3.1
         if (hostHeaders.nonEmpty && (authority ne null) && !authority.isEmpty)
           checkHostMatchesAuthority(scheme, authority, hostHeaders)
 
