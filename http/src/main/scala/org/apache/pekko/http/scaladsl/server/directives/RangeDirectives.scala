@@ -14,14 +14,24 @@
 package org.apache.pekko.http.scaladsl.server
 package directives
 
+import java.io.{ EOFException, IOException }
+import java.nio.ByteBuffer
+import java.nio.channels.FileChannel
+import java.nio.file.{ Path, StandardOpenOption }
+
 import org.apache.pekko
+import pekko.event.LoggingAdapter
+import pekko.http.impl.engine.rendering.BodyPartRenderer
 import pekko.http.impl.util._
+import pekko.http.scaladsl.marshalling.ToResponseMarshallable
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.StatusCodes._
 import pekko.http.scaladsl.model.headers._
 import pekko.http.scaladsl.server.RouteResult.Complete
+import pekko.stream.ActorAttributes
 import pekko.stream.OverflowStrategy
 import pekko.stream.SourceShape
+import pekko.stream.Supervision
 import pekko.stream.scaladsl._
 import pekko.util.ByteString
 
@@ -50,6 +60,9 @@ trait RangeDirectives {
    * @group range
    */
   def withRangeSupport: Directive0 =
+    withRangeSupportFor(None)
+
+  private def withRangeSupportFor(knownFile: Option[(HttpEntity.Default, Path)]): Directive0 =
     extractRequestContext.flatMap { ctx =>
       val settings = ctx.settings
       implicit val log = ctx.log
@@ -82,18 +95,29 @@ trait RangeDirectives {
           otherCandidates :+ merged
         }
 
-      def multipartRanges(ranges: Seq[ByteRange], entity: UniversalEntity): Multipart.ByteRanges = {
+      def multipartRanges(
+          ranges: Seq[ByteRange],
+          entity: UniversalEntity,
+          headers: Seq[HttpHeader]): ToResponseMarshallable = {
         val length = entity.contentLength
         val coalescedRanges = coalesceRanges(ranges.map(indexRange(length)))
         if (settings.preserveRangeRequestOrder && coalescedRanges.lengthCompare(1) > 0)
           entity match {
             case strict: HttpEntity.Strict =>
-              return Multipart.ByteRanges(Source(coalescedRanges).map { range =>
+              val parts = Source(coalescedRanges).map { range =>
                 Multipart.ByteRanges.BodyPart(
                   range.contentRange(length),
                   HttpEntity(strict.contentType, strict.data.slice(range.start.toInt, range.end.toInt)))
-              })
+              }
+              return ToResponseMarshallable((PartialContent, headers, Multipart.ByteRanges(parts)))
             case _ =>
+              knownFile match {
+                case Some((selectedEntity, path)) if selectedEntity eq entity =>
+                  val multipart = RangeDirectives.fileMultipartEntity(
+                    path, selectedEntity, coalescedRanges.map(_.contentRange(length)), log)
+                  return ToResponseMarshallable((PartialContent, headers, multipart))
+                case _ =>
+              }
           }
 
         // It's only possible to run once over the input entity data stream because it's not known if the
@@ -127,7 +151,7 @@ trait RangeDirectives {
               SourceShape(merge.out)
             })
         }
-        Multipart.ByteRanges(source)
+        ToResponseMarshallable((PartialContent, headers, Multipart.ByteRanges(source)))
       }
 
       def rangeResponse(range: ByteRange, entity: UniversalEntity, length: Long, headers: Seq[HttpHeader]) = {
@@ -157,7 +181,7 @@ trait RangeDirectives {
                     case Nil                   => ctx.reject(UnsatisfiableRangeRejection(ranges, length))
                     case Seq(satisfiableRange) => ctx.complete(rangeResponse(satisfiableRange, entity, length, headers))
                     case satisfiableRanges     =>
-                      ctx.complete((PartialContent, headers, multipartRanges(satisfiableRanges, entity)))
+                      ctx.complete(multipartRanges(satisfiableRanges, entity, headers))
                   }
                 case None =>
                   // Ranges not supported for Chunked or CloseDelimited responses
@@ -181,4 +205,66 @@ trait RangeDirectives {
 object RangeDirectives extends RangeDirectives {
   private val respondWithAcceptByteRangesHeader: Directive0 =
     RespondWithDirectives.respondWithHeader(`Accept-Ranges`(RangeUnits.Bytes))
+
+  // The file directive supplies the exact entity it constructed from this path. A transformed response
+  // falls back to the ordinary one-pass stream.
+  private[directives] def withFileRangeSupport(entity: HttpEntity.Default, path: Path): Directive0 =
+    (this: RangeDirectives).withRangeSupportFor(Some((entity, path)))
+
+  private def fileMultipartEntity(
+      path: Path,
+      representation: HttpEntity.Default,
+      ranges: Seq[ContentRange.Default],
+      log: LoggingAdapter): MessageEntity = {
+    val boundary = BodyPartRenderer.randomBoundary()
+    val contentType = MediaTypes.`multipart/byteranges`.withBoundary(boundary).toContentType
+    val bytes = Source.lazySource(() =>
+      Source
+        .unfoldResource[ByteString, FileRangeReader](
+          () => new FileRangeReader(path, representation, ranges.iterator, boundary, log),
+          _.read(),
+          _.close())
+        .addAttributes(ActorAttributes.supervisionStrategy(Supervision.stoppingDecider)))
+    // The entire rendered entity owns the one resource, not a stream of descriptors for separate part sources.
+    HttpEntity.Chunked.fromData(contentType, bytes)
+  }
+
+  private final class FileRangeReader(
+      path: Path,
+      representation: HttpEntity.Default,
+      ranges: Iterator[ContentRange.Default],
+      boundary: String,
+      log: LoggingAdapter) {
+    private val buffer = ByteBuffer.allocate(8192)
+    private var position = 0L
+    private var remaining = 0L
+    private var first = true
+    private var closingBoundaryEmitted = false
+    private val channel = FileChannel.open(path, StandardOpenOption.READ)
+
+    def read(): Option[ByteString] =
+      if (remaining > 0L) {
+        buffer.clear()
+        buffer.limit(math.min(buffer.capacity().toLong, remaining).toInt)
+        val count = channel.read(buffer, position)
+        if (count < 0) throw new EOFException("File ended before the selected byte range was read")
+        if (count == 0) throw new IOException("No progress reading the selected byte range")
+        position += count
+        remaining -= count
+        buffer.flip()
+        Some(ByteString.fromByteBuffer(buffer))
+      } else if (ranges.hasNext) {
+        val range = ranges.next()
+        position = range.first
+        remaining = range.last - range.first + 1L
+        val header = BodyPartRenderer.byteRangePartHeader(boundary, first, representation, range, log)
+        first = false
+        Some(header)
+      } else if (!closingBoundaryEmitted) {
+        closingBoundaryEmitted = true
+        Some(BodyPartRenderer.closingBoundary(boundary))
+      } else None
+
+    def close(): Unit = channel.close()
+  }
 }

@@ -14,9 +14,10 @@
 package org.apache.pekko.http.scaladsl.server
 package directives
 
-import java.io.File
+import java.io.{ ByteArrayOutputStream, File }
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
+import java.util.zip.GZIPOutputStream
 
 import scala.concurrent.duration._
 import scala.util.Properties
@@ -29,11 +30,22 @@ import pekko.http.scaladsl.model.Uri.Path
 import pekko.http.scaladsl.model.headers._
 import pekko.http.scaladsl.settings.RoutingSettings
 import pekko.http.scaladsl.testkit.RouteTestTimeout
+import pekko.stream.testkit.scaladsl.TestSink
+import pekko.stream.testkit.Utils.assertAllStagesStopped
 import pekko.testkit._
+import pekko.util.ByteString
 
 import org.scalatest.{ Inside, Inspectors }
 
+import com.typesafe.config.ConfigFactory
+
 class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Inside {
+
+  private def fileRangeSettings(preserveOrder: Boolean): RoutingSettings =
+    RoutingSettings(
+      ConfigFactory.parseString(s"pekko.http.routing.preserve-range-request-order = $preserveOrder")
+        .withFallback(system.settings.config))
+      .withRangeCoalescingThreshold(0L)
 
   "ContentTypeResolver.Default" should {
     "resolve JavaScript filenames with the default or explicitly selected charset" in {
@@ -216,6 +228,80 @@ class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Ins
           parts.map(_.entity.data.utf8String) should contain theSameElementsAs List("BCDEFGHIJK", "QRSTUVWXYZ")
         }
       } finally file.delete
+    }
+
+    "keep request order for regular files only when configured" in {
+      val path = Files.createTempFile("pekkoHttpTest", ".txt")
+      val stored = ByteString("ABCDEFGHIJKLMNOPQRSTUVWXYZ".repeat(1024))
+      val high = 16991 -> 25186
+      val low = 7 -> 16
+      val requested = Range(ByteRange(high._1, high._2), ByteRange(low._1, low._2))
+      val route = getFromFile(path.toFile, ContentTypes.`text/plain(UTF-8)`)
+      try {
+        Files.write(path, stored.toArray)
+        for (preserveOrder <- Seq(false, true)) {
+          val expected = if (preserveOrder) List(high, low) else List(low, high)
+          Get() ~> addHeader(requested) ~> mapSettings(_ => fileRangeSettings(preserveOrder))(route) ~> check {
+            status shouldEqual StatusCodes.PartialContent
+            header[`Content-Range`] shouldBe None
+            val parts =
+              responseAs[Multipart.ByteRanges].toStrict(1.second.dilated).awaitResult(3.seconds.dilated).strictParts
+            parts.map(_.contentRange) shouldEqual expected.map { case (start, end) =>
+              ContentRange(start, end, stored.size)
+            }
+            parts.map(_.entity.contentType) shouldEqual List.fill(2)(ContentTypes.`text/plain(UTF-8)`)
+            parts.map(_.entity.data) shouldEqual expected.map { case (start, end) => stored.slice(start, end + 1) }
+          }
+        }
+      } finally Files.deleteIfExists(path)
+    }
+
+    "read requested ranges from the precompressed file without changing its metadata" in {
+      val path = Files.createTempFile("pekkoHttpTest", ".svgz")
+      try {
+        val svg = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><rect width="20" height="20"/></svg>"""
+        val encoded = new ByteArrayOutputStream()
+        val gzip = new GZIPOutputStream(encoded)
+        try gzip.write(svg.getBytes(StandardCharsets.UTF_8))
+        finally gzip.close()
+        val stored = ByteString(encoded.toByteArray)
+        Files.write(path, stored.toArray)
+        val requested = Range(ByteRange(32, 39), ByteRange(4, 8))
+        val route = mapSettings(_ => fileRangeSettings(preserveOrder = true))(getFromFile(path.toFile))
+        Get() ~> addHeader(requested) ~> route ~> check {
+          status shouldEqual StatusCodes.PartialContent
+          header[`Content-Encoding`] shouldEqual Some(`Content-Encoding`(HttpEncodings.gzip))
+          val parts =
+            responseAs[Multipart.ByteRanges].toStrict(1.second.dilated).awaitResult(3.seconds.dilated).strictParts
+          parts.map(_.contentRange) shouldEqual List(ContentRange(32, 39, stored.size), ContentRange(4, 8, stored.size))
+          parts.map(_.entity.contentType.mediaType.value) shouldEqual List.fill(2)("image/svg+xml")
+          parts.map(_.entity.data) shouldEqual List(stored.slice(32, 40), stored.slice(4, 9))
+        }
+      } finally Files.deleteIfExists(path)
+    }
+
+    "stop streaming ordered file ranges when the response body is cancelled" in {
+      val path = Files.createTempFile("pekkoHttpTest", ".txt")
+      val stored = ByteString("ABCDEFGHIJKLMNOPQRSTUVWXYZ".repeat(16384))
+      val high = 65536
+      val end = 393215
+      val requested = Range(ByteRange(high, end), ByteRange(0, 15))
+      val route = mapSettings(_ => fileRangeSettings(preserveOrder = true))(getFromFile(path.toFile))
+      try {
+        Files.write(path, stored.toArray)
+        Get() ~> addHeader(requested) ~> route ~> check {
+          status shouldEqual StatusCodes.PartialContent
+          assertAllStagesStopped {
+            val out = chunksStream.map(_.data).runWith(TestSink[ByteString]())
+            try {
+              out.request(2)
+              out.expectNext().utf8String should include(s"Content-Range: bytes $high-$end/${stored.size}")
+              val firstBytes = out.expectNext()
+              firstBytes shouldEqual stored.slice(high, high + firstBytes.size)
+            } finally out.cancel()
+          }
+        }
+      } finally Files.deleteIfExists(path)
     }
 
     "properly handle zero-byte files" in {

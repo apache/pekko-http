@@ -42,8 +42,10 @@ settings from the `pekko.http.routing` configuration.
 
 By default, multipart response parts are sent in ascending byte-offset order. Set
 `pekko.http.routing.preserve-range-request-order = on` to send the surviving parts in the requested order
-when the inner route returns an already strict in-memory entity. Streamed entities still send parts in
-byte-offset order and are read only once. This setting does not change which ranges are selected or coalesced.
+when the inner route returns an already strict in-memory entity. @ref[getFromFile](../file-and-resource-directives/getFromFile.md)
+also uses this setting for regular files, reading only the selected byte ranges through a single file handle opened
+when streaming starts. Other streamed entities still send parts in byte-offset order and are read only once.
+This setting does not change which ranges are selected or coalesced.
 
 This directive is transparent to non-`GET` requests.
 
