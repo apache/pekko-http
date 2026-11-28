@@ -81,6 +81,42 @@ class ResponseParsingSpec extends PekkoSpecWithMaterializer {
         "x-a" -> "café €", "x-b" -> "° ü ÿ", "x-c" -> "c")
     }
 
+    "preserve unregistered status codes in typed responses" in {
+      val settings = ClientConnectionSettings(system).parserSettings
+      val parseTyped = ResponseParsing.parseResponse(HttpHeaderParser(settings, log), settings, Attributes())
+      val body = ByteString("response body")
+
+      // 598 and 599 are built-in status codes in Pekko HTTP.
+      for (code <- Seq(199, 299, 399, 471, 597)) {
+        val headers = ParsedHeadersFrame(1, endStream = false, Seq(":status" -> code.toString), None, None)
+        val data = if (code < 200) ByteString.empty else body
+        val response = parseTyped(Http2SubStream(headers, OptionVal.None, Left(data), Map.empty))
+
+        response.status.intValue shouldBe code
+        response.status.isSuccess shouldBe (code < 400)
+        response.status.isRedirection shouldBe (code / 100 == 3)
+        response.status.isFailure shouldBe (code >= 400)
+        response.status.reason shouldBe ""
+        if (code < 200) response.entity shouldBe HttpEntity.Empty
+        else response.entity shouldBe HttpEntity.Strict(ContentTypes.`application/octet-stream`, body)
+      }
+    }
+
+    "prefer built-in statuses over an application registration and honor an unshadowed registration" in {
+      val shadowed = StatusCodes.custom(200, "Custom OK", "", isSuccess = false, allowsEntity = false)
+      val registered = StatusCodes.custom(471, "Application success", "", isSuccess = true, allowsEntity = true)
+      val settings = ClientConnectionSettings(system).parserSettings.withCustomStatusCodes(shadowed, registered)
+      val parseTyped = ResponseParsing.parseResponse(HttpHeaderParser(settings, log), settings, Attributes())
+      val body = ByteString("response body")
+
+      for (expected <- Seq(StatusCodes.OK, registered)) {
+        val headers = ParsedHeadersFrame(1, endStream = false, Seq(":status" -> expected.intValue.toString), None, None)
+        val response = parseTyped(Http2SubStream(headers, OptionVal.None, Left(body), Map.empty))
+        response.status shouldBe theSameInstanceAs(expected)
+        response.entity shouldBe HttpEntity.Strict(ContentTypes.`application/octet-stream`, body)
+      }
+    }
+
     "classify ordinary status strings and status values consistently" in {
       for (code <- Seq(100, 102, 103, 199, 200, 204, 304)) {
         Http2ResponseStatus.isInformational(code.toString) shouldBe Http2ResponseStatus.isInformational(code)
@@ -89,12 +125,13 @@ class ResponseParsingSpec extends PekkoSpecWithMaterializer {
     }
 
     "classify built-in content-free final statuses separately from informational statuses" in {
+      val customStatusCodes = ClientConnectionSettings(system).parserSettings.customStatusCodes
       for (code <- Seq(204, 205, 304)) {
-        Http2ResponseStatus.isContentFreeFinal(code.toString) shouldBe true
+        Http2ResponseStatus.isContentFreeFinal(code.toString, customStatusCodes) shouldBe true
         Http2ResponseStatus.isInformational(code) shouldBe false
       }
       for (code <- Seq(100, 102, 103, 200, 201, 299))
-        Http2ResponseStatus.isContentFreeFinal(code.toString) shouldBe false
+        Http2ResponseStatus.isContentFreeFinal(code.toString, customStatusCodes) shouldBe false
     }
 
     "parse internally dispatched informational headers with an empty entity" in {

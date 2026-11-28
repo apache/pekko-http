@@ -19,7 +19,7 @@ import pekko.http.impl.engine.http2.RequestParsing
 import pekko.http.impl.engine.http2.RequestParsing.parseError
 import pekko.http.scaladsl.model
 import pekko.http.scaladsl.model.HttpHeader.ParsingResult
-import model.{ HttpHeader, HttpMethod, HttpMethods, IllegalUriException, ParsingException, StatusCode, Uri }
+import model.{ HttpHeader, HttpMethod, HttpMethods, IllegalUriException, ParsingException, Uri }
 import pekko.http.scaladsl.settings.ParserSettings
 
 @InternalApi
@@ -65,10 +65,8 @@ private[pekko] object Http2HeaderParsing {
         case IllegalUriException(info) => throw new ParsingException(info)
       }
   }
-  object Status extends HeaderParser[StatusCode](":status") {
-    override def parse(name: String, value: String, parserSettings: ParserSettings): StatusCode =
-      value.toInt
-  }
+  // Keep the original digits for shared stream classification and response resolution.
+  object Status extends Verbatim(":status")
   object ContentType extends HeaderParser[model.ContentType]("content-type") {
     override def parse(name: String, value: String, parserSettings: ParserSettings): model.ContentType =
       model.ContentType.parse(value) match {

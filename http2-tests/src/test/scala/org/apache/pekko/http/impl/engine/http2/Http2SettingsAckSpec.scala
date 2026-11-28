@@ -43,7 +43,10 @@ class Http2SettingsAckSpec extends PekkoSpecWithMaterializer("") {
         val client = ClientConnectionSettings(system)
         val demux =
           if (server) new Http2ServerDemux(Http2ServerSettings(""), Nil, upgraded = false)
-          else new Http2ClientDemux(client.http2Settings, HttpHeaderParser(client.parserSettings, system.log))
+          else new Http2ClientDemux(
+            client.http2Settings,
+            HttpHeaderParser(client.parserSettings, system.log),
+            client.parserSettings)
         val peerTransport = Flow.fromSinkAndSourceMat(TestSink[FrameEvent](), TestSource[FrameEvent]())(Keep.both)
         val ((send, (wire, peer)), received) = TestSource[Http2SubStream]()
           .viaMat(BidiFlow.fromGraph(demux).joinMat(peerTransport)(Keep.right))(Keep.both)

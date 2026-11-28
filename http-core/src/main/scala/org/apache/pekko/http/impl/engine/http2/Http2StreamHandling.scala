@@ -42,6 +42,7 @@ import pekko.util.OptionVal
 @InternalApi
 private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper { self =>
   // required API from demux
+  def isContentFreeFinalStatus(status: String): Boolean
   def isServer: Boolean
   def multiplexer: Http2Multiplexer
   def settings: Http2CommonSettings
@@ -388,13 +389,13 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     }
 
     /**
-     * A final response whose built-in status forbids content (`allowsEntity == false`), e.g. 204, 205 or 304. Such a response can
+     * A final response whose status forbids content (`allowsEntity == false`), e.g. 204, 205 or 304. Such a response can
      * end in a later empty DATA frame. Informational (1xx) responses are not final and are excluded.
      */
     protected def isContentFreeFinalResponse(frame: ParsedHeadersFrame): Boolean =
       frame.keyValuePairs.exists {
         case (":status", status: String) =>
-          Http2ResponseStatus.isContentFreeFinal(status)
+          isContentFreeFinalStatus(status)
         case _ => false
       }
 

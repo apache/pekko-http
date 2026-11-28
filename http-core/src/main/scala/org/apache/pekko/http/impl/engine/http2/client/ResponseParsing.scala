@@ -86,7 +86,9 @@ private[http2] object ResponseParsing {
         case (":status", statusCodeValue: String) =>
           checkUniquePseudoHeader(":status", status)
           checkNoRegularHeadersBeforePseudoHeader(":status", seenRegularHeader)
-          rec(remainingHeaders.tail, statusCodeValue.toInt, contentType, contentLength, seenRegularHeader, headers)
+          val resolved = Http2ResponseStatus.resolve(statusCodeValue, settings.customStatusCodes)
+            .getOrElse(malformedResponse("The :status pseudo-header must contain three ASCII digits and be in 100–599"))
+          rec(remainingHeaders.tail, resolved, contentType, contentLength, seenRegularHeader, headers)
 
         case ("content-type", contentTypeValue: ContentType) =>
           if (contentType.isEmpty)

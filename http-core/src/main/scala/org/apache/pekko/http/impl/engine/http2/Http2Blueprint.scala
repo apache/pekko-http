@@ -32,13 +32,7 @@ import pekko.http.impl.engine.{ HttpConnectionIdleTimeoutBidi, HttpIdleTimeoutEx
 import pekko.http.impl.util.LogByteStringTools.logTLSBidiBySetting
 import pekko.http.impl.util.StreamUtils
 import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.settings.{
-  ClientConnectionSettings,
-  Http2ClientSettings,
-  Http2ServerSettings,
-  ParserSettings,
-  ServerSettings
-}
+import pekko.http.scaladsl.settings.{ ClientConnectionSettings, Http2ServerSettings, ParserSettings, ServerSettings }
 import pekko.stream.TLSProtocol._
 import pekko.stream.scaladsl.{ BidiFlow, Flow, Keep, Source }
 import pekko.stream.{ BidiShape, Graph, RateExceededException, StreamTcpException, ThrottleMode }
@@ -183,7 +177,7 @@ private[http] object Http2Blueprint {
       else BidiFlow.identity[FrameEvent, FrameEvent]
     telemetry.client.atop(
       httpLayerClient(masterHttpHeaderParser, settings, log, connectionScheme, connectionAuthority)).atop(
-      clientDemux(http2Settings, masterHttpHeaderParser)).atop(
+      clientDemux(settings, masterHttpHeaderParser)).atop(
       FrameLogger.logFramesIfEnabled(http2Settings.logFrames)).atop( // enable for debugging
       hpackCoding(masterHttpHeaderParser, settings.parserSettings, http2Settings.maxHeaderListSize)).atop(
       possibleThrottle).atop(
@@ -347,9 +341,9 @@ private[http] object Http2Blueprint {
    * Creates substreams for every stream and manages stream state machines
    * and handles priorization (TODO: later)
    */
-  def clientDemux(settings: Http2ClientSettings, masterHttpHeaderParser: HttpHeaderParser)
+  def clientDemux(settings: ClientConnectionSettings, masterHttpHeaderParser: HttpHeaderParser)
       : BidiFlow[Http2SubStream, FrameEvent, FrameEvent, Http2SubStream, ServerTerminator] =
-    BidiFlow.fromGraph(new Http2ClientDemux(settings, masterHttpHeaderParser))
+    BidiFlow.fromGraph(new Http2ClientDemux(settings.http2Settings, masterHttpHeaderParser, settings.parserSettings))
 
   /**
    * Translation between substream frames and Http messages (both directions)
