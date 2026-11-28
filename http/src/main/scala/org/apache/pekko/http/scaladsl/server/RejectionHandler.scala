@@ -251,8 +251,12 @@ object RejectionHandler {
       }
       .handle {
         case UnsatisfiableRangeRejection(unsatisfiableRanges, actualEntityLength) =>
+          // An unsatisfied byte Content-Range requires the complete length of the selected representation.
+          val contentRangeHeaders =
+            if (actualEntityLength >= 0) List(`Content-Range`(ContentRange.Unsatisfiable(actualEntityLength)))
+            else Nil
           rejectRequestEntityAndComplete((RangeNotSatisfiable,
-            List(`Content-Range`(ContentRange.Unsatisfiable(actualEntityLength))),
+            contentRangeHeaders,
             unsatisfiableRanges.mkString("None of the following requested Ranges were satisfiable:\n", "\n", "")))
       }
       .handleAll[AuthenticationFailedRejection] { rejections =>

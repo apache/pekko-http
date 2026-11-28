@@ -99,6 +99,22 @@ class RangeDirectivesSpec extends RoutingSpec with Inspectors with Inside {
       }
     }
 
+    for ((kind, entity, length) <- Seq[(String, ResponseEntity, Option[Long])](
+        ("unknown", HttpEntity(ContentTypes.`application/octet-stream`, Source.single(ByteString("abc"))), None),
+        ("known zero", HttpEntity.Empty, Some(0L)),
+        ("known positive", HttpEntity("abc"), Some(3L)))) {
+      s"return a sealed 416 for a single range with $kind representation length" in {
+        val requested = ByteRange(100, 200)
+        val expectedHeaders = length.map(n => `Content-Range`(ContentRange.Unsatisfiable(n))).toList
+
+        Get() ~> addHeader(Range(requested)) ~> Route.seal(wrs(complete(HttpResponse(entity = entity)))) ~> check {
+          status shouldEqual RangeNotSatisfiable
+          headers.filter(_.is("content-range")) shouldEqual expectedHeaders
+          responseAs[String] shouldEqual s"None of the following requested Ranges were satisfiable:\n$requested"
+        }
+      }
+    }
+
     "reject an unsatisfiable single suffix range with length 0" in {
       Get() ~> addHeader(Range(ByteRange.suffix(0))) ~> completeWithRangedBytes(42) ~> check {
         rejection shouldEqual UnsatisfiableRangeRejection(ByteRange.suffix(0) :: Nil, 42)

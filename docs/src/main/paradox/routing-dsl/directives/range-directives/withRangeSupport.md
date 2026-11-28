@@ -36,6 +36,8 @@ In order to prevent the server from becoming overloaded with trying to prepare `
 high numbers of potentially very small ranges the directive rejects requests requesting more than `rangeCountLimit`
 ranges with a @apidoc[TooManyRangesRejection].
 Requests with unsatisfiable ranges are rejected with an @apidoc[UnsatisfiableRangeRejection].
+The default `416 Range Not Satisfiable` response includes `Content-Range` only when the complete
+length of the selected representation is known.
 
 The `withRangeSupport()` form (without parameters) uses the `range-coalescing-threshold` and `range-count-limit`
 settings from the `pekko.http.routing` configuration.
