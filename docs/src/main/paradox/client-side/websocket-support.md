@@ -61,6 +61,8 @@ the WebSocket stream fail with a `java.util.concurrent.TimeoutException`. If the
 deadline but cannot accept it as a WebSocket upgrade, the status and parsed headers are still available through the
 upgrade result's @scala[`response`]@java[`response()`].
 
+If the opening handshake itself is cancelled, the upgrade result fails even when the timeout is disabled.
+
 The deadline may overlap transport setup, but does not replace the TCP connection or TLS timeouts. It stops
 on a successful upgrade and is independent of idle timeouts and the WebSocket close handshake. It can also be
 configured through `ClientConnectionSettings` and `WebSocketSettings.withOpeningTimeout`.
