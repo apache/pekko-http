@@ -37,6 +37,9 @@ with the respective @apidoc[HttpResponse] instance.
 Completing the request will send the response "back up" the route structure where all the logic runs that wrapping
 directives have potentially chained into the @ref[RouteResult](../../routes.md#routeresult) future transformation chain.
 
+For an empty HTTP/1.x `204 No Content` response, Pekko HTTP does not generate a `Content-Length` header,
+even if the request uses a custom method that normally permits one ([RFC 9110, Section 8.6](https://www.rfc-editor.org/rfc/rfc9110.html#section-8.6)).
+
 @java[Please note that the `complete` directive has multiple variants, like the ones shown in the examples.]
 
 ## Example

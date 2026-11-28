@@ -260,7 +260,9 @@ private[http] class HttpResponseRendererFactory(
           // (see HttpResponseParser).
           def renderContentLengthHeader(contentLength: Long) =
             if (ctx.requestMethod.contentLengthAllowed(status) &&
-              (contentLength > 0 || ctx.requestMethod != HttpMethods.HEAD))
+              (contentLength > 0 || ctx.requestMethod != HttpMethods.HEAD) &&
+              // RFC 9110 section 8.6 forbids this field on an empty 204 even when the method allows it.
+              !(noEntity && status.intValue == StatusCodes.NoContent.intValue))
               r ~~ ContentLengthBytes ~~ contentLength ~~ CrLf
             else r
 
