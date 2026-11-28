@@ -16,6 +16,7 @@ package docs.http.javadsl.server;
 import org.apache.pekko.http.javadsl.coding.Coder;
 import org.apache.pekko.http.javadsl.model.ContentTypes;
 import org.apache.pekko.http.javadsl.model.HttpEntity;
+import org.apache.pekko.http.javadsl.model.HttpMethods;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.server.AuthorizationFailedRejection;
@@ -37,9 +38,14 @@ import static org.apache.pekko.http.javadsl.server.Directives.path;
 import static org.apache.pekko.http.javadsl.server.Directives.post;
 // #example1
 // #custom-handler-example-java
+import java.util.Arrays;
+import org.apache.pekko.http.javadsl.model.HttpMethod;
+import org.apache.pekko.http.javadsl.model.headers.Allow;
+
 import static org.apache.pekko.http.javadsl.server.Directives.complete;
 import static org.apache.pekko.http.javadsl.server.Directives.path;
 import static org.apache.pekko.http.javadsl.server.Directives.handleRejections;
+import static org.apache.pekko.http.javadsl.server.Directives.respondWithHeader;
 
 // #custom-handler-example-java
 // #example-json
@@ -71,7 +77,7 @@ public class RejectionHandlerExamplesTest extends JUnitJupiterRouteTest {
     // #example1
   }
 
-  void customRejectionHandler() {
+  Route customRejectionHandler(Route route) {
     // #custom-handler-example-java
     final RejectionHandler rejectionHandler =
         RejectionHandler.newBuilder()
@@ -89,25 +95,41 @@ public class RejectionHandlerExamplesTest extends JUnitJupiterRouteTest {
             .handleAll(
                 MethodRejection.class,
                 rejections -> {
-                  String supported =
+                  HttpMethod[] methods =
                       rejections.stream()
-                          .map(rej -> rej.supported().name())
+                          .map(MethodRejection::supported)
+                          .toArray(HttpMethod[]::new);
+                  String supported =
+                      Arrays.stream(methods)
+                          .map(HttpMethod::name)
                           .collect(Collectors.joining(" or "));
-                  return complete(
-                      StatusCodes.METHOD_NOT_ALLOWED,
-                      "Can't do that! Supported: " + supported + "!");
+                  return respondWithHeader(
+                      Allow.create(methods),
+                      () ->
+                          complete(
+                              StatusCodes.METHOD_NOT_ALLOWED,
+                              "Can't do that! Supported: " + supported + "!"));
                 })
             .handleNotFound(complete(StatusCodes.NOT_FOUND, "Not here!"))
             .build();
 
-    // Route that will be bound to the Http
-    final Route wrapped =
-        handleRejections(rejectionHandler, this::getRoute); // Some route structure for this Server
+    // Wrap the application route with this handler.
+    final Route wrapped = handleRejections(rejectionHandler, () -> route);
     // #custom-handler-example-java
+    return wrapped;
   }
 
-  Route getRoute() {
-    return null;
+  @Test
+  public void customMethodRejectionIncludesAllow() {
+    Route route =
+        concat(get(() -> complete("Received GET")), post(() -> complete("Received POST")));
+
+    testRoute(customRejectionHandler(route))
+        .run(HttpRequest.PUT("/"))
+        .assertStatusCode(StatusCodes.METHOD_NOT_ALLOWED)
+        .assertHeaderExists(Allow.create(HttpMethods.GET, HttpMethods.POST))
+        .assertContentType(ContentTypes.TEXT_PLAIN_UTF8)
+        .assertEntity("Can't do that! Supported: GET or POST!");
   }
 
   @Test
