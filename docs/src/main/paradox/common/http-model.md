@@ -326,6 +326,10 @@ Scala
 Java
 :   @@snip [ModelDocTest.java](/docs/src/test/java/docs/http/javadsl/ModelDocTest.java) { #headers }
 
+A modeled `Content-Disposition` retains the full spelling of a valid extension type. For example,
+`attachment-preview` is an extension, not the built-in `attachment` type. Complete built-in types still
+match case-insensitively. See [RFC 6266, section 4.1](https://www.rfc-editor.org/rfc/rfc6266.html#section-4.1).
+
 ## HTTP Headers
 
 A modeled `Content-Location` field can be sent in the initial headers of requests and responses.

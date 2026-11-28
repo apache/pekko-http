@@ -524,6 +524,26 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
       header shouldEqual Allow()
     }
 
+    for (extensionType <- Seq("inline-preview", "AttachmentPreview", "form-data-preview")) {
+      s"Content-Disposition preserves extension token $extensionType" in {
+        val value = s"""$extensionType; filename="report.txt""""
+        val expected =
+          `Content-Disposition`(ContentDispositionTypes.Ext(extensionType), Map("filename" -> "report.txt"))
+        s"Content-Disposition: $value" =!= expected
+        pekko.http.javadsl.model.HttpHeader.parse("Content-Disposition", value) shouldBe expected
+      }
+    }
+
+    "Content-Disposition recognizes complete built-in types case-insensitively" in {
+      val builtIns = Seq("INLINE" -> ContentDispositionTypes.inline, "Attachment" -> ContentDispositionTypes.attachment,
+        "FORM-DATA" -> ContentDispositionTypes.`form-data`)
+      val filename = """filename="report.txt""""
+      for ((spelling, disposition) <- builtIns) {
+        val expected = `Content-Disposition`(disposition, Map("filename" -> "report.txt"))
+        s"Content-Disposition: $spelling; $filename" =!= expected.renderedTo(s"${disposition.name}; $filename")
+      }
+    }
+
     "Content-Disposition" in {
       "Content-Disposition: form-data" =!= `Content-Disposition`(ContentDispositionTypes.`form-data`)
       "Content-Disposition: attachment; filename=\"file/txt\"; name=\"field1\"" =!=
