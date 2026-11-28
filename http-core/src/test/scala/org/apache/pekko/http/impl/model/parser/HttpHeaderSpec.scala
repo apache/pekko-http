@@ -907,6 +907,27 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
       "TE: someextension" =!= TE(TransferEncodings.Extension("someextension"))
     }
 
+    "TE preserves modeled weights for built-in transfer codings" in {
+      val gzip = TransferEncodings.Extension("gzip", Map("q" -> "0"))
+      val deflate = TransferEncodings.Extension("deflate", Map("q" -> "0.125"))
+      val compress = TransferEncodings.Extension("compress", Map("q" -> "1.000"))
+      "TE: gzip; q=0, DEFLATE; Q=0.125, compress; q=1.000, trailers" =!=
+        TE(gzip, deflate, compress, TransferEncodings.trailers)
+          .renderedTo("gzip; q=0, deflate; q=0.125, compress; q=1.000, trailers")
+      "TE: trailers, deflate;q=0.125, gzip" =!=
+        TE(TransferEncodings.trailers, deflate, TransferEncodings.gzip).renderedTo("trailers, deflate; q=0.125, gzip")
+      "TE: gzip; q=1." =!= TE(TransferEncodings.Extension("gzip", Map("q" -> "1.")))
+
+      val HttpHeader.ParsingResult.Ok(header: TE, Nil) = HttpHeader.parse("TE", "DEFLATE; Q=0.125"): @unchecked
+      HttpHeader.parse("TE", header.value) shouldEqual HttpHeader.ParsingResult.Ok(header, Nil)
+
+      val javaHeader: pekko.http.javadsl.model.headers.TE = header
+      val coding = javaHeader.getAcceptableEncodings().iterator().next()
+      coding.name() shouldEqual "deflate"
+      coding.getParams().get("q") shouldEqual "0.125"
+      coding should not be (TransferEncodings.deflate)
+    }
+
     "Transfer-Encoding" in {
       "Transfer-Encoding: chunked" =!= `Transfer-Encoding`(TransferEncodings.chunked)
       "Transfer-Encoding: cHuNkEd" =!= `Transfer-Encoding`(TransferEncodings.chunked).renderedTo("chunked")

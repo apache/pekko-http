@@ -14,8 +14,11 @@
 package org.apache.pekko.http.javadsl.model.headers;
 
 /**
- * Model for the `Transfer-Encoding` header. Specification:
- * http://tools.ietf.org/html/draft-ietf-httpbis-p1-messaging-26#section-3.3.1
+ * Model for the {@code TE} request header. A weighted built-in compression coding preserves its
+ * preference under the {@code q} key in the transfer coding's parameters.
+ *
+ * @see <a href="https://www.rfc-editor.org/rfc/rfc9110.html#section-10.1.4">RFC 9110, Section
+ *     10.1.4</a>
  */
 public abstract class TE extends org.apache.pekko.http.scaladsl.model.HttpHeader {
   public abstract Iterable<org.apache.pekko.http.javadsl.model.TransferEncoding>
