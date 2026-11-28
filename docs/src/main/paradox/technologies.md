@@ -37,6 +37,7 @@ on the client side.
 
 Apache Pekko HTTP has modeled multipart/* payloads. It provides streaming multipart parsers and renderers e.g. for parsing
 file uploads and provides a typed model to access details of such a payload.
+By default, Pekko HTTP generates multipart boundaries with a shared secure random source. Explicitly supplied boundaries are unchanged.
 
 ## Server-sent Events (SSE)
 
