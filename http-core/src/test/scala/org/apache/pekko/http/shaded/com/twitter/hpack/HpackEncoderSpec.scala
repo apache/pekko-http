@@ -148,7 +148,8 @@ class HpackEncoderSpec extends AnyWordSpec with Matchers {
         Seq(custom, cacheControl, authority), 164)
     }
 
-    "decode consecutive responses without Huffman coding from RFC 7541 Appendix C.5" in {
+    // C.5 and C.6 have the same table states because the size counts decoded octets.
+    def checkResponseBlocks(first: String, second: String, third: String): Unit = {
       val decoder = new Decoder(8192, 256)
       val cacheControl = "cache-control" -> "private"
       val date = "date" -> "Mon, 21 Oct 2013 20:13:21 GMT"
@@ -159,18 +160,39 @@ class HpackEncoderSpec extends AnyWordSpec with Matchers {
       val contentEncoding = "content-encoding" -> "gzip"
       val cookie = "set-cookie" -> "foo=ASDJKHQKBZXOQWEOPIUAXQWEOIU; max-age=3600; version=1"
 
-      checkBlock(decoder,
+      withClue("first response: ") {
+        checkBlock(decoder, first,
+          Seq(found, cacheControl, date, location), Seq(location, date, cacheControl, found), 222)
+      }
+      withClue("second response: ") {
+        checkBlock(decoder, second,
+          Seq(redirect, cacheControl, date, location), Seq(redirect, location, date, cacheControl), 222)
+      }
+      withClue("third response: ") {
+        checkBlock(decoder, third,
+          Seq(":status" -> "200", cacheControl, nextDate, location, contentEncoding, cookie),
+          Seq(cookie, contentEncoding, nextDate), 215)
+      }
+    }
+
+    "decode consecutive responses without Huffman coding from RFC 7541 Appendix C.5" in {
+      checkResponseBlocks(
         "4803 3330 3258 0770 7269 7661 7465 611d 4d6f 6e2c 2032 3120 4f63 7420 " +
         "3230 3133 2032 303a 3133 3a32 3120 474d 546e 1768 7474 7073 3a2f 2f77 7777 2e65 7861 6d70 6c65 2e63 6f6d",
-        Seq(found, cacheControl, date, location), Seq(location, date, cacheControl, found), 222)
-      checkBlock(decoder, "4803 3330 37c1 c0bf",
-        Seq(redirect, cacheControl, date, location), Seq(redirect, location, date, cacheControl), 222)
-      checkBlock(decoder,
+        "4803 3330 37c1 c0bf",
         "88c1 611d 4d6f 6e2c 2032 3120 4f63 7420 3230 3133 2032 303a 3133 3a32 3220 474d " +
         "54c0 5a04 677a 6970 7738 666f 6f3d 4153 444a 4b48 514b 425a 584f 5157 454f 5049 " +
-        "5541 5851 5745 4f49 553b 206d 6178 2d61 6765 3d33 3630 303b 2076 6572 7369 6f6e 3d31",
-        Seq(":status" -> "200", cacheControl, nextDate, location, contentEncoding, cookie),
-        Seq(cookie, contentEncoding, nextDate), 215)
+        "5541 5851 5745 4f49 553b 206d 6178 2d61 6765 3d33 3630 303b 2076 6572 7369 6f6e 3d31")
+    }
+
+    "decode consecutive responses with Huffman coding from RFC 7541 Appendix C.6" in {
+      checkResponseBlocks(
+        "488264025885aec3771a4b6196d07abe941054d444a8200595040b8166e082a6" +
+        "2d1bff6e919d29ad171863c78f0b97c8e9ae82ae43d3",
+        "4883640effc1c0bf",
+        "88c16196d07abe941054d444a8200595040b8166e084a62d1bffc05a839bd9ab" +
+        "77ad94e7821dd7f2e6c7b335dfdfcd5b3960d5af27087f3672c1ab270fb5291f" +
+        "9587316065c003ed4ee5b1063d5007")
     }
 
     "empty its dynamic table across consecutive size updates before fresh entries are added" in {
