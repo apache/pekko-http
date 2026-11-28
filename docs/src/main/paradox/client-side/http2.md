@@ -101,6 +101,11 @@ The default maximum age is `infinite`, which disables age-based retirement. The 
 programmatically with `Http2ClientSettings.withPersistentConnectionMaxAge` and
 `Http2ClientSettings.withPersistentConnectionMaxAgeJitter`.
 
+With either managed persistent HTTP/2 client builder, completing the request source while a connection is
+being established or waiting to reconnect leaves a final buffered, not-yet-dispatched request pending.
+The client can send that request if a connection is established within the configured retry policy.
+This does not replay requests already dispatched to a connection.
+
 ## Request-response ordering
 
 For HTTP/2 connections the responses are not guaranteed to arrive in the same order that the requests were emitted to

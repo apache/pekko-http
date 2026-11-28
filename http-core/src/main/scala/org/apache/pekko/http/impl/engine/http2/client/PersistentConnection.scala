@@ -89,7 +89,15 @@ private[http2] object PersistentConnection {
         def become(state: State): Unit = setHandlers(requestIn, responseOut, state)
 
         trait State extends InHandler with OutHandler
-        object Unconnected extends State {
+
+        // A connection attempt, including one in backoff, can still have an unsent request in the inlet
+        // after the source has completed. Keep the stage alive until that request is dispatched or failed.
+        trait WaitingForConnection extends State {
+          final override def onUpstreamFinish(): Unit =
+            if (!isAvailable(requestIn)) completeStage()
+        }
+
+        object Unconnected extends WaitingForConnection {
           override def onPush(): Unit = connect(maxAttempts, Duration.Zero)
           override def onPull(): Unit =
             if (isAvailable(requestIn)) connect(maxAttempts, Duration.Zero)
@@ -116,7 +124,7 @@ private[http2] object PersistentConnection {
             requestOut: SubSourceOutlet[HttpRequest],
             responseIn: SubSinkInlet[HttpResponse],
             connectsLeft: Option[Int],
-            lastEmbargo: FiniteDuration) extends State {
+            lastEmbargo: FiniteDuration) extends WaitingForConnection {
           connected.onComplete {
             case Success(_) =>
               onConnected.invoke(())
@@ -148,7 +156,7 @@ private[http2] object PersistentConnection {
             currentConnection = Some(newState)
             become(newState)
             if (requestOutPulled) {
-              if (isAvailable(requestIn)) newState.dispatchRequest(grab(requestIn))
+              if (isAvailable(requestIn)) newState.dispatchBufferedRequest()
               else if (!hasBeenPulled(requestIn)) pull(requestIn)
             }
           }
@@ -226,10 +234,8 @@ private[http2] object PersistentConnection {
 
           requestOut.setHandler(new OutHandler {
             override def onPull(): Unit =
-              if (isAvailable(requestIn)) {
-                dispatchRequest(grab(requestIn))
-                if (isClosed(requestIn)) requestOut.complete()
-              } else if (isClosed(requestIn)) requestOut.complete()
+              if (isAvailable(requestIn)) dispatchBufferedRequest()
+              else if (isClosed(requestIn)) requestOut.complete()
               else if (!hasBeenPulled(requestIn)) pull(requestIn)
 
             override def onDownstreamFinish(cause: Throwable): Unit = onDisconnected()
@@ -286,7 +292,12 @@ private[http2] object PersistentConnection {
               requestOut.complete()
             }
 
-          def dispatchRequest(req: HttpRequest): Unit = {
+          def dispatchBufferedRequest(): Unit = {
+            dispatchRequest(grab(requestIn))
+            if (isClosed(requestIn)) requestOut.complete()
+          }
+
+          private def dispatchRequest(req: HttpRequest): Unit = {
             val tag = new AssociationTag
             // Some cross-compilation woes here:
             // Explicit type ascription is needed to make both 2.12 and 2.13 compile.
