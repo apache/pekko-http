@@ -14,8 +14,8 @@
 package org.apache.pekko.http.javadsl.model.headers;
 
 /**
- * Model for the `Proxy-Authorization` header. Specification:
- * http://tools.ietf.org/html/draft-ietf-httpbis-p7-auth-26#section-4.4
+ * Model for the `Proxy-Authorization` header. Specification: <a
+ * href="https://www.rfc-editor.org/rfc/rfc9110.html#section-11.7.2">RFC 9110, Section 11.7.2</a>.
  */
 public abstract class ProxyAuthorization extends org.apache.pekko.http.scaladsl.model.HttpHeader {
   public abstract HttpCredentials credentials();

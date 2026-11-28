@@ -14,8 +14,8 @@
 package org.apache.pekko.http.javadsl.model.headers;
 
 /**
- * Model for the `Proxy-Authenticate` header. Specification:
- * http://tools.ietf.org/html/draft-ietf-httpbis-p7-auth-26#section-4.3
+ * Model for the `Proxy-Authenticate` header. Specification: <a
+ * href="https://www.rfc-editor.org/rfc/rfc9110.html#section-11.7.1">RFC 9110, Section 11.7.1</a>.
  */
 public abstract class ProxyAuthenticate extends org.apache.pekko.http.scaladsl.model.HttpHeader {
   public abstract Iterable<HttpChallenge> getChallenges();

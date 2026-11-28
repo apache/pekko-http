@@ -17,8 +17,8 @@ import org.apache.pekko.http.impl.util.Util;
 import org.apache.pekko.http.javadsl.model.HttpCharsetRange;
 
 /**
- * Model for the `Accept-Charset` header. Specification:
- * http://tools.ietf.org/html/draft-ietf-httpbis-p2-semantics-26#section-5.3.3
+ * Model for the `Accept-Charset` header. Specification: <a
+ * href="https://www.rfc-editor.org/rfc/rfc9110.html#section-12.5.2">RFC 9110, Section 12.5.2</a>.
  */
 public abstract class AcceptCharset extends org.apache.pekko.http.scaladsl.model.HttpHeader {
   public abstract Iterable<HttpCharsetRange> getCharsetRanges();

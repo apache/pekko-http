@@ -14,8 +14,8 @@
 package org.apache.pekko.http.javadsl.model.headers;
 
 /**
- * Model for the `Accept-Ranges` header. Specification:
- * http://tools.ietf.org/html/draft-ietf-httpbis-p5-range-26#section-2.3
+ * Model for the `Accept-Ranges` header. Specification: <a
+ * href="https://www.rfc-editor.org/rfc/rfc9110.html#section-14.3">RFC 9110, Section 14.3</a>.
  */
 public abstract class AcceptRanges extends org.apache.pekko.http.scaladsl.model.HttpHeader {
   public abstract Iterable<RangeUnit> getRangeUnits();

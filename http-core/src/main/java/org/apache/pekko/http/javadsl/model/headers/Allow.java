@@ -16,8 +16,8 @@ package org.apache.pekko.http.javadsl.model.headers;
 import org.apache.pekko.http.javadsl.model.HttpMethod;
 
 /**
- * Model for the `Allow` header. Specification:
- * http://tools.ietf.org/html/draft-ietf-httpbis-p2-semantics-26#section-7.4.1
+ * Model for the `Allow` header. Specification: <a
+ * href="https://www.rfc-editor.org/rfc/rfc9110.html#section-10.2.1">RFC 9110, Section 10.2.1</a>.
  */
 public abstract class Allow extends org.apache.pekko.http.scaladsl.model.HttpHeader {
   public abstract Iterable<HttpMethod> getMethods();

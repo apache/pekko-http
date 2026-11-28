@@ -16,8 +16,8 @@ package org.apache.pekko.http.javadsl.model.headers;
 import org.apache.pekko.http.javadsl.model.DateTime;
 
 /**
- * Model for the `Last-Modified` header. Specification:
- * http://tools.ietf.org/html/draft-ietf-httpbis-p4-conditional-26#section-2.2
+ * Model for the `Last-Modified` header. Specification: <a
+ * href="https://www.rfc-editor.org/rfc/rfc9110.html#section-8.8.2">RFC 9110, Section 8.8.2</a>.
  */
 public abstract class LastModified extends org.apache.pekko.http.scaladsl.model.HttpHeader {
   public abstract DateTime date();

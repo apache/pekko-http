@@ -16,8 +16,8 @@ package org.apache.pekko.http.javadsl.model.headers;
 import org.apache.pekko.http.impl.util.Util;
 
 /**
- * Model for the `Accept-Encoding` header. Specification:
- * http://tools.ietf.org/html/draft-ietf-httpbis-p2-semantics-26#section-5.3.4
+ * Model for the `Accept-Encoding` header. Specification: <a
+ * href="https://www.rfc-editor.org/rfc/rfc9110.html#section-12.5.3">RFC 9110, Section 12.5.3</a>.
  */
 public abstract class AcceptEncoding extends org.apache.pekko.http.scaladsl.model.HttpHeader {
   public abstract Iterable<HttpEncodingRange> getEncodings();

@@ -16,8 +16,8 @@ package org.apache.pekko.http.javadsl.model.headers;
 import org.apache.pekko.http.javadsl.model.DateTime;
 
 /**
- * Model for the `If-Modified-Since` header. Specification:
- * http://tools.ietf.org/html/draft-ietf-httpbis-p4-conditional-26#section-3.3
+ * Model for the `If-Modified-Since` header. Specification: <a
+ * href="https://www.rfc-editor.org/rfc/rfc9110.html#section-13.1.3">RFC 9110, Section 13.1.3</a>.
  */
 public abstract class IfModifiedSince extends org.apache.pekko.http.scaladsl.model.HttpHeader {
   public abstract DateTime date();

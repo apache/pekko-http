@@ -14,8 +14,8 @@
 package org.apache.pekko.http.javadsl.model.headers;
 
 /**
- * Model for the `Content-Length` header. Specification:
- * https://tools.ietf.org/html/draft-ietf-httpbis-p1-messaging-26#section-3.3.2
+ * Model for the `Content-Length` header. Specification: <a
+ * href="https://www.rfc-editor.org/rfc/rfc9110.html#section-8.6">RFC 9110, Section 8.6</a>.
  */
 public abstract class ContentLength extends org.apache.pekko.http.scaladsl.model.HttpHeader {
   public abstract long length();

@@ -14,8 +14,8 @@
 package org.apache.pekko.http.javadsl.model.headers;
 
 /**
- * Model for the `Content-Type` header. Specification:
- * http://tools.ietf.org/html/draft-ietf-httpbis-p2-semantics-26#section-3.1.1.5
+ * Model for the `Content-Type` header. Specification: <a
+ * href="https://www.rfc-editor.org/rfc/rfc9110.html#section-8.3">RFC 9110, Section 8.3</a>.
  */
 public abstract class ContentType extends org.apache.pekko.http.scaladsl.model.HttpHeader {
   public abstract org.apache.pekko.http.javadsl.model.ContentType contentType();

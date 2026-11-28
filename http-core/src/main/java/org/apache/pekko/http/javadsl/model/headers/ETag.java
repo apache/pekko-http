@@ -14,8 +14,8 @@
 package org.apache.pekko.http.javadsl.model.headers;
 
 /**
- * Model for the `ETag` header. Specification:
- * http://tools.ietf.org/html/draft-ietf-httpbis-p4-conditional-26#section-2.3
+ * Model for the `ETag` header. Specification: <a
+ * href="https://www.rfc-editor.org/rfc/rfc9110.html#section-8.8.3">RFC 9110, Section 8.8.3</a>.
  */
 public abstract class ETag extends org.apache.pekko.http.scaladsl.model.HttpHeader {
   public abstract EntityTag etag();

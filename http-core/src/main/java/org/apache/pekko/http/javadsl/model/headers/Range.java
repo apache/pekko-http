@@ -14,8 +14,8 @@
 package org.apache.pekko.http.javadsl.model.headers;
 
 /**
- * Model for the `Range` header. Specification:
- * http://tools.ietf.org/html/draft-ietf-httpbis-p5-range-26#section-3.1
+ * Model for the `Range` header. Specification: <a
+ * href="https://www.rfc-editor.org/rfc/rfc9110.html#section-14.2">RFC 9110, Section 14.2</a>.
  */
 public abstract class Range extends org.apache.pekko.http.scaladsl.model.HttpHeader {
   public abstract RangeUnit rangeUnit();
