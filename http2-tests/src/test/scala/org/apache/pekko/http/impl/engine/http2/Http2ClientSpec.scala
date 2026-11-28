@@ -601,6 +601,37 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
         entityDataIn.expectBytes(2000)
         entityDataIn.expectComplete()
       })
+
+      "retain typed Content-Range on a single-part 206 response" in StreamTestKit.assertAllStagesStopped {
+        val setup = new TestSetup with NetProbes
+        val network = setup.network
+        val user = setup.user
+        try {
+          val request = Get("https://www.example.com/document").withHeaders(headers.Range(headers.ByteRange(2, 4)))
+          user.emitRequest(request)
+          network.expectDecodedResponseHEADERSPairs(1) should contain("range" -> "bytes=2-4")
+
+          network.sendHEADERS(1, endStream = false,
+            Seq(
+              RawHeader(":status", "206"),
+              RawHeader("content-range", "bytes 2-4/12"),
+              `Content-Type`(ContentTypes.`application/octet-stream`)))
+          val response = user.expectResponse()
+          response.status shouldBe StatusCodes.PartialContent
+          response.header[headers.`Content-Range`] shouldBe Some(headers.`Content-Range`(ContentRange(2, 4, 12)))
+          val javaRange = response.getHeader(classOf[pekko.http.javadsl.model.headers.ContentRange]).get()
+          javaRange.contentRange().getInstanceLength() shouldBe java.util.OptionalLong.of(12)
+
+          val data = ByteStringSinkProbe(response.entity.dataBytes)
+          network.sendDATA(1, endStream = true, ByteString("cde"))
+          data.expectBytes(ByteString("cde"))
+          data.expectComplete()
+        } finally {
+          network.fromNet.sendComplete()
+          network.toNet.cancel()
+        }
+      }
+
       "fail entity stream if peer sends RST_STREAM frame".inAssertAllStagesStopped(new WaitingForResponseData {
         val data1 = ByteString("abcdef")
         network.sendDATA(TheStreamId, endStream = false, data1)
