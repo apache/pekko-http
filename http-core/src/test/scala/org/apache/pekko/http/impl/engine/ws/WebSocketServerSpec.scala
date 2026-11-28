@@ -25,7 +25,7 @@ import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.http.javadsl.model.ws.{ Message => JavaMessage, TextMessage => JavaTextMessage }
 import pekko.http.scaladsl.model.HttpHeader
-import pekko.http.scaladsl.model.headers.{ `Sec-WebSocket-Extensions`, `Sec-WebSocket-Protocol` }
+import pekko.http.scaladsl.model.headers.{ `Sec-WebSocket-Extensions`, `Sec-WebSocket-Protocol`, WebSocketExtension }
 import pekko.http.scaladsl.model.ws._
 import pekko.http.scaladsl.model.AttributeKeys.webSocketUpgrade
 import pekko.stream.Materializer
@@ -1469,6 +1469,16 @@ class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.w
           closeNetworkInput()
           expectNetworkClose()
         }
+      }
+
+      "keep permessage-deflate when the client no-context hint is ignored" in {
+        val settings = WebSocketCompressionSettingsImpl.Disabled.copy(enabled = true)
+        val offer = WebSocketExtension("permessage-deflate", Map("client_no_context_takeover" -> ""))
+        val negotiated =
+          PerMessageDeflate.negotiate(List(offer), settings).getOrElse(fail("expected permessage-deflate negotiation"))
+
+        negotiated.responseExtension shouldBe WebSocketExtension("permessage-deflate")
+        negotiated.clientNoContextTakeover shouldBe false
       }
 
       "not negotiate client_no_context_takeover when it was not requested by the client" in
