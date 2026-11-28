@@ -48,6 +48,7 @@ import pekko.http.scaladsl.model.headers.{
   `Content-Length`,
   `Content-Type`,
   Expect,
+  `If-Modified-Since`,
   `Raw-Request-URI`,
   RawHeader
 }
@@ -88,6 +89,13 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
 
   override implicit val patience: PatienceConfig = PatienceConfig(5.seconds, 5.seconds)
   override def failOnSevereMessages: Boolean = true
+
+  private def assertFrameworkProjection(response: HttpResponse, declaredLength: Option[Long]): Unit = {
+    val rawHeaders = response.headers.map(header => header.lowercaseName -> header.value) ++
+      response.attribute(AttributeKeys.representationContentLength).map(length => "content-length" -> length.toString)
+    rawHeaders.collect { case ("content-length", length) => length } shouldBe declaredLength.map(_.toString).toList
+    response.entity.dataBytes.runFold(ByteString.empty)(_ ++ _).futureValue shouldBe ByteString.empty
+  }
 
   "The Http/2 client implementation" should {
     for {
@@ -295,6 +303,90 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
           response.entity shouldBe HttpEntity.Empty
           network.sendDATA(1, endStream = true, ByteString.empty)
         })
+
+      for (declaredLength <- Seq(None, Some(0L), Some(123L))) {
+        s"expose conditional GET 304 representation length $declaredLength" in StreamTestKit.assertAllStagesStopped {
+          val setup = new TestSetup with NetProbes
+          import setup._
+          val representationLength = AttributeKeys.representationContentLength
+          val associationKey = AttributeKey[SimpleRequestResponseAttribute[String]]("conditional-get-association")
+          val tag = SimpleRequestResponseAttribute("not-modified")
+          val condition: HttpHeader =
+            if (declaredLength.contains(0L)) `If-Modified-Since`(DateTime(2024, 1, 2, 0, 0, 0))
+            else RawHeader("If-None-Match", "\"cached\"")
+          try {
+            user.emitRequest(Get("https://www.example.com/").withHeaders(condition).addAttribute(associationKey, tag))
+            network.expectDecodedResponseHEADERSPairs(1, endStream = true) should contain(
+              condition.lowercaseName -> condition.value)
+            network.sendHEADERS(1, endStream = true,
+              Seq[HttpHeader](RawHeader(":status", "304")) ++ declaredLength.map(length => `Content-Length`(length)))
+
+            val response = user.expectResponse()
+            val expected = declaredLength.map(Long.box)
+            response.status shouldBe StatusCodes.NotModified
+            response.entity shouldBe HttpEntity.Empty
+            response.attribute(representationLength) shouldBe expected
+            val expectedAttributes = Map[AttributeKey[?], Any](associationKey -> tag) ++
+              expected.map(length => representationLength -> length)
+            response.attributes shouldBe expectedAttributes
+            val javaResponse: pekko.http.javadsl.model.HttpResponse = response
+            val javaKey = pekko.http.javadsl.model.AttributeKeys.representationContentLength
+            javaResponse.getAttribute(javaKey) shouldBe java.util.Optional.ofNullable(expected.orNull)
+            assertFrameworkProjection(response, declaredLength)
+
+            user.requestOut.sendComplete()
+            expectGracefulCompletion()
+          } finally {
+            network.fromNet.sendComplete()
+            network.toNet.cancel()
+          }
+        }
+      }
+
+      "keep neighboring conditional GET 200 trailers separate from 304 representation length" in
+      StreamTestKit.assertAllStagesStopped {
+        val setup = new TestSetup with NetProbes
+        import setup._
+        val associationKey = AttributeKey[SimpleRequestResponseAttribute[String]]("conditional-responses-association")
+        val representationLength = AttributeKeys.representationContentLength
+        val notModified = SimpleRequestResponseAttribute("not-modified")
+        val modified = SimpleRequestResponseAttribute("modified")
+        try {
+          user.emitRequest(conditionalGet("https://www.example.com/unchanged").addAttribute(associationKey,
+            notModified))
+          network.expectDecodedResponseHEADERSPairs(1, endStream = true) should contain("if-none-match" -> "\"cached\"")
+          user.emitRequest(conditionalGet("https://www.example.com/changed").addAttribute(associationKey, modified))
+          network.expectDecodedResponseHEADERSPairs(3, endStream = true) should contain("if-none-match" -> "\"cached\"")
+
+          network.sendHEADERS(3, endStream = false, Seq(RawHeader(":status", "200"), `Content-Length`(0)))
+          val successful = user.expectResponse()
+          successful.status shouldBe StatusCodes.OK
+          successful.attributes shouldBe Map(associationKey -> modified)
+          successful.attribute(representationLength) shouldBe None
+          successful.entity shouldBe a[Chunked]
+          val chunks =
+            successful.entity.asInstanceOf[Chunked].chunks.runWith(TestSink[ChunkStreamPart]()(system.classicSystem))
+          try {
+            chunks.request(1)
+            network.sendHEADERS(1, endStream = true, Seq(RawHeader(":status", "304"), `Content-Length`(42)))
+            val unchanged = user.expectResponse()
+            unchanged.status shouldBe StatusCodes.NotModified
+            unchanged.entity shouldBe HttpEntity.Empty
+            unchanged.attributes shouldBe Map(associationKey -> notModified, representationLength -> Long.box(42L))
+
+            val trailer = RawHeader("x-results", "saved")
+            network.sendHEADERS(3, endStream = true, Seq(trailer))
+            chunks.expectNext() shouldBe LastChunk(trailer = Seq(trailer))
+            chunks.expectComplete()
+
+            user.requestOut.sendComplete()
+            expectGracefulCompletion()
+          } finally chunks.cancel()
+        } finally {
+          network.fromNet.sendComplete()
+          network.toNet.cancel()
+        }
+      }
 
       "cancel an unfinished upload when the connection ends before a content-free response wire end".inAssertAllStagesStopped(
         new TestSetup with NetProbes {
@@ -1183,6 +1275,7 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
             val javaKey = pekko.http.javadsl.model.AttributeKeys.representationContentLength
             (javaKey eq key) shouldBe true
             javaResponse.getAttribute(javaKey) shouldBe java.util.Optional.ofNullable(expected.orNull)
+            assertFrameworkProjection(response, declaredLength)
 
             // The strictification limit applies to the actual zero-byte entity, not the representation length.
             val strict = response.toStrict(1.second, maxBytes = 1L).futureValue

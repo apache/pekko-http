@@ -30,8 +30,9 @@ public final class AttributeKeys {
       (AttributeKey<Trailer>) (Object) org.apache.pekko.http.scaladsl.model.AttributeKeys.trailer();
 
   /**
-   * The length advertised by the peer in a 200 response to an HTTP/2 HEAD request, if present. This
-   * is the size of the corresponding GET representation, not the length of this response's entity.
+   * The length advertised by the peer in an HTTP/2 HEAD 200 or conditional GET 304 response, if
+   * present. This is the size of the selected representation in a corresponding GET 200 response,
+   * not the length of this entity.
    */
   public static final AttributeKey<Long> representationContentLength =
       org.apache.pekko.http.scaladsl.model.AttributeKeys.representationContentLength();

@@ -79,16 +79,22 @@ A response that permits content can carry trailing fields even when its content 
 headers leave the HTTP/2 stream open, consume the chunked response entity to read these fields from the final
 chunk. Reading only the entity's data bytes does not expose trailing fields.
 
-## Representation length for HEAD responses
+## Advertised representation length
 
-For a `200 OK` response to a `HEAD` request, the HTTP/2 client exposes an advertised `Content-Length`
-as representation metadata. Read it with @scala[`response.attribute(AttributeKeys.representationContentLength)`]@java[`response.getAttribute(AttributeKeys.representationContentLength)`]
-using the corresponding DSL's `AttributeKeys`. A missing field gives an empty result; an explicitly advertised
-zero gives a present value of zero.
+The HTTP/2 client exposes a peer-advertised `Content-Length` as representation metadata for a `200 OK` response to
+`HEAD`, or a `304 Not Modified` response to a `GET` that sent `If-None-Match` or `If-Modified-Since`. Read it with
+@scala[`response.attribute(AttributeKeys.representationContentLength)`]@java[`response.getAttribute(AttributeKeys.representationContentLength)`]
+using the corresponding DSL's `AttributeKeys`. A missing field gives an empty result; an explicitly advertised zero
+is returned as a present value of zero.
 
-The value describes the corresponding `GET` representation, not a response body. The attribute does not
-change the response entity or its size limits. When the initial headers end the HTTP/2 stream, the response
-still has a known-empty strict entity. See [RFC 9110 §8.6](https://www.rfc-editor.org/rfc/rfc9110.html#section-8.6).
+The length describes the selected representation that a corresponding `GET 200` would have sent. If the selected
+representation uses a content coding such as `gzip`, this is the coded length, not the decoded size. A framework
+adapter can project the value as `Content-Length` when exposing raw response headers, while still exposing an empty
+body stream. The attribute is separate from the body length and does not change cache behavior or entity size limits.
+When the initial headers end the HTTP/2 stream, the response still has a known-empty strict entity. See
+[RFC 9110 §8.4](https://www.rfc-editor.org/rfc/rfc9110.html#section-8.4),
+[§8.6](https://www.rfc-editor.org/rfc/rfc9110.html#section-8.6), and
+[§15.4.5](https://www.rfc-editor.org/rfc/rfc9110.html#section-15.4.5).
 
 ## Limiting managed persistent connection lifetime
 

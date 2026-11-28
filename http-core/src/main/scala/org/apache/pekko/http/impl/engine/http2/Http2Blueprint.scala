@@ -214,7 +214,10 @@ private[http] object Http2Blueprint {
         new RequestRendering(settings, log, connectionScheme, connectionAuthority))((renderer, request) => {
           val stream = renderer(request)
           val associated =
-            if (request.method == HttpMethods.HEAD) ResponseParsing.expectHeadResponse(stream) else stream
+            if (request.method == HttpMethods.HEAD) ResponseParsing.expectHeadResponse(stream)
+            else if (request.method == HttpMethods.GET && request.headers.nonEmpty)
+              ResponseParsing.correlateConditionalGet(stream)
+            else stream
           (renderer, associated)
         }, _ => None),
       StreamUtils.statefulAttrsMap[Http2SubStream, HttpResponse] { attrs =>

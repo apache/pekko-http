@@ -40,9 +40,21 @@ private[http2] object ResponseParsing {
   // A HEAD response may carry the length of the corresponding GET without allowing trailers.
   private object HeadRequest
   private val headRequestKey = AttributeKey[HeadRequest.type]("pekko.http.internal.http2.head-request")
+  private object ConditionalGetRequest
+  private val conditionalGetRequestKey =
+    AttributeKey[ConditionalGetRequest.type]("pekko.http.internal.http2.conditional-get-request")
 
   def expectHeadResponse(stream: Http2SubStream): Http2SubStream =
     stream.withCorrelationAttributes(stream.correlationAttributes.updated(headRequestKey, HeadRequest))
+
+  // Record only validators actually sent in the initial request headers, not any synthetic metadata.
+  def correlateConditionalGet(stream: Http2SubStream): Http2SubStream =
+    if (stream.initialHeaders.keyValuePairs.exists {
+        case (name, _) => name == "if-none-match" || name == "if-modified-since"
+      })
+      stream.withCorrelationAttributes(stream.correlationAttributes.updated(conditionalGetRequestKey,
+        ConditionalGetRequest))
+    else stream
 
   private def comesFromHeadRequest(correlationAttributes: Map[AttributeKey[?], ?]): Boolean =
     correlationAttributes.contains(headRequestKey)
@@ -99,6 +111,11 @@ private[http2] object ResponseParsing {
           if (isHeadResponse) {
             val publicAttributes = correlationAttributes - headRequestKey
             if (status == StatusCodes.OK && contentLength >= 0)
+              publicAttributes.updated(AttributeKeys.representationContentLength, Long.box(contentLength))
+            else publicAttributes
+          } else if (correlationAttributes.contains(conditionalGetRequestKey)) {
+            val publicAttributes = correlationAttributes - conditionalGetRequestKey
+            if (status == StatusCodes.NotModified && contentLength >= 0)
               publicAttributes.updated(AttributeKeys.representationContentLength, Long.box(contentLength))
             else publicAttributes
           } else correlationAttributes
