@@ -89,6 +89,36 @@ class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.w
           }
         }
       }
+      "accept a mixed-case upgrade token in a Connection list" in Utils.assertAllStagesStopped {
+        new TestSetup {
+          try {
+            sendWebSocketRequest("", connection = "keep-alive, UpGrAdE")
+            val upgrade = expectRequest().attribute(webSocketUpgrade).get
+            responses.sendNext(upgrade.handleMessages(Flow[Message]))
+
+            expectResponseWithWipedDate(
+              """HTTP/1.1 101 Switching Protocols
+                |Upgrade: websocket
+                |Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
+                |Server: pekko-http/test
+                |Date: XXXX
+                |Connection: upgrade
+                |
+                |""")
+
+            val text = ByteString("hello")
+            sendWSFrame(Protocol.Opcode.Text, text, fin = true, mask = true)
+            expectWSFrame(Protocol.Opcode.Text, text, fin = true)
+
+            sendWSCloseFrame(Protocol.CloseCodes.Regular, mask = true)
+            expectWSCloseFrame(Protocol.CloseCodes.Regular)
+          } finally {
+            closeNetworkInput()
+            responses.sendComplete()
+            netOut.cancel()
+          }
+        }
+      }
       "when user handler instantly tries to send messages" in Utils.assertAllStagesStopped {
         new TestSetup {
           send(
@@ -2085,12 +2115,12 @@ class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.w
     def expectBytes(length: Int): ByteString = netOut.expectBytes(length)
     def expectBytes(bytes: ByteString): Unit = netOut.expectBytes(bytes)
 
-    def sendWebSocketRequest(extraHeader: String): Unit =
+    def sendWebSocketRequest(extraHeader: String, connection: String = "Upgrade"): Unit =
       send(
         s"""GET /chat HTTP/1.1
            |Host: server.example.com
            |Upgrade: websocket
-           |Connection: Upgrade
+           |Connection: $connection
            |Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==
            |Origin: http://example.com
            |Sec-WebSocket-Version: 13
