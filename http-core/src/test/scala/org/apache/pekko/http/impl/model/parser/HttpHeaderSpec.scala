@@ -187,6 +187,18 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
 
   "The HTTP header model must correctly parse and render the headers" - {
 
+    "Accept retains an explicitly empty field" in {
+      val value = ""
+      s"Accept: $value" =!= Accept(Seq.empty).renderedTo(value)
+
+      pekko.http.javadsl.model.HttpHeader.parse("Accept", value) match {
+        case header: pekko.http.javadsl.model.headers.Accept =>
+          header.getMediaRanges().iterator().hasNext shouldBe false
+          header.value shouldBe value
+        case other => fail(s"Expected a modeled empty Accept header, got $other")
+      }
+    }
+
     "Accept" in {
       "Accept: audio/midi;q=0.2, audio/basic" =!=
         Accept(`audio/midi`.withQValue(0.2), `audio/basic`)
