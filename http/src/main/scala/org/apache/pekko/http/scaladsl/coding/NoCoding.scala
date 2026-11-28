@@ -28,7 +28,7 @@ import pekko.util.ByteString
 @InternalApi // used by javadsl.coding.Coder
 @deprecated("Actual implementation of NoCoding is internal API, use Coders.NoCoding instead",
   since = "Akka HTTP 10.2.0")
-object NoCoding extends Coder with StreamDecoder {
+object NoCoding extends Coder with StreamDecoder with BuiltInResponseDecoder {
   val encoding = HttpEncodings.identity
 
   override def encodeData[T](t: T)(implicit mapper: DataMapper[T]): T = t

@@ -47,7 +47,7 @@ private[http] final class Zstd private[http] (
     compressionLevel: Int,
     val messageFilter: HttpMessage => Boolean,
     override val maxBytesPerChunk: Int,
-    windowLogMax: Int) extends Coder {
+    windowLogMax: Int) extends Coder with BuiltInResponseDecoder {
   require(
     compressionLevel >= Compression.ZstdMinCompressionLevel && compressionLevel <= Compression.ZstdMaxCompressionLevel,
     s"Compression level needs to be between ${Compression.ZstdMinCompressionLevel} and " +

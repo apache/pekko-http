@@ -17,6 +17,7 @@
 
 package org.apache.pekko.http.scaladsl.coding
 
+import scala.annotation.nowarn
 import scala.concurrent.duration._
 
 import org.apache.pekko
@@ -70,6 +71,87 @@ class CodersSpec extends AnyWordSpec with CodecSpecSupport {
         decoded.headers shouldEqual List(other)
         decoded.entity.toStrict(3.seconds.dilated).awaitResult(3.seconds.dilated).data.utf8String shouldEqual smallText
       }
+    }
+  }
+
+  "explicit response decoding with a built-in coder" should {
+    val gzip = `Content-Encoding`(HttpEncodings.gzip)
+    val other = RawHeader("X-Other", "kept")
+
+    for ((label, outer, headers, remaining) <- List(
+        ("one field", Coders.Deflate.withMaxBytesPerChunk(16),
+          List(other, `Content-Encoding`(HttpEncodings.gzip, HttpEncodings.deflate)), List(other, gzip)),
+        ("separate fields", Coders.Deflate,
+          List(gzip, other, `Content-Encoding`(HttpEncodings.deflate)), List(gzip, other)),
+        ("zstd as the outer coding", Coders.Zstd,
+          List(other, `Content-Encoding`(HttpEncodings.gzip, HttpEncodings.zstd)), List(other, gzip)))) {
+      s"decode only the outer coding and retain the inner one for $label" in {
+        val original = ByteString(smallText)
+        val inner = Coders.Gzip.encodeAsync(original).awaitResult(3.seconds.dilated)
+        // The explicitly selected decoder can also be a configured Decoder, not a Coder.
+        val outerEncoder = if (outer.encoding == HttpEncodings.zstd) Coders.Zstd else Coders.Deflate
+        val encoded = outerEncoder.encodeAsync(inner).awaitResult(3.seconds.dilated)
+        val contentType = ContentTypes.`text/plain(UTF-8)`
+        val response = HttpResponse(StatusCodes.Accepted, headers = headers, entity = HttpEntity(contentType, encoded))
+
+        (Coders.Gzip.decodeMessage(response) should be).theSameInstanceAs(response)
+
+        val partial = outer.decodeMessage(response)
+        partial.headers shouldEqual remaining
+        val partialEntity = partial.entity.toStrict(3.seconds.dilated).awaitResult(3.seconds.dilated)
+        partialEntity shouldEqual HttpEntity(contentType, inner)
+
+        val decoded = Coders.Gzip.decodeMessage(partial.withEntity(partialEntity))
+        decoded.headers shouldEqual List(other)
+        decoded.status shouldEqual response.status
+        decoded.entity.toStrict(3.seconds.dilated).awaitResult(3.seconds.dilated) shouldEqual
+        HttpEntity(contentType, original)
+      }
+    }
+
+    "remove one matching coding at a time when two field lines name the same coding" in {
+      val original = ByteString(smallText)
+      val inner = Coders.Gzip.encodeAsync(original).awaitResult(3.seconds.dilated)
+      val outer = Coders.Gzip.encodeAsync(inner).awaitResult(3.seconds.dilated)
+      val response = HttpResponse(headers = List(gzip, other, gzip), entity = HttpEntity(outer))
+      val decoder = Coders.Gzip.withMaxBytesPerChunk(32).withMaxBytesPerChunk(16)
+
+      (Coders.decodeMessage(response) should be).theSameInstanceAs(response)
+      val partial = decoder.decodeMessage(response)
+      partial.headers shouldEqual List(gzip, other)
+      val partialEntity = partial.entity.toStrict(3.seconds.dilated).awaitResult(3.seconds.dilated)
+      partialEntity.data shouldEqual inner
+
+      val decoded = decoder.decodeMessage(partial.withEntity(partialEntity))
+      decoded.headers shouldEqual List(other)
+      body(decoded) shouldEqual smallText
+    }
+
+    "preserve custom stream decoders' explicit choice of a compatible codec" in {
+      @nowarn("msg=deprecated")
+      val custom = new StreamDecoder {
+        val encoding = HttpEncoding.custom("x-application-gzip")
+        protected def newDecompressorStage(maxBytesPerChunk: Int) = () => new GzipDecompressor(maxBytesPerChunk)
+      }
+      for (decoder <- Seq(custom, custom.withMaxBytesPerChunk(16))) {
+        val decoded = decoder.decodeMessage(encoded(Coders.Gzip))
+        decoded.headers shouldEqual Nil
+        body(decoded) shouldEqual smallText
+      }
+    }
+
+    "leave a response without a coding or with a different coding unchanged" in {
+      val plain = HttpResponse(entity = HttpEntity(smallText))
+      val compressed = encoded(Coders.Deflate)
+      (Coders.Gzip.decodeMessage(plain) should be).theSameInstanceAs(plain)
+      (Coders.Gzip.decodeMessage(compressed) should be).theSameInstanceAs(compressed)
+    }
+
+    "decode one gzip layer with a case-insensitive raw x-gzip field" in {
+      val response = encoded(Coders.Gzip).withHeaders(RawHeader("cOnTeNt-EnCoDiNg", "X-GZip"), other)
+      val decoded = Coders.Gzip.decodeMessage(response)
+      decoded.headers shouldEqual List(other)
+      body(decoded) shouldEqual smallText
     }
   }
 

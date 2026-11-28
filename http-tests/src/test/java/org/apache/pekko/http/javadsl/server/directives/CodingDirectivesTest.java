@@ -199,6 +199,44 @@ public class CodingDirectivesTest extends JUnitJupiterRouteTest {
   }
 
   @Test
+  public void testExplicitResponseDecoderKeepsInnerCoding() throws Exception {
+    ByteString inner = compress("two-layer response", Compression.gzip());
+    ByteString outer =
+        Source.single(inner)
+            .via(Compression.deflate())
+            .runFold(ByteString.emptyByteString(), ByteString::concat, materializer())
+            .toCompletableFuture()
+            .get(3, TimeUnit.SECONDS);
+    HttpResponse response =
+        HttpResponse.create()
+            .withEntity(outer)
+            .withHeaders(
+                List.of(
+                    ContentEncoding.create(HttpEncodings.GZIP),
+                    ContentEncoding.create(HttpEncodings.DEFLATE)));
+
+    Assertions.assertSame(response, Coder.Gzip.decodeMessage(response));
+    Assertions.assertSame(response, Coder.decodeResponse(response));
+
+    HttpResponse partiallyDecoded = Coder.Deflate.decodeMessage(response);
+    Assertions.assertEquals(
+        ContentEncoding.create(HttpEncodings.GZIP),
+        partiallyDecoded.getHeader(ContentEncoding.class).orElseThrow());
+
+    HttpResponse decoded = Coder.Gzip.decodeMessage(partiallyDecoded);
+    Assertions.assertTrue(decoded.getHeader(ContentEncoding.class).isEmpty());
+    Assertions.assertEquals(
+        "two-layer response",
+        decoded
+            .entity()
+            .toStrict(3000, materializer())
+            .toCompletableFuture()
+            .get(3, TimeUnit.SECONDS)
+            .getData()
+            .utf8String());
+  }
+
+  @Test
   public void testDecodeResponseLeavesUnsupportedEncodingUnchanged() {
     HttpResponse encoded = Coder.Zstd.encodeMessage(HttpResponse.create().withEntity("tester"));
     // zstd is not one of the default coders
