@@ -638,6 +638,16 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
       "Expect: 100-continue" =!= Expect.`100-continue`
     }
 
+    "retain an extension Expect field in the header model" in {
+      val value = "example-extension=ready"
+      HttpHeader.parse("Expect", value) match {
+        case HttpHeader.ParsingResult.Ok(header, _) =>
+          header.is("expect") shouldBe true
+          header.value shouldBe value
+        case other => fail(s"Expected a retained Expect header, got $other")
+      }
+    }
+
     "Expires" in {
       "Expires: Wed, 13 Jul 2011 08:12:31 GMT" =!= Expires(DateTime(2011, 7, 13, 8, 12, 31))
       "Expires: 0" =!= Expires(DateTime.MinValue).renderedTo("Wed, 01 Jan 1800 00:00:00 GMT")
