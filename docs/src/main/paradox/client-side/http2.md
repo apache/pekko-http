@@ -130,3 +130,7 @@ Java
 :  @@snip [HttpClientExampleDocTest.java](/docs/src/test/java/docs/http/javadsl/Http2ClientApp.java) { #response-future-association }
 
 Connection-specific headers set on the model are dropped with a warning when sent over HTTP/2.
+
+The `:authority` pseudo-header carries only the selected host and optional port. [RFC 9113 §8.3.1](https://www.rfc-editor.org/rfc/rfc9113.html#section-8.3.1)
+requires omitting URI userinfo for `http` and `https`. Pekko HTTP applies that rule to every scheme:
+requests using other schemes also no longer send URI userinfo in `:authority`. The request URI model is unchanged.
