@@ -85,7 +85,7 @@ private[http2] object RequestParsing {
           contentLength: Long,
           cookies: StringBuilder,
           headers: VectorBuilder[HttpHeader]): HttpRequest = {
-        // https://httpwg.org/specs/rfc7540.html#rfc.section.8.1.2.3: these pseudo header fields are mandatory for a request
+        // Required for ordinary requests: https://www.rfc-editor.org/rfc/rfc9113.html#section-8.3.1
         checkRequiredPseudoHeader(":scheme", scheme)
         checkRequiredPseudoHeader(":method", method)
         checkRequiredPseudoHeader(":path", pathAndRawQuery)
@@ -181,7 +181,7 @@ private[http2] object RequestParsing {
               } else parseError("HTTP message must not contain more than one content-length header", "content-length")
 
             case "cookie" =>
-              // Compress cookie headers as described here https://tools.ietf.org/html/rfc7540#section-8.1.2.5
+              // Recombine Cookie fields: https://www.rfc-editor.org/rfc/rfc9113.html#section-8.2.3
               val cookiesBuilder = if (cookies == null) {
                 new StringBuilder
               } else {
@@ -258,15 +258,13 @@ private[http2] object RequestParsing {
     if (value ne null) protocolError(s"Pseudo-header '$name' must not occur more than once")
   private[http2] def checkNoRegularHeadersBeforePseudoHeader(name: String, seenRegularHeader: Boolean): Unit =
     if (seenRegularHeader) protocolError(s"Pseudo-header field '$name' must not appear after a regular header")
+  // Connection-specific fields and TE: https://www.rfc-editor.org/rfc/rfc9113.html#section-8.2.2
   private[http2] def validateHeader(httpHeader: HttpHeader) = httpHeader.lowercaseName match {
     case "connection" =>
-      // https://tools.ietf.org/html/rfc7540#section-8.1.2.2
       protocolError("Header 'Connection' must not be used with HTTP/2")
     case "transfer-encoding" =>
-      // https://tools.ietf.org/html/rfc7540#section-8.1.2.2
       protocolError("Header 'Transfer-Encoding' must not be used with HTTP/2")
     case "te" =>
-      // https://tools.ietf.org/html/rfc7540#section-8.1.2.2
       if (httpHeader.value.compareToIgnoreCase("trailers") != 0)
         protocolError(s"Header 'TE' must not contain value other than 'trailers', value was '${httpHeader.value}")
     case _ => // ok

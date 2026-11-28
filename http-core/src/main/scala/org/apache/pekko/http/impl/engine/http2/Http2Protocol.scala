@@ -21,9 +21,9 @@ import pekko.util.OptionVal
 /**
  * INTERNAL API
  *
- * Defines constants as defined in the HTTP/2 specification.
+ * Constants from the HTTP/2 specification.
  *
- * https://tools.ietf.org/html/rfc7540
+ * https://www.rfc-editor.org/rfc/rfc9113.html
  */
 @InternalApi
 private[http] object Http2Protocol {
@@ -45,12 +45,9 @@ private[http] object Http2Protocol {
   final val InitialMaxConcurrentStreams = Int.MaxValue
 
   /**
-   * The initial window size for both new streams and the overall connection
-   * as defined by the specification.
+   * The initial flow-control window for both new streams and the overall connection.
    *
-   * See https://tools.ietf.org/html/rfc7540#section-5.2.1:
-   *    4.  The initial value for the flow-control window is 65,535 octets
-   *        for both new streams and the overall connection.
+   * @see https://www.rfc-editor.org/rfc/rfc9113.html#section-5.2.1
    */
   final val InitialWindowSize = 65535
 
@@ -66,48 +63,30 @@ private[http] object Http2Protocol {
   final val MaxWindowSize: Int = Int.MaxValue
 
   /**
-   * The initial frame size for both incoming and outgoing frames as defined by the
-   * specification.
+   * The initial maximum frame payload size before any SETTINGS_MAX_FRAME_SIZE is received.
    *
-   * The frame size can be changed by changing SETTINGS_MAX_FRAME_SIZE.
-   *
-   * See https://tools.ietf.org/html/rfc7540#section-6.5.2:
-   *
-   * SETTINGS_MAX_FRAME_SIZE (0x5):  Indicates the size of the largest
-   *  frame payload that the sender is willing to receive, in octets.
-   *
-   *  The initial value is 2^14 (16,384) octets.  The value advertised
-   *  by an endpoint MUST be between this initial value and the maximum
-   *  allowed frame size (2^24-1 or 16,777,215 octets), inclusive.
-   *  Values outside this range MUST be treated as a connection error
-   *  (Section 5.4.1) of type PROTOCOL_ERROR.
+   * @see https://www.rfc-editor.org/rfc/rfc9113.html#section-6.5.2
    */
   final val InitialMaxFrameSize = 16384
 
   /**
-   * Minimum frame size that can be written.
+   * Lower bound on the value of SETTINGS_MAX_FRAME_SIZE.
    *
-   * See http://httpwg.org/specs/rfc7540.html#rfc.section.4.2
-   *
-   * The size of a frame payload is limited by the maximum size that a receiver advertises in the SETTINGS_MAX_FRAME_SIZE setting.
-   * This setting can have any value between 2^14^ (16,384) and 2^24^-1 (16,777,215) octets, inclusive.
+   * @see https://www.rfc-editor.org/rfc/rfc9113.html#section-4.2
    */
   final val MinFrameSize = 16384
 
   /**
-   * Maximum frame size that can be written.
+   * Upper bound on the value of SETTINGS_MAX_FRAME_SIZE.
    *
-   * See http://httpwg.org/specs/rfc7540.html#rfc.section.4.2
-   *
-   * The size of a frame payload is limited by the maximum size that a receiver advertises in the SETTINGS_MAX_FRAME_SIZE setting.
-   * This setting can have any value between 2^14^ (16,384) and 2^24^-1 (16,777,215) octets, inclusive.
+   * @see https://www.rfc-editor.org/rfc/rfc9113.html#section-4.2
    */
   final val MaxFrameSize = 16777215
 
   /**
-   * Initial maximum size of the header compression table used to decode header blocks, in octets.
+   * Initial maximum size of the compression table used to decode field blocks, in octets.
    *
-   * See http://httpwg.org/specs/rfc7540.html#SettingValues
+   * @see https://www.rfc-editor.org/rfc/rfc9113.html#section-6.5.2
    */
   final val InitialMaxHeaderTableSize = 4096
 
@@ -118,20 +97,14 @@ private[http] object Http2Protocol {
    * including the length of the name and value in octets plus an overhead of 32 octets for each header field.
    * For any given request, a lower limit than what is advertised MAY be enforced.
    *
-   * See http://httpwg.org/specs/rfc7540.html#SettingValues
+   * @see https://www.rfc-editor.org/rfc/rfc9113.html#section-6.5.2
    */
   final val InitialMaxHeaderListSize = Int.MaxValue // "unlimited"
 
   /**
-   * The stream id to be used for frames not associated with any individual stream
-   * as defined by the specification.
+   * The stream ID for frames associated with the connection as a whole.
    *
-   * See https://tools.ietf.org/html/rfc7540#section-4.1:
-   *
-   *   Stream Identifier:  A stream identifier (see Section 5.1.1) expressed
-   *   as an unsigned 31-bit integer.  The value 0x0 is reserved for
-   *   frames that are associated with the connection as a whole as
-   *   opposed to an individual stream.
+   * @see https://www.rfc-editor.org/rfc/rfc9113.html#section-4.1
    */
   final val NoStreamId = 0
 

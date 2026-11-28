@@ -42,8 +42,9 @@ private[pekko] object Http2SettingsHeader {
     ByteString(base64UrlStringDecoder(value.toCharArray))
 
   def parse(value: String, log: LoggingAdapter): Try[Seq[Setting]] = Try {
-    // settings are a base64url encoded Http2 settings frame
-    // https://httpwg.org/specs/rfc7540.html#rfc.section.3.2.1
+    // Historical h2c Upgrade: HTTP2-Settings carries a base64url-encoded SETTINGS frame payload.
+    // https://www.rfc-editor.org/rfc/rfc7540.html#section-3.2.1
+    // This upgrade and header are deprecated in https://www.rfc-editor.org/rfc/rfc9113.html#section-3.1
     val bytes = headerValueToBinary(value)
     val reader = new io.ByteStringParser.ByteReader(bytes)
     Http2FrameParsing.readSettings(reader, log)
