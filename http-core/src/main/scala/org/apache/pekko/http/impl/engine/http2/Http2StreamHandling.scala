@@ -156,8 +156,13 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
   def activeStreamCount(): Int = streamStates.size
 
   /** Called by Http2ServerDemux to let the state machine handle StreamFrameEvents */
-  def handleStreamEvent(e: StreamFrameEvent): Unit =
-    updateState(e.streamId, _.handle(e), "handleStreamEvent", e.frameTypeName)
+  def handleStreamEvent(e: StreamFrameEvent): Unit = {
+    val streamId = e.streamId
+    val frameType = e.frameTypeName
+    val oldState = beginStateTransition(streamId)
+    val newState = oldState.handle(e)
+    finishStateTransition(streamId, oldState, newState, "handleStreamEvent", frameType)
+  }
 
   /** Called by Http2ServerDemux when a stream comes in from the user-handler */
   def handleOutgoingCreated(outgoing: Http2SubStream): Unit = {
@@ -173,13 +178,16 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     if (streamFor(stream.streamId) != Closed) {
       multiplexer.pushControlFrame(stream.initialHeaders)
 
+      val streamId = stream.streamId
       if (stream.initialHeaders.endStream) {
-        updateState(stream.streamId, _.handleOutgoingCreatedAndFinished(stream.correlationAttributes),
-          "handleOutgoingCreatedAndFinished")
+        val oldState = beginStateTransition(streamId)
+        val newState = oldState.handleOutgoingCreatedAndFinished(stream.correlationAttributes)
+        finishStateTransition(streamId, oldState, newState, "handleOutgoingCreatedAndFinished")
       } else {
         val outStream = OutStream(stream)
-        updateState(stream.streamId, _.handleOutgoingCreated(outStream, stream.correlationAttributes),
-          "handleOutgoingCreated")
+        val oldState = beginStateTransition(streamId)
+        val newState = oldState.handleOutgoingCreated(outStream, stream.correlationAttributes)
+        finishStateTransition(streamId, oldState, newState, "handleOutgoingCreated")
       }
     } else
       // stream was cancelled by peer before our response was ready
@@ -188,8 +196,11 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
   }
 
   // Called by the outgoing stream multiplexer when that side of the stream is ended.
-  def handleOutgoingEnded(streamId: Int): Unit =
-    updateState(streamId, _.handleOutgoingEnded(), "handleOutgoingEnded")
+  def handleOutgoingEnded(streamId: Int): Unit = {
+    val oldState = beginStateTransition(streamId)
+    val newState = oldState.handleOutgoingEnded()
+    finishStateTransition(streamId, oldState, newState, "handleOutgoingEnded")
+  }
 
   def handleOutgoingFailed(streamId: Int, cause: Throwable): Unit =
     updateState(streamId, _.handleOutgoingFailed(cause), "handleOutgoingFailed")
@@ -235,8 +246,11 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     streamStates.keys.foreach(streamId => updateState(streamId.toInt, handle, event, eventArg))
 
   private def updateState(
-      streamId: Int, handle: StreamState => StreamState, event: String, eventArg: AnyRef = null): Unit =
-    updateStateAndReturn(streamId, x => (handle(x), ()), event, eventArg)
+      streamId: Int, handle: StreamState => StreamState, event: String, eventArg: AnyRef = null): Unit = {
+    val oldState = beginStateTransition(streamId)
+    val newState = handle(oldState)
+    finishStateTransition(streamId, oldState, newState, event, eventArg)
+  }
 
   // Calling multiplexer.enqueueOutStream directly out of the state machine is not allowed, because it might try to
   // reenter the state machine with `pullNextState`. This call defers enqueuing until the current state machine operation
@@ -261,14 +275,22 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
   }
 
   private var stateMachineRunning = false
-  private def updateStateAndReturn[R](streamId: Int, handle: StreamState => (StreamState, R), event: String,
-      eventArg: AnyRef = null): R = {
+  private def beginStateTransition(streamId: Int): StreamState = {
     require(!stateMachineRunning, "State machine already running")
     stateMachineRunning = true
+    streamFor(streamId)
+  }
 
-    val oldState = streamFor(streamId)
-
+  private def updateStateAndReturn[R](streamId: Int, handle: StreamState => (StreamState, R), event: String,
+      eventArg: AnyRef = null): R = {
+    val oldState = beginStateTransition(streamId)
     val (newState, ret) = handle(oldState)
+    finishStateTransition(streamId, oldState, newState, event, eventArg)
+    ret
+  }
+
+  private def finishStateTransition(streamId: Int, oldState: StreamState, newState: StreamState, event: String,
+      eventArg: AnyRef = null): Unit = {
     newState match {
       case Closed   => streamClosed(streamId)
       case newState => streamStates.put(streamId, newState)
@@ -287,7 +309,6 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
       if (streamStates.contains(streamId))
         multiplexer.enqueueOutStream(streamId)
     }
-    ret
   }
 
   /** Called to cleanup any state when the connection is torn down */

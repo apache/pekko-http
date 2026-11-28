@@ -64,6 +64,26 @@ class HeaderCompressionSpec extends PekkoSpec {
       (decoded(1) eq decoded(3)) shouldBe true
     }
 
+    "drain all continuation fragments before acknowledging the next setting" in {
+      val ack = setting(2048)
+      val frames = compress(headers(1, Seq("x-example" -> ("a" * 59000))), ack, headers(3))
+      val first = frames.head.asInstanceOf[HeadersFrame]
+      first.streamId shouldBe 1
+      first.endHeaders shouldBe false
+      first.headerBlockFragment.size shouldBe 16384
+
+      val continuations = frames.tail.takeWhile(_.isInstanceOf[ContinuationFrame])
+      continuations.size shouldBe 2
+      val second = continuations.head.asInstanceOf[ContinuationFrame]
+      val last = continuations.last.asInstanceOf[ContinuationFrame]
+      second.streamId shouldBe 1
+      last.streamId shouldBe 1
+      second.endHeaders shouldBe false
+      last.endHeaders shouldBe true
+      hex(frames.last) shouldEqual "3fe10f82"
+      frames(3) shouldEqual ack
+    }
+
     "emit only the smallest and final table sizes while preserving every settings acknowledgement" in {
       val updates = Seq(setting(2048), setting(1024), setting(2048))
       val result = compress((updates :+ headers()): _*)
