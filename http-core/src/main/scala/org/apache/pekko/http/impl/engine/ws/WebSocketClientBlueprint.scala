@@ -85,6 +85,9 @@ private[http] object WebSocketClientBlueprint {
     val hostHeader = Host(uri.authority.normalizedFor(uri.scheme))
     val renderedInitialRequest =
       HttpRequestRendererFactory.renderStrict(RequestRenderingContext(initialRequest, hostHeader), settings, log)
+    val allowedSubprotocols =
+      if (subprotocol.isDefined || extraHeaders.isEmpty) subprotocols
+      else Handshake.Client.subprotocolOffers(initialRequest.headers)
 
     class UpgradeStage extends SimpleLinearGraphStage[ByteString] {
 
@@ -138,7 +141,9 @@ private[http] object WebSocketClientBlueprint {
               case NeedMoreData                                                        => pull(in)
               case ResponseStart(status, protocol, attributes, headers, entity, close) =>
                 val response = new HttpResponse(status, headers, attributes, HttpEntity.Empty, protocol)
-                Handshake.Client.validateResponse(response, subprotocols, key, offeredExtensions) match {
+                Handshake.Client.validateResponse(
+                  response, allowedSubprotocols, key, offeredExtensions,
+                  requireSubprotocol = subprotocols.nonEmpty) match {
                   case Right(NegotiatedWebSocketSettings(protocol)) =>
                     if (openingDeadline.isDefined) cancelTimer(OpeningDeadline)
                     result.success(ValidUpgrade(response, protocol))

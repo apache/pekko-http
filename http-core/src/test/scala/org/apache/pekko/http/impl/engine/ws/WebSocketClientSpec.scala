@@ -706,6 +706,64 @@ class WebSocketClientSpec extends PekkoSpecWithMaterializer("pekko.http.client.w
       expectNetworkClose()
     }
     "support subprotocols" should {
+      "negotiating from additional request header offers" should {
+        val targetUri = Uri("ws://example.org/ws")
+        val headerName = "Sec-WebSocket-Protocol"
+        val mixedHeaderName = "sEc-WeBsOcKeT-pRoToCoL"
+        val expectedOffers = List("metrics, stats", "chat.v1,  Chat.v2")
+
+        val scalaRequest = WebSocketRequest(targetUri,
+          extraHeaders = List(
+            `Sec-WebSocket-Protocol`(Seq("metrics", "stats")),
+            RawHeader(mixedHeaderName, expectedOffers.last)))
+
+        val javaRequest = pekko.http.javadsl.model.ws.WebSocketRequest.create(targetUri.toString)
+          .addHeader(pekko.http.javadsl.model.headers.RawHeader.create(headerName, expectedOffers.head))
+          .addHeader(pekko.http.javadsl.model.headers.RawHeader.create(mixedHeaderName, expectedOffers.last))
+
+        for (selection <- List(Some("Chat.v2"), None)) {
+          val choice = selection.fold("no selection")(_ => "an offered selection")
+
+          s"allow $choice through the Scala client" in {
+            withSubprotocolResponse(Http(system).webSocketClientLayer(scalaRequest, settingsForSubprotocols),
+              expectedOffers, selection) { result =>
+              val upgrade = result.awaitResult(1.second.dilated)
+              upgrade shouldBe a[ValidUpgrade]
+              upgrade.asInstanceOf[ValidUpgrade].chosenSubprotocol shouldEqual selection
+            }
+          }
+
+          s"allow $choice through the Java client" in {
+            val client = pekko.http.javadsl.Http.get(system).webSocketClientLayer(javaRequest, settingsForSubprotocols)
+            withSubprotocolResponse(client.asScala, expectedOffers, selection) { result =>
+              val upgrade = scala.jdk.javaapi.FutureConverters.asScala(result).awaitResult(1.second.dilated)
+              upgrade.isValid shouldBe true
+              upgrade.chosenSubprotocol shouldEqual java.util.Optional.ofNullable(selection.orNull)
+            }
+          }
+        }
+
+        "keep explicitly requested choices and additional wire offers in the Scala client" in {
+          val request = scalaRequest.copy(subprotocol = Some("required"))
+          withSubprotocolResponse(Http(system).webSocketClientLayer(request, settingsForSubprotocols),
+            "required" :: expectedOffers, Some("required")) { result =>
+            val upgrade = result.awaitResult(1.second.dilated)
+            upgrade shouldBe a[ValidUpgrade]
+            upgrade.asInstanceOf[ValidUpgrade].chosenSubprotocol shouldEqual Some("required")
+          }
+        }
+
+        "keep an explicit Java requirement when the server makes no selection" in {
+          val client = pekko.http.javadsl.Http.get(system)
+            .webSocketClientLayer(javaRequest.requestSubprotocol("required"), settingsForSubprotocols)
+          withSubprotocolResponse(client.asScala, "required" :: expectedOffers, None) { result =>
+            val upgrade = scala.jdk.javaapi.FutureConverters.asScala(result).awaitResult(1.second.dilated)
+            upgrade.isValid shouldBe false
+            upgrade.invalidationReason should include("client supported: required, server supported: None")
+          }
+        }
+      }
+
       "accept if server supports subprotocol" in new TestSetup with ClientEchoes {
         override protected def requestedSubProtocol: Option[String] = Some("v2")
 
@@ -823,6 +881,44 @@ class WebSocketClientSpec extends PekkoSpecWithMaterializer("pekko.http.client.w
             "WebSocket server at ws://example.org/ws returned response that indicated that the given subprotocol was not supported. (client supported: v2, server supported: Some(v3))")
         }
       }
+    }
+  }
+
+  private def settingsForSubprotocols =
+    ClientConnectionSettings(system).withWebsocketRandomFactory(() => new Random(0))
+
+  private def withSubprotocolResponse[M, Mat](
+      layer: BidiFlow[M, SslTlsOutbound, SslTlsInbound, M, Mat],
+      expectedOffers: List[String],
+      selection: Option[String])(check: Mat => Unit): Unit = Utils.assertAllStagesStopped {
+    val netIn = TestPublisher.probe[ByteString]()
+    val netOut = ByteStringSinkProbe()
+    val transport = Flow.fromSinkAndSource(
+      Flow[SslTlsOutbound].collect { case SendBytes(bytes) => bytes }.to(netOut.sink),
+      Source.fromPublisher(netIn).map[SslTlsInbound](SessionBytes(null, _)))
+    val (stopSending, response) = Source.maybe[M].viaMat(layer.join(transport))(Keep.both).to(Sink.ignore).run()
+
+    try {
+      val endOfHeaders = "\r\n\r\n"
+      val request = new StringBuilder
+      while (request.length < 4096 && !request.endsWith(endOfHeaders))
+        request.append(netOut.expectByte().toChar)
+      request.result() should endWith(endOfHeaders)
+
+      val field = "Sec-WebSocket-Protocol:"
+      request.result().split("\r\n").toList
+        .filter(_.regionMatches(true, 0, field, 0, field.length))
+        .map(_.drop(field.length).trim) shouldEqual expectedOffers
+
+      val responseBytes = selection.fold(UpgradeResponseBytes) { protocol =>
+        UpgradeResponseBytes.dropRight(2) ++ ByteString(s"Sec-WebSocket-Protocol: $protocol\r\n\r\n")
+      }
+      netIn.sendNext(responseBytes)
+      check(response)
+    } finally {
+      stopSending.trySuccess(None)
+      netIn.sendComplete()
+      netOut.cancel()
     }
   }
 
