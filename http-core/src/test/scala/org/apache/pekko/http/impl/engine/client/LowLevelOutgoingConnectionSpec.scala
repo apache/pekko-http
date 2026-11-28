@@ -13,25 +13,16 @@
 
 package org.apache.pekko.http.impl.engine.client
 
-import scala.concurrent.ExecutionContext
+import java.net.InetSocketAddress
+import java.util.concurrent.atomic.AtomicInteger
 
-import com.typesafe.config.ConfigFactory
 import scala.concurrent.duration._
+import scala.concurrent.{ ExecutionContext, Future, Promise }
 import scala.reflect.ClassTag
 
-import org.scalatest.Inside
 import org.apache.pekko
-import pekko.http.scaladsl.settings.ClientConnectionSettings
-import pekko.util.ByteString
+import pekko.actor.ActorSystem
 import pekko.event.NoLogging
-import pekko.stream.ClosedShape
-import pekko.stream.TLSProtocol._
-import pekko.stream.testkit._
-import pekko.stream.scaladsl._
-import pekko.http.scaladsl.model.HttpEntity._
-import pekko.http.scaladsl.model.HttpMethods._
-import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.model.headers._
 import pekko.http.impl.engine.rendering.{
   DateHeaderRendering,
   HttpResponseRendererFactory,
@@ -39,7 +30,23 @@ import pekko.http.impl.engine.rendering.{
   ResponseRenderingOutput
 }
 import pekko.http.impl.util._
+import pekko.http.scaladsl.model.HttpEntity._
+import pekko.http.scaladsl.model.HttpMethods._
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.headers._
+import pekko.http.scaladsl.settings.{ ClientConnectionSettings, ConnectionPoolSettings }
+import pekko.http.scaladsl.{ ClientTransport, Http }
+import pekko.http.{ ExpectContinuePolicy, ExpectContinueRetryContext }
+import pekko.stream.ClosedShape
+import pekko.stream.TLSProtocol._
+import pekko.stream.scaladsl._
+import pekko.stream.testkit._
 import pekko.testkit._
+import pekko.util.ByteString
+
+import org.scalatest.Inside
+
+import com.typesafe.config.ConfigFactory
 
 class LowLevelOutgoingConnectionSpec extends PekkoSpecWithMaterializer with Inside {
   implicit val dispatcher: ExecutionContext = system.dispatcher
@@ -1060,6 +1067,126 @@ class LowLevelOutgoingConnectionSpec extends PekkoSpecWithMaterializer with Insi
       }
     }
 
+    "observe the native Expect gate for an internally prepared request".which {
+      class PreparedPut extends TestSetup {
+        val body = "document"
+        val request = HttpRequest(PUT, "/document", headers = List(Expect.`100-continue`), entity = body)
+        val (prepared, observation) = Http1ExpectContinueAttempt.prepare(request,
+          ExpectContinuePolicy.retryIdempotentOnce).get
+
+        def sendRequestHead(): Unit = {
+          requestsSub.sendNext(prepared)
+          requestsSub.sendComplete()
+          expectWireData(
+            """PUT /document HTTP/1.1
+              |Expect: 100-continue
+              |Host: example.com
+              |User-Agent: pekko-http/test
+              |Content-Type: text/plain; charset=UTF-8
+              |Content-Length: 8
+              |
+              |""")
+        }
+
+        def receiveFinalRejection(): HttpResponse = {
+          sendWireData(
+            """HTTP/1.1 417 Expectation Failed
+              |Connection: close
+              |Content-Length: 0
+              |
+              |""")
+          val response = expectResponse()
+          response.status shouldBe StatusCodes.ExpectationFailed
+          response.entity.isKnownEmpty shouldBe true
+          netOut.expectComplete()
+          netInSub.sendComplete()
+          responses.expectComplete()
+          response
+        }
+      }
+
+      "observe a final 417 before sending the body only once" in new PreparedPut {
+        sendRequestHead()
+        // Keep demand outstanding so a stray body element cannot hide behind backpressure.
+        netOutSub.request(1)
+        val response = receiveFinalRejection()
+        observation.takeRejectionBeforeBody(response) shouldBe true
+        observation.takeRejectionBeforeBody(response) shouldBe false
+      }
+
+      "not observe a pre-body rejection after an ordinary 100 releases the upload" in new PreparedPut {
+        sendRequestHead()
+        sendWireData(
+          """HTTP/1.1 100 Continue
+            |
+            |""")
+        expectWireData(body)
+        netOutSub.request(1)
+        // An interim response from the first hop does not preclude a final 417 from the response chain.
+        val response = receiveFinalRejection()
+        observation.takeRejectionBeforeBody(response) shouldBe false
+      }
+    }
+
+    "dispatch a privately selected one-request Expect recovery".which {
+      "finish a streamed early 417 on its old connection and recover once on the same origin" in
+      new ManagedExpectSetup {
+        checkRecovery(executor)
+      }
+
+      "recover and return one final response through the public Scala request function" in new ManagedExpectSetup {
+        checkRecovery(scalaExecutor)
+      }
+
+      "recover and return one final response through the public Java request function" in new ManagedExpectSetup {
+        checkRecovery(javaExecutor)
+      }
+
+      "give a vetoed streamed 417 to the caller without subscribing to its explanation" in new ManagedExpectSetup {
+        val veto: ExpectContinuePolicy = _ => false
+        val result = executor(ExpectContinuePolicy.retryIdempotentOnce)
+          .apply(request.addAttribute(ExpectContinuePolicy.attributeKey, veto))
+        val first = connected()
+        first.expectRequest(expectContinue = true)
+        first.toServer.request(1)
+        first.sendRejectionHead()
+        val selected = result.awaitResult(3.seconds.dilated)
+        selected.status shouldBe StatusCodes.ExpectationFailed
+        selected.entity.isDefault shouldBe true
+        selected.header[Connection] shouldBe Some(Connection("close"))
+        val received = selected.entity.dataBytes.runFold(ByteString.empty)(_ ++ _)
+        first.fromServer.sendNext(ByteString(explanation))
+        received.awaitResult(3.seconds.dilated) shouldBe ByteString(explanation)
+        first.toServer.expectComplete()
+        first.fromServer.expectCancellation()
+        materialized.get() shouldBe 1
+        delegated.get() shouldBe 0
+      }
+
+      "delegate stock disabled, unselected and application-targeted requests unchanged" in new ManagedExpectSetup {
+        (executor(ExpectContinuePolicy.disabled) should be).theSameInstanceAs(ordinary)
+        val missingExpect = request.removeHeader("expect")
+        val differentPort = request.withUri(Uri("http://example.com:8081/document"))
+        val explicitHost = request.addHeader(Host("example.com", 8080))
+        val rawHost = request.addHeader(RawHeader("hOsT", "example.com:8080"))
+        val explicitTarget = request.addHeader(`Raw-Request-URI`("/document"))
+        val rawTarget = request.addHeader(RawHeader("rAw-ReQuEsT-uRi", "/document"))
+        val nonIdempotent = request.withMethod(POST)
+        val streamed = request.withEntity(
+          HttpEntity(ContentTypes.`text/plain(UTF-8)`, Source.single(ByteString(body))))
+        val permissivePolicy: ExpectContinuePolicy = _ => true
+        val execute = executor(permissivePolicy)
+        for (unselected <- List(missingExpect, differentPort, explicitHost, rawHost, explicitTarget, rawTarget,
+            nonIdempotent, streamed)) {
+          execute(unselected).awaitResult(3.seconds.dilated) shouldBe
+          ordinaryResponse
+          (ordinaryRequests.expectMsg(unselected) should be).theSameInstanceAs(unselected)
+        }
+        materialized.get() shouldBe 0
+        delegated.get() shouldBe 8
+      }
+    }
+
     "ignore interim 1xx responses" in new TestSetup {
       sendStandardRequest()
       sendWireData(
@@ -1110,6 +1237,132 @@ class LowLevelOutgoingConnectionSpec extends PekkoSpecWithMaterializer with Insi
       netOut.expectComplete()
       netInSub.sendComplete()
       responses.expectComplete()
+    }
+  }
+
+  private class ManagedExpectSetup {
+    val body = "document"
+    val explanation = "This endpoint does not support the expectation."
+    val origin = Uri("http://example.com:8080")
+    val request = HttpRequest(PUT, origin.withPath(Uri.Path("/document")), headers = List(Expect.`100-continue`),
+      entity = body)
+
+    val materialized = new AtomicInteger()
+    val delegated = new AtomicInteger()
+    private val opened = TestProbe()
+    val ordinaryRequests = TestProbe()
+    val ordinaryResponse = HttpResponse(StatusCodes.Accepted)
+    val ordinary: HttpRequest => Future[HttpResponse] = r => {
+      delegated.incrementAndGet()
+      ordinaryRequests.ref ! r
+      Future.successful(ordinaryResponse)
+    }
+
+    final class Wire(val host: String, val port: Int) {
+      val fromServer: TestPublisher.Probe[ByteString] = TestPublisher.probe[ByteString]()
+      val toServer: TestSubscriber.Probe[ByteString] = TestSubscriber.probe[ByteString]()
+
+      def expectRequest(expectContinue: Boolean): Unit = {
+        val expect = if (expectContinue) "Expect: 100-continue\r\n" else ""
+        val content = if (expectContinue) "" else body
+        toServer.requestNext().utf8String shouldBe (
+          "PUT /document HTTP/1.1\r\n" + expect +
+          "Host: example.com:8080\r\nUser-Agent: pekko-http/test\r\nContent-Type: text/plain; charset=UTF-8\r\n" +
+          "Content-Length: 8\r\n\r\n" + content)
+      }
+
+      def sendRejectionHead(): Unit =
+        fromServer.sendNext(ByteString(
+          s"HTTP/1.1 417 Expectation Failed\r\nConnection: close\r\nContent-Length: ${explanation.length}\r\n\r\n"))
+    }
+
+    private val transport = new ClientTransport {
+      override def connectTo(host: String, port: Int, settings: ClientConnectionSettings)(
+          implicit actorSystem: ActorSystem): Flow[ByteString, ByteString, Future[Http.OutgoingConnection]] = {
+        val wire = new Wire(host, port)
+        Flow.fromSinkAndSource(Sink.fromSubscriber(wire.toServer),
+          Source.fromPublisher(wire.fromServer)).mapMaterializedValue { _ =>
+          materialized.incrementAndGet()
+          opened.ref ! wire
+          Future.successful(Http.OutgoingConnection(InetSocketAddress.createUnresolved("client", 12345),
+            InetSocketAddress.createUnresolved(host, port)))
+        }
+      }
+    }
+
+    def connected(): Wire = {
+      val next = opened.expectMsgType[Wire]
+      next.host shouldBe "example.com"
+      next.port shouldBe 8080
+      next
+    }
+
+    private val settings = ClientConnectionSettings(system)
+      .withUserAgentHeader(Some(`User-Agent`(List(ProductVersion("pekko-http", "test")))))
+      .withTransport(transport)
+    private val poolSettings = ConnectionPoolSettings(system).withConnectionSettings(settings)
+    private val budget = 15.seconds.dilated
+
+    def executor(policy: ExpectContinuePolicy): HttpRequest => Future[HttpResponse] = {
+      val http = Http()
+      Http1ExpectContinueExecutor.wrap(ordinary, origin, policy, budget, http,
+        http.defaultClientHttpsContext, settings, NoLogging)
+    }
+
+    def scalaExecutor(policy: ExpectContinuePolicy): HttpRequest => Future[HttpResponse] = {
+      val http = Http()
+      http.singleRequestWithExpectContinueRetry(origin, policy, budget, http.defaultClientHttpsContext,
+        poolSettings, NoLogging)
+    }
+
+    def javaExecutor(policy: ExpectContinuePolicy): HttpRequest => Future[HttpResponse] = {
+      import scala.jdk.FutureConverters._
+      val http = pekko.http.javadsl.Http.get(system)
+      val execute = http.singleRequestWithExpectContinueRetry(
+        pekko.http.javadsl.model.Uri.create(origin),
+        policy,
+        java.time.Duration.ofNanos(budget.toNanos),
+        http.defaultClientHttpsContext,
+        poolSettings,
+        NoLogging)
+      request => execute.apply(request).asScala.map(JavaMapping.HttpResponse.toScala)
+    }
+
+    def checkRecovery(createExecutor: ExpectContinuePolicy => (HttpRequest => Future[HttpResponse])): Unit = {
+      val verdict = Promise[ExpectContinueRetryContext]()
+      val observePolicy: ExpectContinuePolicy = context => {
+        verdict.success(context)
+        ExpectContinuePolicy.retryIdempotentOnce.shouldRetry(context)
+      }
+
+      val result = createExecutor(observePolicy).apply(request)
+      val first = connected()
+      first.expectRequest(expectContinue = true)
+      first.toServer.request(1)
+      first.sendRejectionHead()
+      val context = verdict.future.awaitResult(3.seconds.dilated)
+      context.getMethod shouldBe PUT
+      context.getRequestUri shouldBe request.getUri
+      context.getProtocol shouldBe HttpProtocols.`HTTP/1.1`
+      context.getContentLength shouldBe body.length.toLong
+      first.fromServer.sendNext(ByteString(explanation))
+      first.toServer.expectComplete()
+      first.fromServer.expectCancellation()
+
+      val second = connected()
+      second.expectRequest(expectContinue = false)
+      result.isCompleted shouldBe false
+      second.fromServer.sendNext(ByteString("HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 6\r\n\r\n"))
+      val selected = result.awaitResult(3.seconds.dilated)
+      selected.status shouldBe StatusCodes.OK
+      selected.entity.isDefault shouldBe true
+      val received = selected.entity.dataBytes.runFold(ByteString.empty)(_ ++ _)
+      second.fromServer.sendNext(ByteString("stored"))
+      received.awaitResult(3.seconds.dilated) shouldBe ByteString("stored")
+      second.toServer.expectComplete()
+      second.fromServer.expectCancellation()
+      materialized.get() shouldBe 2
+      delegated.get() shouldBe 0
     }
   }
 

@@ -20,7 +20,7 @@ from a background with non-"streaming first" HTTP Clients.
 @@@
 
 @@@ note
-The request-level API is implemented on top of a connection pool that is shared inside the actor system. A consequence of
+The default request-level API is implemented on top of a connection pool that is shared inside the actor system. A consequence of
 using a pool is that long-running requests block a connection while running and starve other requests. Make sure not to use
 the request-level API for long-running requests like long-polling GET requests. Use the @ref[Connection-Level Client-Side API](connection-level.md)
 or an extra pool just for the long-running connection instead.
@@ -46,6 +46,39 @@ Scala
 Java
 :   @@snip [HttpClientExampleDocTest.java](/docs/src/test/java/docs/http/javadsl/HttpClientExampleDocTest.java) { #single-request-example }
 
+### Opting in to HTTP/1.1 Expect recovery
+
+Use `singleRequestWithExpectContinueRetry` to create a reusable request function for one
+retry origin (scheme, host and effective port). This does not modify `singleRequest`, other
+request functions or connection-level flows.
+
+The function uses dedicated connections for eligible idempotent requests with a nonempty strict
+entity and exactly one modeled `Expect: 100-continue` field. It does not add that field. If the
+request's first attempt receives a final `417 Expectation Failed` before releasing the entity
+and the configured policy permits retrying, the function consumes the first response and can
+retry once on a fresh connection to the same origin without the Expect field. A request can
+veto the retry, for example if a request signature covers the Expect field.
+
+Recovery is not used for other origins, streamed request entities, non-idempotent methods,
+or requests that supply their own Host or raw request target. They follow the usual
+`singleRequest` path. When a retry is not selected, the original response is returned without
+consuming its entity. The positive retry budget bounds the dedicated attempts and disposal of
+a replaced response. If that disposal or the second attempt fails, the request function fails
+instead of returning a partially consumed response or issuing another attempt. As with
+`singleRequest`, the caller must consume or discard the returned entity.
+
+Dedicated attempts still use the effective client connection settings for the origin. They bypass
+the pool's `max-connections`, `max-open-requests`, `max-retries` and
+`response-entity-subscription-timeout`. Limit the number of concurrent requests at the caller
+and consume or discard each returned entity promptly. These pool settings still apply when the
+function delegates to `singleRequest`.
+
+Scala
+:   @@snip [HttpClientExampleSpec.scala](/docs/src/test/scala/docs/http/scaladsl/HttpClientExampleSpec.scala) { #expect-continue-retry-example }
+
+Java
+:   @@snip [HttpClientExampleDocTest.java](/docs/src/test/java/docs/http/javadsl/HttpClientExampleDocTest.java) { #expect-continue-retry-example }
+
 ### Using the Future-Based API in Actors
 
 When using the @scala[`Future`]@java[`CompletionStage`] based API from inside a classic Apache Pekko @apidoc[Actor], all the usual caveats apply to how one should deal
@@ -67,7 +100,7 @@ if you don't care about the response entity.
 
 Read the @ref[Implications of the streaming nature of Request/Response Entities](../implications-of-streaming-http-entity.md) section for more details.
 
-If the application doesn't subscribe to the response entity within 
+For pooled responses, if the application doesn't subscribe to the response entity within
 `pekko.http.host-connection-pool.response-entity-subscription-timeout`, the stream will fail with a 
 `TimeoutException: Response entity was not subscribed after ...`.
 @@@

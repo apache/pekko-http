@@ -14,10 +14,13 @@
 package org.apache.pekko.http.javadsl
 
 import java.net.InetSocketAddress
+import java.time.Duration
 import java.util.Optional
 import java.util.concurrent.CompletionStage
+import java.util.function.Function
 
 import scala.concurrent.Future
+import scala.jdk.DurationConverters._
 import scala.jdk.FutureConverters._
 import scala.util.Try
 
@@ -530,6 +533,51 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
       settings: ConnectionPoolSettings,
       log: LoggingAdapter): CompletionStage[HttpResponse] =
     delegate.singleRequest(request.asScala, connectionContext.asScala, settings.asScala, log).asJava
+
+  /**
+   * Creates a reusable request function with optional HTTP/1.1 recovery from an early 417,
+   * using the default TLS context and connection pool settings. Only eligible idempotent
+   * requests to the fixed origin use dedicated connections; other requests use `singleRequest`.
+   * Dedicated attempts bypass the pool's limits, retries and subscription timeout. Bound
+   * concurrency at the caller and consume or discard each returned entity promptly.
+   *
+   * @since 2.1.0
+   */
+  def singleRequestWithExpectContinueRetry(
+      retryOrigin: Uri,
+      policy: ExpectContinuePolicy,
+      retryBudget: Duration): Function[HttpRequest, CompletionStage[HttpResponse]] = {
+    val execute = delegate.singleRequestWithExpectContinueRetry(retryOrigin.asScala(), policy, retryBudget.toScala)
+    request => execute(request.asScala).asJava
+  }
+
+  /**
+   * Creates a reusable request function with explicit TLS context, connection pool settings
+   * and logging. Recovery is limited to one retry without the explicit `Expect: 100-continue`
+   * field for an idempotent request with a nonempty strict entity to the fixed origin. The
+   * policy is consulted only if the original attempt receives a final 417 before releasing
+   * the body. A request policy may only narrow this decision.
+   *
+   * The positive budget bounds the dedicated attempts and disposal of the replaced response.
+   * It does not bound consumption of the response entity returned to the caller.
+   *
+   * Dedicated attempts use the effective connection settings for the origin but bypass the
+   * pool's connection and open-request limits, automatic retries, and response-entity subscription
+   * timeout. Bound concurrency at the caller and consume or discard each returned entity promptly.
+   *
+   * @since 2.1.0
+   */
+  def singleRequestWithExpectContinueRetry(
+      retryOrigin: Uri,
+      policy: ExpectContinuePolicy,
+      retryBudget: Duration,
+      connectionContext: HttpsConnectionContext,
+      settings: ConnectionPoolSettings,
+      log: LoggingAdapter): Function[HttpRequest, CompletionStage[HttpResponse]] = {
+    val execute = delegate.singleRequestWithExpectContinueRetry(
+      retryOrigin.asScala(), policy, retryBudget.toScala, connectionContext.asScala, settings.asScala, log)
+    request => execute(request.asScala).asJava
+  }
 
   /**
    * Constructs a WebSocket [[pekko.stream.javadsl.BidiFlow]].

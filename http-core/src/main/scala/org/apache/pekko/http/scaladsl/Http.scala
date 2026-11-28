@@ -27,6 +27,7 @@ import org.apache.pekko
 import pekko.actor._
 import pekko.annotation.{ DoNotInherit, InternalApi, InternalStableApi }
 import pekko.event.LoggingAdapter
+import pekko.http.ExpectContinuePolicy
 import pekko.http.impl.engine.HttpConnectionIdleTimeoutBidi
 import pekko.http.impl.engine.client._
 import pekko.http.impl.engine.http2.Http2
@@ -608,6 +609,43 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
     catch {
       case e: IllegalUriException => FastFuture.failed(e)
     }
+
+  /**
+   * Creates a reusable request function with optional HTTP/1.1 recovery from an early 417.
+   *
+   * Only idempotent requests to the given HTTP or HTTPS origin (scheme, host and effective port)
+   * with one explicit modeled `Expect: 100-continue` field and a nonempty strict entity are
+   * eligible. These requests use dedicated connections. If their own attempt receives a final
+   * 417 before releasing the body and the policy permits recovery, the request can be sent
+   * once more without that field. A request's [[pekko.http.ExpectContinuePolicy.attributeKey]]
+   * may narrow but cannot enable or widen the configured policy.
+   *
+   * Other requests use [[singleRequest]] normally. A positive `retryBudget` bounds the dedicated
+   * attempts and disposal of a replaced response, not consumption of the returned response's
+   * entity. When recovery is disabled, the function always uses [[singleRequest]].
+   *
+   * Dedicated attempts use the effective connection settings for the origin but bypass the
+   * pool's connection and open-request limits, automatic retries, and response-entity subscription
+   * timeout. Bound concurrency at the caller and consume or discard each returned entity promptly.
+   *
+   * @since 2.1.0
+   */
+  def singleRequestWithExpectContinueRetry(
+      retryOrigin: Uri,
+      policy: ExpectContinuePolicy,
+      retryBudget: FiniteDuration,
+      connectionContext: HttpsConnectionContext = defaultClientHttpsContext,
+      settings: ConnectionPoolSettings = defaultConnectionPoolSettings,
+      log: LoggingAdapter = system.log): HttpRequest => Future[HttpResponse] = {
+    val ordinary: HttpRequest => Future[HttpResponse] =
+      request => singleRequest(request, connectionContext, settings, log)
+    if (policy eq ExpectContinuePolicy.disabled) ordinary
+    else {
+      val connectionSettings = settings.forHost(retryOrigin.authority.host.toString).connectionSettings
+      Http1ExpectContinueExecutor.wrap(ordinary, retryOrigin, policy, retryBudget, this, connectionContext,
+        connectionSettings, log)(systemMaterializer)
+    }
+  }
 
   /**
    * Constructs a [[pekko.http.scaladsl.Http.WebSocketClientLayer]] stage using the configured default [[pekko.http.scaladsl.settings.ClientConnectionSettings]],

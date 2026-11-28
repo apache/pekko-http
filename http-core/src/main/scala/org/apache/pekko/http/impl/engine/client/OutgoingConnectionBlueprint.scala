@@ -13,9 +13,12 @@
 
 package org.apache.pekko.http.impl.engine.client
 
+import java.util.concurrent.atomic.AtomicReference
+
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
-import scala.concurrent.Promise
+import scala.concurrent.{ Future, Promise }
+import scala.util.Failure
 
 import org.apache.pekko
 import pekko.NotUsed
@@ -27,8 +30,17 @@ import pekko.http.impl.util.LogByteStringTools._
 import pekko.http.impl.util._
 import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.model.headers
-import pekko.http.scaladsl.model.{ HttpRequest, HttpResponse, IllegalResponseException, ResponseEntity }
+import pekko.http.scaladsl.model.{
+  AttributeKey,
+  HttpProtocols,
+  HttpRequest,
+  HttpResponse,
+  IllegalResponseException,
+  ResponseEntity,
+  StatusCodes
+}
 import pekko.http.scaladsl.settings.{ ClientConnectionSettings, ParserSettings }
+import pekko.http.{ ExpectContinuePolicy, ExpectContinuePolicySupport }
 import pekko.stream.TLSProtocol._
 import pekko.stream._
 import pekko.stream.scaladsl._
@@ -75,7 +87,12 @@ private[http] object OutgoingConnectionBlueprint {
       val renderingContextCreation = b.add {
         Flow[HttpRequest].map { request =>
           val sendEntityTrigger =
-            request.headers.collectFirst { case headers.Expect.`100-continue` => Promise[NotUsed]().future }
+            request.headers.collectFirst {
+              case headers.Expect.`100-continue` =>
+                val gate = Promise[NotUsed]().future
+                if (request.attributes.nonEmpty) Http1ExpectContinueAttempt.captureNativeGate(request, gate)
+                gate
+            }
           RequestRenderingContext(request, hostHeader, sendEntityTrigger)
         }
       }
@@ -377,4 +394,65 @@ private[http] object OutgoingConnectionBlueprint {
   class UnexpectedConnectionClosureException(outstandingResponses: Int)
       extends RuntimeException(
         s"The http server closed the connection unexpectedly before delivering responses for $outstandingResponses outstanding requests")
+}
+
+/**
+ * INTERNAL API
+ *
+ * One opt-in HTTP/1.1 attempt's observation of the native Expect gate. This does not run a policy, own an entity,
+ * or submit another request. The dispatching operation must pair it with its own final response.
+ */
+@InternalApi
+private[http] final class Http1ExpectContinueAttempt private (val policy: ExpectContinuePolicy) {
+  import Http1ExpectContinueAttempt._
+
+  private val state = new AtomicReference[Observation](AwaitingGate)
+
+  private def capture(request: HttpRequest, gate: Future[NotUsed]): Unit = {
+    // Check the actual request entering the connection. A repeated binding cannot inherit the earlier gate.
+    if (!isEligible(request, policy) || !state.compareAndSet(AwaitingGate, ObservedGate(gate)))
+      state.set(Retired)
+  }
+
+  /** Consume the observation once for the final response from this dispatch. */
+  def takeRejectionBeforeBody(finalResponse: HttpResponse): Boolean =
+    state.getAndSet(Retired) match {
+      case ObservedGate(gate) if finalResponse.status == StatusCodes.ExpectationFailed =>
+        gate.value match {
+          case Some(Failure(HttpResponseParser.OneHundredContinueError)) => true
+          case _                                                         => false
+        }
+      case _ => false
+    }
+
+  /** Release the observation when no final response is available for this dispatch. */
+  def retire(): Unit = state.set(Retired)
+}
+
+/** INTERNAL API */
+@InternalApi
+private[http] object Http1ExpectContinueAttempt {
+  private sealed trait Observation
+  private case object AwaitingGate extends Observation
+  private final case class ObservedGate(gate: Future[NotUsed]) extends Observation
+  private case object Retired extends Observation
+
+  private val key = AttributeKey[Http1ExpectContinueAttempt]("pekko.http.client.http1-expect-attempt")
+
+  private def isEligible(request: HttpRequest, policy: ExpectContinuePolicy): Boolean =
+    request.protocol == HttpProtocols.`HTTP/1.1` &&
+    ExpectContinuePolicySupport.eligibleContentLength(request, request.protocol, policy).isDefined
+
+  /** Prepare one internal dispatch; no request attributes are created for an ineligible or disabled request. */
+  def prepare(request: HttpRequest, clientPolicy: ExpectContinuePolicy)
+      : Option[(HttpRequest, Http1ExpectContinueAttempt)] = {
+    val policy = ExpectContinuePolicySupport.forRequest(request, clientPolicy)
+    if (isEligible(request, policy) && request.attribute(key).isEmpty) {
+      val attempt = new Http1ExpectContinueAttempt(policy)
+      Some(request.addAttribute(key, attempt) -> attempt)
+    } else None
+  }
+
+  private[client] def captureNativeGate(request: HttpRequest, gate: Future[NotUsed]): Unit =
+    request.attribute(key).foreach(_.capture(request, gate))
 }
