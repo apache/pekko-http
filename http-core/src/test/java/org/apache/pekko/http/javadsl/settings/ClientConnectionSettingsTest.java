@@ -14,6 +14,8 @@
 package org.apache.pekko.http.javadsl.settings;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -40,6 +42,22 @@ public class ClientConnectionSettingsTest {
     } finally {
       TestKit.shutdownActorSystem(sys);
     }
+  }
+
+  @Test
+  public void testReadBackManagedWebSocketCompressionSetting() {
+    ClientConnectionSettings original = ClientConnectionSettings.create("");
+    ClientConnectionSettings enabled =
+        original.withWebsocketSettings(
+            original.getWebsocketSettings().withClientCompressionEnabled(true));
+
+    assertTrue(enabled.getWebsocketSettings().getClientCompressionEnabled());
+    assertFalse(original.getWebsocketSettings().getClientCompressionEnabled());
+    assertFalse(
+        enabled
+            .getWebsocketSettings()
+            .withClientCompressionEnabled(false)
+            .getClientCompressionEnabled());
   }
 
   @Test

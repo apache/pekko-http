@@ -185,7 +185,7 @@ private[pekko] object WebSocketSettingsImpl { // on purpose not extending Settin
   def clientFromRoot(root: Config): WebSocketSettingsImpl =
     client(root.getConfig("pekko.http.client.websocket"))
   def client(config: Config): WebSocketSettingsImpl =
-    fromConfig(config, WebSocketCompressionSettingsImpl.Disabled, readOpeningTimeout(config))
+    fromConfig(config, WebSocketCompressionSettingsImpl.clientFromConfig(config), readOpeningTimeout(config))
 
   private def fromConfig(
       inner: Config,
@@ -234,7 +234,41 @@ private[pekko] final case class WebSocketCompressionSettingsImpl(
     compressionLevel: Int,
     preferredClientWindowSize: Int,
     allowServerNoContext: Boolean,
-    preferredClientNoContext: Boolean) {
+    preferredClientNoContext: Boolean,
+    clientEnabled: Boolean) {
+  // Preserve the 2.0 constructor, copy and companion apply JVM descriptors.
+  // This class is internal to Scala, but those descriptors are public in the released jars.
+  def this(
+      enabled: Boolean,
+      maxAllocation: Long,
+      compressionLevel: Int,
+      preferredClientWindowSize: Int,
+      allowServerNoContext: Boolean,
+      preferredClientNoContext: Boolean) =
+    this(enabled, maxAllocation, compressionLevel, preferredClientWindowSize, allowServerNoContext,
+      preferredClientNoContext, false)
+
+  def copy(
+      enabled: Boolean,
+      maxAllocation: Long,
+      compressionLevel: Int,
+      preferredClientWindowSize: Int,
+      allowServerNoContext: Boolean,
+      preferredClientNoContext: Boolean): WebSocketCompressionSettingsImpl =
+    new WebSocketCompressionSettingsImpl(enabled, maxAllocation, compressionLevel, preferredClientWindowSize,
+      allowServerNoContext, preferredClientNoContext, clientEnabled)
+
+  def copy(
+      enabled: Boolean = this.enabled,
+      maxAllocation: Long = this.maxAllocation,
+      compressionLevel: Int = this.compressionLevel,
+      preferredClientWindowSize: Int = this.preferredClientWindowSize,
+      allowServerNoContext: Boolean = this.allowServerNoContext,
+      preferredClientNoContext: Boolean = this.preferredClientNoContext,
+      clientEnabled: Boolean = this.clientEnabled): WebSocketCompressionSettingsImpl =
+    new WebSocketCompressionSettingsImpl(enabled, maxAllocation, compressionLevel, preferredClientWindowSize,
+      allowServerNoContext, preferredClientNoContext, clientEnabled)
+
   require(maxAllocation >= 0, "websocket compression max-allocation must be >= 0")
   require(compressionLevel >= 0 && compressionLevel <= 9, "websocket compression level must be between 0 and 9")
   require(
@@ -245,6 +279,16 @@ private[pekko] final case class WebSocketCompressionSettingsImpl(
 /** INTERNAL API */
 @InternalApi
 private[pekko] object WebSocketCompressionSettingsImpl {
+  def apply(
+      enabled: Boolean,
+      maxAllocation: Long,
+      compressionLevel: Int,
+      preferredClientWindowSize: Int,
+      allowServerNoContext: Boolean,
+      preferredClientNoContext: Boolean): WebSocketCompressionSettingsImpl =
+    new WebSocketCompressionSettingsImpl(enabled, maxAllocation, compressionLevel, preferredClientWindowSize,
+      allowServerNoContext, preferredClientNoContext)
+
   val Disabled: WebSocketCompressionSettingsImpl =
     WebSocketCompressionSettingsImpl(
       enabled = false,
@@ -253,6 +297,20 @@ private[pekko] object WebSocketCompressionSettingsImpl {
       preferredClientWindowSize = 15,
       allowServerNoContext = false,
       preferredClientNoContext = false)
+
+  def clientFromConfig(c: Config): WebSocketCompressionSettingsImpl = {
+    if (!c.hasPath("compression")) Disabled
+    else {
+      val compression = c.getConfig("compression")
+      val levelPath = "permessage-deflate.compression-level"
+      Disabled.copy(
+        maxAllocation =
+          if (compression.hasPath("max-allocation")) compression.getBytes("max-allocation") else Disabled.maxAllocation,
+        compressionLevel =
+          if (compression.hasPath(levelPath)) compression.getInt(levelPath) else Disabled.compressionLevel,
+        clientEnabled = compression.hasPath("enabled") && compression.getBoolean("enabled"))
+    }
+  }
 
   def fromConfig(c: Config): WebSocketCompressionSettingsImpl = {
     val perMessageDeflate = c.getConfig("permessage-deflate")

@@ -15,12 +15,14 @@ package org.apache.pekko.http.impl.engine.ws
 
 import java.util.Random
 import java.util.concurrent.TimeoutException
+import java.util.zip.{ Deflater, Inflater }
 
 import com.typesafe.config.ConfigFactory
 
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.actor.ActorSystem
+import pekko.http.impl.settings.WebSocketCompressionSettingsImpl
 import pekko.http.scaladsl.model.ws.{ InvalidUpgradeResponse, WebSocketUpgradeResponse }
 import pekko.stream.{ ClosedShape, SystemMaterializer }
 import pekko.stream.TLSProtocol._
@@ -513,6 +515,310 @@ class WebSocketClientSpec extends PekkoSpecWithMaterializer("pekko.http.client.w
 
         sendWSFrame(Protocol.Opcode.Text, ByteString("Message 1"), fin = true)
         expectMaskedFrameOnNetwork(Protocol.Opcode.Text, ByteString("Message 1"), fin = true)
+      }
+    }
+
+    "negotiate managed client compression when enabled" should {
+      abstract class CompressionSetup extends TestSetup with ClientProbes {
+        override def settings: ClientConnectionSettings =
+          ClientConnectionSettings("pekko.http.client.websocket.compression.enabled = on")
+            .withUserAgentHeader(Some(`User-Agent`(List(ProductVersion("pekko-http", "test")))))
+            .withWebsocketRandomFactory(() => random)
+
+        def expectOffer(extension: String): Unit =
+          expectWireData(ByteString(UpgradeRequestBytes.utf8String.replace(
+            "Host: example.org", s"Sec-WebSocket-Extensions: $extension\r\nHost: example.org")))
+
+        def withSelectedExtension(extension: String): ByteString =
+          ByteString(UpgradeResponseBytes.utf8String.replace(
+            "Connection: upgrade", s"Sec-WebSocket-Extensions: $extension\r\nConnection: upgrade"))
+
+        def compressedText(hex: String): ByteString = {
+          val payload = ByteString.fromArray(hex.grouped(2).map(Integer.parseInt(_, 16).toByte).toArray)
+          ByteString(0xC1.toByte, payload.length.toByte) ++ payload
+        }
+
+        def expectCompressedClientText(text: String, inflater: Inflater): Unit = {
+          val header = expectBytes(2)
+          header(0) shouldBe 0xC1.toByte // FIN, RSV1, text
+          (header(1) & 0x80) shouldBe 0x80
+          val key = expectBytes(4)
+          val payload = expectBytes(header(1) & 0x7F)
+          val unmasked = payload.zipWithIndex.map { case (b, i) => (b ^ key(i % 4)).toByte }.toArray
+          inflater.setInput(unmasked ++ Array[Byte](0, 0, -1, -1))
+          val decoded = new Array[Byte](1024)
+          val count = inflater.inflate(decoded)
+          ByteString.fromArray(decoded, 0, count).utf8String shouldBe text
+        }
+
+        def cleanup(): Unit = {
+          messagesOut.sendComplete()
+          messagesIn.cancel()
+          netOut.cancel()
+          netIn.sendComplete()
+        }
+      }
+
+      "process a compressed frame coalesced with the 101 and compress before applying the client mask" in {
+        val firstText = "hello from the server! " * 8
+        val secondText = "second server message! " * 7
+        Utils.assertAllStagesStopped {
+          new CompressionSetup {
+            override def settings: ClientConnectionSettings = {
+              // Permit each existing message individually, including a message exactly at the configured limit.
+              val defaults = ClientConnectionSettings(
+                s"pekko.http.client.websocket.compression.max-allocation = ${firstText.length}")
+                .withUserAgentHeader(Some(`User-Agent`(List(ProductVersion("pekko-http", "test")))))
+                .withWebsocketRandomFactory(() => random)
+              defaults.withWebsocketSettings(
+                defaults.websocketSettings.withClientCompressionEnabled(true).withOpeningTimeout(10.seconds.dilated))
+            }
+
+            try {
+              expectOffer("permessage-deflate")
+              messagesIn.request(2)
+              // Independently generated with Python zlib compressobj(wbits=-12), Z_SYNC_FLUSH,
+              // dropping the final four octets. A new compressor supplies each server message.
+              val extension =
+                "permessage-deflate; server_max_window_bits=12; server_no_context_takeover; client_no_context_takeover"
+              sendWireData(withSelectedExtension(extension) ++
+                compressedText("ca48cdc9c957482bcacf5528c94855284e2d2a4b2d5254c818ecc20000"))
+              response.awaitResult(1.second.dilated) shouldBe a[ValidUpgrade]
+              messagesIn.expectNext(TextMessage(firstText))
+              sendWireData(compressedText("2a4e4dcecf4b51284e2d2a4b2d52c84d2d2e4e4c4f5504f2078b3000"))
+              messagesIn.expectNext(TextMessage(secondText))
+
+              val text = "a repeated client message with a reusable dictionary " * 8
+              for (_ <- 1 to 2) {
+                messagesOut.sendNext(TextMessage(text))
+                // A fresh independent inflater for each emitted message also checks client_no_context_takeover.
+                val inflater = new Inflater(true)
+                try expectCompressedClientText(text, inflater)
+                finally inflater.end()
+              }
+            } finally cleanup()
+          }
+        }
+      }
+
+      "decode a fragmented compressed server message across a Ping and reply with a masked Pong" in {
+        Utils.assertAllStagesStopped {
+          new CompressionSetup {
+            val text = "a fragmented compressed message from the server"
+            val next = "the next server message"
+            val ping = ByteString("ping")
+
+            def compressedPayload(): ByteString = {
+              val deflater = new Deflater(Deflater.DEFAULT_COMPRESSION, true)
+              try {
+                deflater.setInput(ByteString(text).toArray)
+                val output = new Array[Byte](128)
+                val size = deflater.deflate(output, 0, output.length, Deflater.SYNC_FLUSH)
+                size should be > 5
+                size should be < output.length
+                ByteString.fromArray(output, 0, size - 4)
+              } finally deflater.end()
+            }
+
+            try {
+              expectOffer("permessage-deflate")
+              messagesIn.request(2)
+              sendWireData(withSelectedExtension("permessage-deflate"))
+              response.awaitResult(1.second.dilated) shouldBe a[ValidUpgrade]
+
+              val compressed = compressedPayload()
+              val (first, last) = compressed.splitAt(compressed.size / 2)
+              sendWSFrame(Protocol.Opcode.Text, first, fin = false, rsv1 = true)
+              val delivered = messagesIn.expectNext() match {
+                case message: TextMessage.Streamed => message.toStrict(3.seconds.dilated)
+                case other                         => fail(s"Expected streaming text, got $other")
+              }
+
+              sendWSFrame(Protocol.Opcode.Ping, ping, fin = true)
+              // Check the client replies before FIN, with no RSV bits and with a mask.
+              expectBytes(2) shouldBe ByteString(
+                (Protocol.FIN_MASK | Protocol.Opcode.Pong.code).toByte, (Protocol.MASK_MASK | ping.size).toByte)
+              val key = expectBytes(4)
+              val maskedPing = ByteString.fromArray(
+                ping.iterator.zipWithIndex.map { case (byte, index) => (byte ^ key(index % 4)).toByte }.toArray)
+              expectBytes(maskedPing)
+              delivered.isCompleted shouldBe false
+
+              sendWSFrame(Protocol.Opcode.Continuation, last, fin = true)
+              delivered.awaitResult(3.seconds.dilated) shouldBe TextMessage(text)
+              sendWSFrame(Protocol.Opcode.Text, ByteString(next), fin = true)
+              messagesIn.expectNext(TextMessage(next))
+            } finally cleanup()
+          }
+        }
+      }
+
+      "preserve the server inflater context when the peer accepts a bare offer" in {
+        Utils.assertAllStagesStopped {
+          new CompressionSetup {
+            try {
+              expectOffer("permessage-deflate")
+              messagesIn.request(2)
+              val text = "a short legal message with duplicate bytes " * 8
+              sendWireData(withSelectedExtension("permessage-deflate"))
+              response.awaitResult(1.second.dilated) shouldBe a[ValidUpgrade]
+              // Generated with a single Python zlib compressobj(wbits=-15) and successive Z_SYNC_FLUSHes.
+              // The second message refers to the first message's dictionary.
+              sendWireData(compressedText(
+                "4a5428cec82f2a51c8494d4fcc51c84d2d2e4e4c4f5528cf2cc95048292dc8c94c4e2c495548aa2c492d56481c554abc520000"))
+              messagesIn.expectNext(TextMessage(text))
+              sendWireData(compressedText("1a554a1ba50000"))
+              messagesIn.expectNext(TextMessage(text))
+            } finally cleanup()
+          }
+        }
+      }
+
+      "reset only the client compressor when client_no_context_takeover is negotiated" in {
+        Utils.assertAllStagesStopped {
+          new CompressionSetup {
+            val text = "a small ordinary message that can reuse its dictionary " * 8
+
+            def deflateText(deflater: Deflater): ByteString = {
+              deflater.setInput(ByteString(text).toArray)
+              val output = new Array[Byte](1024)
+              val size = deflater.deflate(output, 0, output.length, Deflater.SYNC_FLUSH)
+              size should be > 4
+              size should be < output.length
+              ByteString.fromArray(output, 0, size - 4)
+            }
+
+            try {
+              expectOffer("permessage-deflate")
+              messagesIn.request(2)
+              sendWireData(withSelectedExtension("permessage-deflate; client_no_context_takeover"))
+              response.awaitResult(1.second.dilated) shouldBe a[ValidUpgrade]
+
+              val deflater = new Deflater(Deflater.DEFAULT_COMPRESSION, true)
+              val (first, second) =
+                try (deflateText(deflater), deflateText(deflater))
+                finally deflater.end()
+              // The server's second message uses history; don't pin any particular zlib byte sequence.
+              second.size should be < first.size
+              for (payload <- Seq(first, second)) {
+                sendWSFrame(Protocol.Opcode.Text, payload, fin = true, rsv1 = true)
+                messagesIn.expectNext(TextMessage(text))
+              }
+
+              // The same text from the client must decompress without any previous-message history.
+              for (_ <- 1 to 2) {
+                messagesOut.sendNext(TextMessage(text))
+                val inflater = new Inflater(true)
+                try expectCompressedClientText(text, inflater)
+                finally inflater.end()
+              }
+            } finally cleanup()
+          }
+        }
+      }
+
+      "continue uncompressed when the peer declines its offer" in {
+        Utils.assertAllStagesStopped {
+          new CompressionSetup {
+            try {
+              expectOffer("permessage-deflate")
+              sendWireData(UpgradeResponseBytes)
+              response.awaitResult(1.second.dilated) shouldBe a[ValidUpgrade]
+              messagesOut.sendNext(TextMessage("plain client message"))
+              expectMaskedFrameOnNetwork(Protocol.Opcode.Text, ByteString("plain client message"), fin = true)
+
+              messagesIn.request(1)
+              sendWSFrame(Protocol.Opcode.Text, ByteString("plain client message"), fin = true)
+              messagesIn.expectNext(TextMessage("plain client message"))
+            } finally cleanup()
+          }
+        }
+      }
+
+      "reject an unoffered client compression window and stop the deferred codec stages" in {
+        Utils.assertAllStagesStopped {
+          new CompressionSetup {
+            try {
+              expectOffer("permessage-deflate")
+              messagesIn.request(1)
+              sendWireData(withSelectedExtension("permessage-deflate; client_max_window_bits=10"))
+
+              expectInvalidUpgradeResponseCause(
+                "WebSocket server at ws://example.org/ws returned response with unsupported permessage-deflate parameters.")
+              expectNetworkAbort()
+              netIn.expectCancellation()
+            } finally cleanup()
+          }
+        }
+      }
+
+      "reject invalid permessage-deflate parameter syntax received in an upgrade response" in {
+        Utils.assertAllStagesStopped {
+          new CompressionSetup {
+            try {
+              expectOffer("permessage-deflate")
+              messagesIn.request(1)
+              sendWireData(withSelectedExtension("permessage-deflate; server_no_context_takeover=true"))
+
+              expectInvalidUpgradeResponseCause(
+                "WebSocket server at ws://example.org/ws returned response with invalid WebSocket extension syntax.")
+              expectNetworkAbort()
+              netIn.expectCancellation()
+            } finally cleanup()
+          }
+        }
+      }
+
+      "reject a parsed extension flagged for invalid parameter syntax before selecting a codec" in {
+        val extensions = Seq(PerMessageDeflate.ClientOffer)
+        val settings = WebSocketCompressionSettingsImpl.Disabled.copy(clientEnabled = true)
+        val valid = `Sec-WebSocket-Extensions`(extensions)
+        PerMessageDeflate.negotiateClient(Seq(valid), settings).map(_.isDefined) shouldBe Right(true)
+
+        // The normalized values alone are acceptable. Validation must also honor the parser's finding.
+        val flagged = `Sec-WebSocket-Extensions`.fromParser(extensions, invalidPerMessageDeflateParameterSyntax = true)
+        PerMessageDeflate.negotiateClient(Seq(flagged), settings) shouldBe
+        Left("response with invalid WebSocket extension syntax.")
+      }
+
+      "release deferred codecs when the peer closes before responding" in {
+        Utils.assertAllStagesStopped {
+          new CompressionSetup {
+            try {
+              expectOffer("permessage-deflate")
+              messagesIn.request(1)
+              closeNetworkInput()
+              messagesIn.expectComplete()
+              response.failed.awaitResult(1.second.dilated).getMessage shouldBe
+              "Connection closed before WebSocket upgrade completed."
+            } finally {
+              messagesOut.sendComplete()
+              messagesIn.cancel()
+              netOut.cancel()
+            }
+          }
+        }
+      }
+
+      "leave an existing caller offer alone without installing the managed codec" in {
+        Utils.assertAllStagesStopped {
+          new CompressionSetup {
+            override def clientLayer: Http.WebSocketClientLayer =
+              Http(system).webSocketClientLayer(
+                WebSocketRequest(targetUri,
+                  extraHeaders = List(
+                    RawHeader("Sec-WebSocket-Extensions", "permessage-deflate; client_no_context_takeover"))),
+                settings = settings)
+
+            try {
+              expectOffer("permessage-deflate; client_no_context_takeover")
+              sendWireData(withSelectedExtension("permessage-deflate"))
+              response.awaitResult(1.second.dilated) shouldBe a[ValidUpgrade]
+              messagesOut.sendNext(TextMessage("plain client message"))
+              expectMaskedFrameOnNetwork(Protocol.Opcode.Text, ByteString("plain client message"), fin = true)
+            } finally cleanup()
+          }
+        }
       }
     }
 

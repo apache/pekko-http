@@ -30,7 +30,8 @@ import pekko.NotUsed
 import pekko.annotation.InternalApi
 import pekko.http.impl.settings.WebSocketCompressionSettingsImpl
 import pekko.http.impl.util.ByteStringOutputStream
-import pekko.http.scaladsl.model.headers.WebSocketExtension
+import pekko.http.scaladsl.model.HttpHeader
+import pekko.http.scaladsl.model.headers.{ `Sec-WebSocket-Extensions`, WebSocketExtension }
 import pekko.stream.scaladsl.BidiFlow
 import pekko.stream.scaladsl.Flow
 import pekko.stream.stage.GraphStage
@@ -45,7 +46,8 @@ import pekko.util.{ ByteString, ByteStringBuilder }
  */
 @InternalApi
 private[http] object PerMessageDeflate {
-  private val ExtensionName = "permessage-deflate"
+  val ExtensionName = "permessage-deflate"
+  val ClientOffer: WebSocketExtension = WebSocketExtension(ExtensionName, Map.empty)
   private val ClientMaxWindowBits = "client_max_window_bits"
   private val ServerMaxWindowBits = "server_max_window_bits"
   private val ClientNoContextTakeover = "client_no_context_takeover"
@@ -72,6 +74,12 @@ private[http] object PerMessageDeflate {
       settings: WebSocketCompressionSettingsImpl) {
     def bidiFlow: BidiFlow[FrameEventOrError, FrameEventOrError, FrameEvent, FrameEvent, NotUsed] =
       BidiFlow.fromFlows(inflaterFlow, deflaterFlow)
+
+    def clientInflaterFlow: Flow[FrameEventOrError, FrameEventOrError, NotUsed] =
+      createInflaterFlow(serverNoContextTakeover, settings, DefaultCompressionFactory)
+
+    def clientDeflaterFlow: Flow[FrameEvent, FrameEvent, NotUsed] =
+      createDeflaterFlow(clientNoContextTakeover, settings, DefaultCompressionFactory)
 
     def messageBidiFlow: BidiFlow[FrameEventOrError, FrameEventOrError, FrameEvent, FrameEvent, NotUsed] =
       BidiFlow.fromFlows(inflaterFlow, selectiveDeflaterFlow(_.header.rsv1, rsv1IndicatesCompression = true))
@@ -135,6 +143,43 @@ private[http] object PerMessageDeflate {
           compressionFactory,
           _ => true,
           rsv1IndicatesCompression = false)))
+
+  def negotiateClient(
+      headers: Seq[HttpHeader],
+      settings: WebSocketCompressionSettingsImpl): Either[String, Option[Negotiated]] = {
+    val extensionHeaders = headers.filter(_.is("sec-websocket-extensions"))
+    if (extensionHeaders.exists {
+        case header: `Sec-WebSocket-Extensions` => header.invalidPerMessageDeflateParameterSyntax
+        case _                                  => true // The generic parser fell back to a raw header.
+      })
+      Left("response with invalid WebSocket extension syntax.")
+    else {
+      val selected = extensionHeaders.collect {
+        case header: `Sec-WebSocket-Extensions` => header.extensions
+      }.flatten
+      negotiateClientExtension(selected, settings)
+    }
+  }
+
+  private def negotiateClientExtension(
+      selected: Seq[WebSocketExtension],
+      settings: WebSocketCompressionSettingsImpl): Either[String, Option[Negotiated]] =
+    selected.filter(_.name.equalsIgnoreCase(ExtensionName)) match {
+      case Seq() => Right(None)
+      case Seq(extension) if extension.params.forall {
+            case (ServerNoContextTakeover | ClientNoContextTakeover, "") => true
+            case (ServerMaxWindowBits, bits)                             =>
+              bits == "8" || bits == "9" ||
+              (bits.length == 2 && bits.head == '1' && bits(1) >= '0' && bits(1) <= '5')
+            // The stock JDK Deflater cannot select a smaller client window, so the bare offer did not include it.
+            case _ => false
+          } =>
+        Right(Some(Negotiated(extension,
+          extension.params.contains(ServerNoContextTakeover),
+          extension.params.contains(ClientNoContextTakeover),
+          settings)))
+      case _ => Left("response with unsupported permessage-deflate parameters.")
+    }
 
   def negotiate(
       requested: Seq[WebSocketExtension],

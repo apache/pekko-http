@@ -28,7 +28,9 @@ private[parser] trait WebSocketHeaders { this: Parser with CommonRules with Comm
   }
 
   def `sec-websocket-extensions` = rule {
-    listStart ~ oneOrMore(extension).separatedBy(listSep) ~ listEnd ~ EOI ~> (`Sec-WebSocket-Extensions`(_))
+    listStart ~ oneOrMore(extension).separatedBy(listSep) ~ listEnd ~ EOI ~>
+    ((parsed: Seq[(WebSocketExtension, Boolean)]) =>
+      `Sec-WebSocket-Extensions`.fromParser(parsed.map(_._1), parsed.exists(_._2)))
   }
 
   def `sec-websocket-key` = rule {
@@ -55,12 +57,22 @@ private[parser] trait WebSocketHeaders { this: Parser with CommonRules with Comm
 
   private def extension = rule {
     `extension-token` ~ zeroOrMore(ws(";") ~ `extension-param`) ~>
-    ((name, params) => WebSocketExtension(name, Map(params: _*)))
+    ((name, params) => {
+      val normalized = params.iterator.map { case (key, value) => (key, value.getOrElse("")) }.toMap
+      // The public model normalizes parameters into a Map. Preserve the facts needed to validate
+      // a managed client response without changing the behavior of caller-supplied extensions.
+      val invalidPerMessageDeflateSyntax = name.equalsIgnoreCase("permessage-deflate") &&
+        (normalized.size != params.size || params.exists {
+          case ("server_no_context_takeover" | "client_no_context_takeover", value) => value.isDefined
+          case _                                                                    => false
+        })
+      (WebSocketExtension(name, normalized), invalidPerMessageDeflateSyntax)
+    })
   }
   private def `extension-token`: Rule1[String] = token
-  private def `extension-param`: Rule1[(String, String)] =
+  private def `extension-param`: Rule1[(String, Option[String])] =
     rule {
-      token ~ optional(ws("=") ~ word) ~> ((name: String, value: Option[String]) => (name, value.getOrElse("")))
+      token ~ optional(ws("=") ~ word) ~> ((name: String, value: Option[String]) => (name, value))
     }
 
   private def version = rule {
