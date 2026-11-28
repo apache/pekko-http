@@ -50,6 +50,11 @@ Use @scala[`WebSocketRequest.extraHeaders`]@java[`WebSocketRequest.addHeader`] t
 `Authorization` or `Origin`. Pekko HTTP generates `Sec-WebSocket-Key` and `Sec-WebSocket-Version` for the opening
 handshake; caller-supplied headers with either of these names are not sent, regardless of name casing.
 
+Use @scala[`WebSocketRequest.subprotocol`]@java[`WebSocketRequest.requestSubprotocol`] to require that the server selects
+one of the explicitly requested subprotocols. Without this requirement, you can offer optional subprotocols through
+additional `Sec-WebSocket-Protocol` request fields. The server can select one of those case-sensitive offers or none.
+If you set a requirement and add fields, only an explicitly requested subprotocol satisfies the requirement.
+
 ## Opening handshake timeout
 
 Set `pekko.http.client.websocket.opening-timeout` to bound how long the client waits for a complete upgrade

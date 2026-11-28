@@ -308,6 +308,11 @@ private[http] object Handshake {
      */
     def validateResponse(response: HttpResponse, subprotocols: Seq[String], key: `Sec-WebSocket-Key`,
         offeredExtensions: Set[String])
+        : Either[String, NegotiatedWebSocketSettings] =
+      validateResponse(response, subprotocols, key, offeredExtensions, requireSubprotocol = subprotocols.nonEmpty)
+
+    def validateResponse(response: HttpResponse, subprotocols: Seq[String], key: `Sec-WebSocket-Key`,
+        offeredExtensions: Set[String], requireSubprotocol: Boolean)
         : Either[String, NegotiatedWebSocketSettings] = {
       /*
        From http://tools.ietf.org/html/rfc6455#section-4.1
@@ -403,15 +408,26 @@ private[http] object Handshake {
       expectations(response) match {
         case None =>
           val subs = response.header[`Sec-WebSocket-Protocol`].flatMap(_.protocols.headOption)
+          val selectionAllowed = subs match {
+            case Some(selected) => subprotocols.contains(selected)
+            case None           => !requireSubprotocol
+          }
 
-          if (subprotocols.isEmpty && subs.isEmpty) Right(NegotiatedWebSocketSettings(None)) // no specific one selected
-          else if (subs.nonEmpty && subprotocols.contains(subs.get)) Right(NegotiatedWebSocketSettings(Some(subs.get)))
+          if (selectionAllowed) Right(NegotiatedWebSocketSettings(subs))
           else Left(
             s"response that indicated that the given subprotocol was not supported. (client supported: ${subprotocols.mkString(
                 ", ")}, server supported: $subs)")
         case Some(problem) => Left(problem)
       }
     }
+
+    /** Case-sensitive offers in request header fields that the HTTP renderer will send. */
+    def subprotocolOffers(headers: Seq[HttpHeader]): Seq[String] =
+      headers.iterator
+        .filter(header => header.is(`Sec-WebSocket-Protocol`.lowercaseName) && header.renderInRequests)
+        .flatMap(header => `Sec-WebSocket-Protocol`.parseFromValueString(header.value).toOption)
+        .flatMap(_.protocols)
+        .toList
   }
 
   val UpgradeHeader = Upgrade(List(UpgradeProtocol("websocket")))
