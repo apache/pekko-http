@@ -23,7 +23,7 @@ Release notes for Apache Pekko HTTP 1.5.0. See [GitHub Milestone for 1.5.0](http
 
 This release is binary compatible with Pekko HTTP 1.4.x. It adds a limit on the size of incoming HTTP/2 frames and includes further hardening changes to the HTTP parsing code. Some of the changes alter behavior in edge cases; see the notes below.
 
-It is strongly recommended that you avoid using Pekko 1.0.x jars with this release, you should use Pekko 1.1.x jars (or later 1.x releases) where possible. We don't expect there to be problems running with Pekko 1.0.x jars but Pekko HTTP 1.5 jars are built with Pekko 1.1 jars.
+It is recommended that you use the latest Pekko 1.x release with this release. Pekko HTTP 1.5 jars are built with Pekko 1.1 jars and work with any later Pekko 1.x release. It is strongly recommended that you avoid using Pekko 1.0.x jars; we don't expect there to be problems running with them, but they are older than the jars this release is built with.
 
 ### Behavior Changes
 * HTTP/2: the size of an incoming frame is bounded by the new `max-frame-size` setting
