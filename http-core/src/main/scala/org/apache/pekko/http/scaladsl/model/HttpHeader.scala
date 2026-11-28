@@ -90,7 +90,13 @@ object HttpHeader {
       val parser = new HeaderParser(value, settings)
       parser.`header-field-value`.run() match {
         case Success(preProcessedValue) =>
-          HeaderParser.parseFull(toRootLowerCase(name), preProcessedValue, settings) match {
+          val lowerName = toRootLowerCase(name)
+          val result =
+            if (lowerName == "content-type")
+              HeaderParser.parseContentTypeWithPlainQuotedMetadata(value, preProcessedValue, settings)
+                .getOrElse(HeaderParser.parseFull(lowerName, preProcessedValue, settings))
+            else HeaderParser.parseFull(lowerName, preProcessedValue, settings)
+          result match {
             case HeaderParser.Success(header) => ParsingResult.Ok(header, Nil)
             case HeaderParser.Failure(info)   =>
               val errors = info.withSummaryPrepended(s"Illegal HTTP header '$name'") :: Nil

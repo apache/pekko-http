@@ -127,6 +127,23 @@ class HeaderSpec extends AnyFreeSpec with Matchers {
         ContentType.parse("text/plain; charset=UTF8") shouldEqual Right(
           MediaTypes.`text/plain`.withCharset(HttpCharsets.`UTF-8`))
       }
+      "preserve spaces in ordinary quoted media metadata" in {
+        val doubleSpace = """application/vnd.example.notes; label="spring  edition""""
+        val singleSpace = """application/vnd.example.notes; label="spring edition""""
+        val bareToken = "application/vnd.example.notes; label=spring-edition"
+        val quotedToken = """application/vnd.example.notes; label="spring-edition""""
+
+        for ((input, label, rendered) <- List(
+            (doubleSpace, "spring  edition", doubleSpace),
+            (singleSpace, "spring edition", singleSpace),
+            (bareToken, "spring-edition", bareToken),
+            (quotedToken, "spring-edition", bareToken))) {
+          val scalaContentType = ContentType.parse(input).fold(errors => fail(errors.mkString(", ")), identity)
+          scalaContentType.mediaType.params("label") shouldEqual label
+          scalaContentType.value shouldEqual rendered
+          pekko.http.javadsl.model.ContentTypes.parse(input).value shouldEqual rendered
+        }
+      }
       "ignore empty parameter slots" in {
         ContentType.parse("text/plain;;charset=UTF-8") shouldEqual Right(
           MediaTypes.`text/plain`.withCharset(HttpCharsets.`UTF-8`))

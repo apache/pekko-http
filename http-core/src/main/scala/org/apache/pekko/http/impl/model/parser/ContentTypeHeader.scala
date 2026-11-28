@@ -16,7 +16,7 @@ package org.apache.pekko.http.impl.model.parser
 import scala.annotation.tailrec
 import scala.collection.immutable.TreeMap
 
-import org.parboiled2.Parser
+import org.parboiled2.{ Parser, Rule1 }
 
 import org.apache.pekko
 import pekko.http.scaladsl.model._
@@ -27,6 +27,23 @@ private[parser] trait ContentTypeHeader { this: Parser with CommonRules with Com
   def `content-type` = rule {
     `media-type` ~ EOI ~>
     ((main, sub, params) => headers.`Content-Type`(contentType(main, sub, params)))
+  }
+
+  // RFC 9110 section 5.6.4: spaces inside quoted values are data, not optional whitespace.
+  // Delay building the model until the plain-metadata alternative is selected.
+  def contentTypeWithPlainQuotedMetadata: Rule1[Option[() => HttpHeader]] = rule {
+    `media-type` ~ EOI ~>
+    ((main: String, sub: String, params: Seq[(String, String)]) =>
+      plainQuotedMetadata(main, sub, params))
+  }
+
+  private def plainQuotedMetadata(
+      main: String, sub: String, params: Seq[(String, String)]): Option[() => HttpHeader] = {
+    val spaced = params.iterator.filter(_._2.contains("  "))
+    if (!equalsAsciiCaseInsensitive(main, "multipart") && spaced.hasNext &&
+      !spaced.exists(p => equalsAsciiCaseInsensitive(p._1, "charset")))
+      Some(() => headers.`Content-Type`(contentType(main, sub, params)))
+    else None
   }
 
   @tailrec private def contentType(

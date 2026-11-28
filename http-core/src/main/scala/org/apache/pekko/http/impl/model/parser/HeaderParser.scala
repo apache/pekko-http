@@ -142,14 +142,33 @@ private[http] object HeaderParser {
           Failure(ErrorInfo(
             "Header parsing error",
             s"Rule for $headerName accepted trailing garbage. Is the parser missing a trailing EOI?"))
-        case Failure(e) =>
-          Failure(e.copy(summary = e.summary.filterNot(_ == EOI), detail = e.detail.filterNot(_ == EOI)))
+        case f: Failure   => withoutEndOfInput(f)
         case RuleNotFound => RuleNotFound
       }
     }
 
+  private def withoutEndOfInput(failure: Failure): Failure = {
+    val info = failure.info
+    Failure(info.copy(summary = info.summary.filterNot(_ == EOI), detail = info.detail.filterNot(_ == EOI)))
+  }
+
   def parseFull(headerName: String, value: String, settings: Settings = DefaultSettings): HeaderParser.Result =
     lookupParser(headerName, settings).map(_(value)).getOrElse(HeaderParser.RuleNotFound)
+
+  // Only used after the original field value has passed header-field-value validation.
+  def parseContentTypeWithPlainQuotedMetadata(
+      value: String, normalizedValue: String, settings: Settings): Option[Result] =
+    if (value.length > normalizedValue.length && value.indexOf('"') >= 0 && value.contains("  ") &&
+      value.forall(c => c >= ' ' && c <= '~')) {
+      import Parser.DeliveryScheme.Try
+      val input = value.trim + EOI
+      val parser = new HeaderParser(input, settings)
+      parser.contentTypeWithPlainQuotedMetadata.run().toOption.flatten
+        .filter(_ => parser.cursor == input.length).map { build =>
+          try Success(build())
+          catch { case NonFatal(error) => withoutEndOfInput(parser.failure(error)) }
+        }
+    } else None
 
   val (dispatch, ruleNames) = DynamicRuleDispatch[HeaderParser, HttpHeader :: HNil](
     "accept",
