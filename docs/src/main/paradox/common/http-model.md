@@ -357,6 +357,10 @@ Pekko HTTP matches modeled `Cache-Control` directive names case-insensitively, a
 [RFC 9111, Section 5.2](https://www.rfc-editor.org/rfc/rfc9111.html#section-5.2).
 It renders modeled names in lowercase and preserves the spelling of unmodeled directive names.
 
+Pekko HTTP accepts quoted decimal arguments when receiving modeled `max-age`, `s-maxage`, `max-stale`, and
+`min-fresh` directives for interoperability. It still renders their numeric arguments as unquoted tokens, as required
+for senders by [RFC 9111, Section 5.2](https://www.rfc-editor.org/rfc/rfc9111.html#section-5.2).
+
 Some headers have special status in HTTP and are therefore treated differently from "regular" headers:
 
 Content-Type

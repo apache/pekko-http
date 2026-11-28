@@ -13,14 +13,14 @@
 
 package org.apache.pekko.http.impl.model.parser
 
-import org.parboiled2.Rule0
+import org.parboiled2.{ Rule0, Rule1 }
 
 import org.apache.pekko
 import pekko.http.scaladsl.model.headers.CacheDirectives._
 import pekko.http.scaladsl.model.headers._
 
 private[parser] trait CacheControlHeader { this: HeaderParser =>
-  import CharacterClasses.tchar
+  import CharacterClasses.{ DIGIT, DQUOTE, tchar }
 
   // https://www.rfc-editor.org/rfc/rfc9111.html#section-5.2
   def `cache-control` = rule {
@@ -30,11 +30,11 @@ private[parser] trait CacheControlHeader { this: HeaderParser =>
   def `cache-directive` = rule(
     directiveName("no-store") ~ push(`no-store`)
     | directiveName("no-transform") ~ push(`no-transform`)
-    | directiveName("max-age") ~ '=' ~ `delta-seconds` ~>
+    | directiveName("max-age") ~ '=' ~ cacheDeltaSeconds ~>
     (`max-age`(_))
-    | directiveName("max-stale") ~ optional(ws('=') ~ `delta-seconds`) ~>
+    | directiveName("max-stale") ~ optional(ws('=') ~ cacheDeltaSeconds) ~>
     (`max-stale`(_))
-    | directiveName("min-fresh") ~ '=' ~ `delta-seconds` ~>
+    | directiveName("min-fresh") ~ '=' ~ cacheDeltaSeconds ~>
     (`min-fresh`(_))
     | directiveName("only-if-cached") ~ push(`only-if-cached`)
     | directiveName("public") ~ push(`public`)
@@ -44,11 +44,16 @@ private[parser] trait CacheControlHeader { this: HeaderParser =>
     (ws('=') ~ `field-names` ~> (`no-cache`(_)) | push(`no-cache`))
     | directiveName("must-revalidate") ~ push(`must-revalidate`)
     | directiveName("proxy-revalidate") ~ push(`proxy-revalidate`)
-    | directiveName("s-maxage") ~ '=' ~ `delta-seconds` ~>
+    | directiveName("s-maxage") ~ '=' ~ cacheDeltaSeconds ~>
     (`s-maxage`(_))
     | directiveName("immutable") ~ push(immutableDirective)
     | token ~ optional(ws('=') ~ word) ~>
     (CacheDirective.custom(_, _)))
+
+  // The shared number rule also consumes OWS. Inside quotes, require the closing quote directly after the digits.
+  private def cacheDeltaSeconds: Rule1[Long] = rule {
+    `delta-seconds` | DQUOTE ~ &(oneOrMore(DIGIT) ~ DQUOTE) ~ `delta-seconds` ~ DQUOTE
+  }
 
   // Keep custom names intact and only treat ASCII case variants of a complete known token as modeled.
   private def directiveName(name: String): Rule0 = rule {

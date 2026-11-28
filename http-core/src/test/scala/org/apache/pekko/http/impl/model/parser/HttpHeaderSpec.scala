@@ -476,6 +476,28 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
       }
     }
 
+    "Cache-Control quoted numeric argument interoperability" - {
+      for ((incoming, canonical, expected) <- Seq(
+          ("""max-age="60"""", "max-age=60", `max-age`(60)),
+          ("""s-maxage="120"""", "s-maxage=120", `s-maxage`(120)),
+          ("""max-stale="15"""", "max-stale=15", `max-stale`(Some(15L))),
+          ("""min-fresh="25"""", "min-fresh=25", `min-fresh`(25)))) {
+        s"normalizes $incoming" in {
+          val typed = `Cache-Control`(expected)
+          s"Cache-Control: $canonical" =!= typed
+          s"Cache-Control: $incoming" =!= typed.renderedTo(canonical)
+          org.apache.pekko.http.javadsl.model.HttpHeader.parse("Cache-Control", incoming) shouldBe typed
+        }
+      }
+
+      "keeps bare max-stale, field-name arguments and extensions" in {
+        "Cache-Control: max-stale" =!= `Cache-Control`(`max-stale`(None))
+        """Cache-Control: no-cache="X-Theme,X-Color"""" =!= `Cache-Control`(`no-cache`("X-Theme", "X-Color"))
+        """Cache-Control: preview-window="two words"""" =!= `Cache-Control`(
+          CacheDirective.custom("preview-window", Some("two words")))
+      }
+    }
+
     "Cache-Control with whitespace before the list separator" in {
       "Cache-Control: no-store , public" =!=> "no-store, public"
       "Cache-Control: no-transform , public" =!=> "no-transform, public"
