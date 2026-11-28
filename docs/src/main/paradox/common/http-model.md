@@ -292,6 +292,11 @@ response. In Pekko HTTP, @scala[*HttpEntity.Default*]@java[*HttpEntityDefault*] 
 An @scala[*HttpEntity.CloseDelimited*]@java[*HttpEntityCloseDelimited*] entity does not, by itself, cause the connection
 to close after a HEAD response. This allows a HEAD response without `Content-Length` on a persistent HTTP/1.1 connection.
 
+### Multipart form-data field names
+
+When reading a form-data body part, Pekko HTTP matches the `name` parameter of `Content-Disposition`
+case-insensitively. The parameter value is the form field name and retains its original case.
+
 ### Multipart form-data filenames
 
 The @scala[`filename`]@java[`getFilename`] accessor of a form-data body part returns the `filename` parameter as received.
