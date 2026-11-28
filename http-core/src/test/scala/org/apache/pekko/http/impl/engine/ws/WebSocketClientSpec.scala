@@ -92,6 +92,26 @@ class WebSocketClientSpec extends PekkoSpecWithMaterializer("pekko.http.client.w
       }
     }
 
+    "read a fresh 16-byte nonce for each opening handshake request" in {
+      val nonces = Vector(Array.fill[Byte](16)(1), Array.fill[Byte](16)(-1))
+      val encoder = java.util.Base64.getEncoder
+      var nonceReads = 0
+      val random = new Random(0) {
+        override def nextBytes(bytes: Array[Byte]): Unit = {
+          bytes.length shouldBe 16
+          val nonce = nonces(nonceReads)
+          System.arraycopy(nonce, 0, bytes, 0, nonce.length)
+          nonceReads += 1
+        }
+      }
+
+      nonces.zipWithIndex.foreach { case (nonce, index) =>
+        val (request, _) = Handshake.Client.buildRequest(target, Nil, Nil, random)
+        nonceReads shouldBe (index + 1)
+        request.header[`Sec-WebSocket-Key`].map(_.value) shouldBe Some(encoder.encodeToString(nonce))
+      }
+    }
+
     "send the caller's Origin header when establishing a WebSocket connection" in new TestSetup with ClientEchoes {
       override def clientLayer: Http.WebSocketClientLayer =
         Http(system).webSocketClientLayer(
