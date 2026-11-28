@@ -851,6 +851,21 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
       "disable Push via SETTINGS_ENABLE_PUSH" in new SettingsSetup {
         expectSetting(Setting(SettingIdentifier.SETTINGS_ENABLE_PUSH, 0))
       }
+
+      "advertise the configured SETTINGS_MAX_HEADER_LIST_SIZE in the initial SETTINGS" in {
+        val configured = 48 * 1024
+        StreamTestKit.assertAllStagesStopped {
+          val setup = new SettingsSetup {
+            override def settings = super.settings.mapHttp2Settings(_.withMaxHeaderListSize(configured))
+          }
+
+          try setup.expectSetting(Setting(SettingIdentifier.SETTINGS_MAX_HEADER_LIST_SIZE, configured))
+          finally {
+            setup.network.fromNet.sendComplete()
+            setup.network.toNet.cancel()
+          }
+        }
+      }
     }
 
     "respect settings" should {
