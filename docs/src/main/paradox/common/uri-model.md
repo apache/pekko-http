@@ -42,6 +42,10 @@ Scala
 Java
 :   @@snip [UriTest.scala](/http-core/src/test/java/org/apache/pekko/http/javadsl/model/UriTest.java) { #valid-uri-examples }
 
+In Scala, `Uri.from` and `Uri.Authority.normalizedFor` omit the default port for a recognized scheme
+regardless of the scheme's letter case. `Uri.Authority.normalizedFor` uses the supplied scheme only for
+the default-port lookup; it does not rewrite it. An explicit port set later with `withPort` is kept.
+
 For exact definitions of the parts of a URI, like `scheme`, `path` and `query` refer to [RFC 3986](https://tools.ietf.org/html/rfc3986#section-1.1.2).
 Here's a little overview:
 

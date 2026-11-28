@@ -940,6 +940,31 @@ class UriSpec extends AnyWordSpec with Matchers {
       Uri("https://host:3030/").withPort(4450).effectivePort shouldEqual 4450
     }
 
+    "normalize default ports in component-built URIs with mixed-case schemes" in {
+      for ((scheme, lowerScheme, port) <- Seq(("HtTp", "http", 80), ("hTtPs", "https", 443))) {
+        val parsed = Uri(s"$scheme://EXAMPLE.com:$port/catalog")
+        val fromComponents = Uri.from(scheme = scheme, host = "EXAMPLE.com", port = port, path = "/catalog")
+        fromComponents shouldEqual parsed
+        fromComponents.authority.port shouldEqual 0
+        fromComponents.effectivePort shouldEqual port
+        fromComponents.toString shouldEqual s"$lowerScheme://example.com/catalog"
+        Uri.from(scheme = lowerScheme, host = "EXAMPLE.com", port = port, path = "/catalog") shouldEqual parsed
+        fromComponents.withPort(port).authority.port shouldEqual port
+      }
+    }
+
+    "normalize explicit authorities for mixed-case schemes without dropping non-default ports" in {
+      val authority = Uri.Authority(Host("example.com"), 443)
+      authority.normalizedFor("hTtPs") shouldEqual authority.copy(port = 0)
+      authority.normalizedFor("https") shouldEqual authority.copy(port = 0)
+      authority.normalizedFor("HtTp") shouldEqual authority
+      authority.normalizedFor("custom") shouldEqual authority
+      val nonDefault = authority.copy(port = 8443)
+      nonDefault.normalizedFor("hTtPs") shouldEqual nonDefault
+      Uri.from(scheme = "hTtPs", host = "example.com", port = 8443, path = "/catalog") shouldEqual
+      Uri("https://example.com:8443/catalog")
+    }
+
     "parse authority" in {
       Uri.Authority.parse("localhost").toString shouldEqual "localhost"
       Uri.Authority.parse("example.com:80").toString shouldEqual "example.com:80"
