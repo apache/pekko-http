@@ -34,6 +34,8 @@ import pekko.util.ByteString
 
 class WebSocketDirectivesSpec extends RoutingSpec {
   "the handleWebSocketMessages directive" should {
+    import pekko.http.scaladsl.model.headers.`Sec-WebSocket-Version`
+
     "handle websocket requests" in {
       val wsClient = WSProbe()
 
@@ -167,8 +169,48 @@ class WebSocketDirectivesSpec extends RoutingSpec {
       Get("http://localhost/") ~> Route.seal(websocketRoute) ~> check {
         status shouldEqual StatusCodes.BadRequest
         responseAs[String] shouldEqual "Expected WebSocket Upgrade request"
+        header[`Sec-WebSocket-Version`] shouldEqual None
       }
     }
+    "advertise the supported version when an ordinary WebSocket offer uses an unsupported version" in {
+      unsupportedVersionRequest ~> Route.seal(websocketRoute) ~> check {
+        status shouldEqual StatusCodes.BadRequest
+        responseAs[String] shouldEqual "Expected WebSocket Upgrade request"
+        header[`Sec-WebSocket-Version`].map(_.versions) shouldEqual Some(Seq(13))
+      }
+    }
+    "let a sibling HTTP route handle an unsupported WebSocket version offer" in {
+      val route = websocketRoute ~ complete("ordinary HTTP response")
+      unsupportedVersionRequest ~> Route.seal(route) ~> check {
+        status shouldEqual StatusCodes.OK
+        responseAs[String] shouldEqual "ordinary HTTP response"
+        header[`Sec-WebSocket-Version`] shouldEqual None
+      }
+    }
+    "let a custom rejection handler respond to an unsupported WebSocket version offer" in {
+      import pekko.http.scaladsl.server.RejectionHandler
+
+      val handler = RejectionHandler.newBuilder().handle {
+        case ExpectedWebSocketRequestRejection => complete((StatusCodes.BadRequest, "custom WebSocket response"))
+      }.result()
+      unsupportedVersionRequest ~> handleRejections(handler)(websocketRoute) ~> check {
+        status shouldEqual StatusCodes.BadRequest
+        responseAs[String] shouldEqual "custom WebSocket response"
+        header[`Sec-WebSocket-Version`] shouldEqual None
+      }
+    }
+  }
+
+  private def unsupportedVersionRequest: HttpRequest = {
+    import pekko.http.impl.engine.ws.Handshake
+    import pekko.http.scaladsl.model.headers.{ `Sec-WebSocket-Key`, `Sec-WebSocket-Version`, Host }
+
+    Get("http://localhost/").withHeaders(List(
+      Host("localhost"),
+      Handshake.UpgradeHeader,
+      Handshake.ConnectionUpgradeHeader,
+      `Sec-WebSocket-Key`(new Array[Byte](16)),
+      `Sec-WebSocket-Version`(Seq(8))))
   }
 
   def websocketRoute = handleWebSocketMessages(greeter)

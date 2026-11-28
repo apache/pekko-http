@@ -18,6 +18,7 @@ import scala.collection.immutable
 import scala.reflect.ClassTag
 
 import org.apache.pekko
+import pekko.http.impl.engine.ws.Handshake
 import pekko.http.scaladsl.marshalling.ToResponseMarshallable
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.StatusCodes._
@@ -167,6 +168,25 @@ object RejectionHandler {
     }
   }
 
+  // On the default rejection path only, recognize an ordinary version offer from the modeled headers.
+  // The normal WebSocket upgrade validation and all application route selection stay unchanged.
+  private def shouldAdvertiseWebSocketVersion(request: HttpRequest): Boolean =
+    request.method == HttpMethods.GET &&
+    request.protocol == HttpProtocols.`HTTP/1.1` &&
+    request.entity.isKnownEmpty &&
+    request.header[Upgrade].exists(_.hasWebSocket) &&
+    request.header[Connection].exists(_.hasUpgrade) &&
+    request.header[Host].exists(!_.isEmpty) &&
+    (request.headers.filter(_.is(`Sec-WebSocket-Version`.lowercaseName)) match {
+      case Seq(version: `Sec-WebSocket-Version`)
+          if version.versions.size == 1 && !version.hasVersion(Handshake.CurrentWebSocketVersion) =>
+        request.headers.filter(_.is(`Sec-WebSocket-Key`.lowercaseName)) match {
+          case Seq(key: `Sec-WebSocket-Key`) => key.isValid
+          case _                             => false
+        }
+      case _ => false
+    })
+
   /**
    * Default [[RejectionHandler]] instance.
    */
@@ -297,7 +317,11 @@ object RejectionHandler {
           "The request's Content-Encoding is not supported. Expected:\n" + supported))
       }
       .handle { case ExpectedWebSocketRequestRejection =>
-        rejectRequestEntityAndComplete((BadRequest, "Expected WebSocket Upgrade request"))
+        extractRequest { request =>
+          // RFC 6455 sections 4.2.2 and 4.4: advertise supported versions for an unsupported offer.
+          val headers = if (shouldAdvertiseWebSocketVersion(request)) List(Handshake.SecWebSocketVersionHeader) else Nil
+          rejectRequestEntityAndComplete((BadRequest, headers, "Expected WebSocket Upgrade request"))
+        }
       }
       .handleAll[UnsupportedWebSocketSubprotocolRejection] { rejections =>
         val supported = rejections.map(_.supportedProtocol)

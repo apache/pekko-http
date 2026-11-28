@@ -64,6 +64,11 @@ in the next section.
 The routing DSL provides the @ref[handleWebSocketMessages](../routing-dsl/directives/websocket-directives/handleWebSocketMessages.md) directive to install a WebSocket handler if a request
 is a WebSocket request. Otherwise, the directive rejects the request.
 
+If the default rejection handler responds to an otherwise valid WebSocket handshake with an unsupported version, it
+includes the supported version in `Sec-WebSocket-Version` on its `400 Bad Request` response
+([RFC 6455 §4.4](https://www.rfc-editor.org/rfc/rfc6455.html#section-4.4)). Alternate routes and custom rejection handlers
+retain control of their responses.
+
 Let's look at how the above example can be rewritten using the high-level routing DSL.
 
 Instead of writing the request handler manually, the routing behavior of the app is defined by a route that
