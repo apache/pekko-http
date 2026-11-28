@@ -288,7 +288,7 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
         with GenericOutletSupport with StageLogging with LogHelper with ServerTerminator {
       logic =>
 
-      import Http2Demux.{ CompletionTimeout, MaxConnectionAge }
+      import Http2Demux._
 
       def wrapTrailingHeaders(headers: ParsedHeadersFrame): Option[HttpEntity.ChunkStreamPart] =
         stage.wrapTrailingHeaders(headers)
@@ -311,6 +311,25 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
       private val terminationPromise = Promise[Http.HttpTerminated]()
       private var terminating: Boolean = false
       private var lastIdBeforeTermination: Int = 0
+      private val advisoryTimeout = http2Settings match {
+        case serverSettings: Http2ServerSettings => serverSettings.gracefulShutdownAdvisoryTimeout
+        case _                                   => Duration.Zero
+      }
+      private var advisoryState: AdvisoryState = AdvisoryNotStarted
+      private var advisoryDeadline: OptionVal[Deadline] = OptionVal.None
+      private val shutdownBoundary =
+        if (advisoryTimeout > Duration.Zero) OptionVal.Some(new ServerShutdownBoundary(if (upgraded) 1 else 0))
+        else OptionVal.None
+
+      override protected def admitPeerStream(streamId: Int, hasCapacity: Boolean): Boolean =
+        shutdownBoundary match {
+          case OptionVal.Some(boundary) => boundary.admit(streamId, hasCapacity)
+          case _                        => hasCapacity
+        }
+
+      private def advisoryPending: Boolean =
+        advisoryState == AdvisoryQueued || advisoryState == AdvisoryAwaitingAck
+
       // when the forced close of a terminating connection is due, unset while no forced close is scheduled
       private var forcedCloseDeadline: OptionVal[Deadline] = OptionVal.None
       private val terminateCallback = getAsyncCallback[FiniteDuration](triggerTermination)
@@ -324,8 +343,19 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
             "Termination of this connection was triggered. Sending GOAWAY and waiting for open requests to complete for {}.",
             deadline)
           terminating = true
-          pushGOAWAY(ErrorCode.NO_ERROR, "Voluntary connection close.")
-          lastIdBeforeTermination = lastStreamId()
+          val canStartAdvisory = shutdownBoundary match {
+            case OptionVal.Some(boundary) => boundary.isOpen && deadline > advisoryTimeout
+            case _                        => false
+          }
+          if (canStartAdvisory) {
+            advisoryState = AdvisoryQueued
+            // Spend one budget on both handing off the PING and waiting for its ACK.
+            // If the hard deadline is too close, the single-phase path sets the real boundary now.
+            advisoryDeadline = OptionVal.Some(Deadline.now + advisoryTimeout)
+            scheduleOnce(AdvisoryTimeout, advisoryTimeout)
+            sendGoAway(Int.MaxValue, ErrorCode.NO_ERROR, "Voluntary connection close.")
+            multiplexer.pushControlFrame(AdvisoryPing)
+          } else sendFinalShutdownGoAway()
           completeIfDone()
         }
         scheduleForcedCloseIfEarlier(deadline)
@@ -340,6 +370,11 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
           if (earlier) {
             forcedCloseDeadline = OptionVal.Some(due)
             scheduleOnce(CompletionTimeout, deadline)
+            advisoryDeadline match {
+              // Announce the final boundary while there is still time to flush it and drain accepted streams.
+              case OptionVal.Some(advisoryDue) if due <= advisoryDue => completeAdvisory()
+              case _                                                 =>
+            }
           }
         case _ => // no deadline, wait for open requests to complete
       }
@@ -356,6 +391,8 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
 
       override def pushFrameOut(event: FrameEvent): Unit = {
         pingState.onDataFrameSeen()
+        if (advisoryState == AdvisoryQueued && (event eq AdvisoryPing))
+          advisoryState = AdvisoryAwaitingAck
         push(frameOut, event)
       }
 
@@ -400,11 +437,39 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
         }
       }
 
-      override def pushGOAWAY(errorCode: ErrorCode, debug: String): Unit = {
-        val frame = GoAwayFrame(lastStreamId(), errorCode, ByteString(debug))
-        multiplexer.pushControlFrame(frame)
-        // FIXME: handle the connection closing according to the specification
+      private def sendGoAway(lastId: Int, errorCode: ErrorCode, debug: String): Unit =
+        multiplexer.pushControlFrame(GoAwayFrame(lastId, errorCode, ByteString(debug)))
+
+      private def freezeAdmissionBoundary(): Int = shutdownBoundary match {
+        case OptionVal.Some(boundary) => boundary.finish()
+        case _                        => lastStreamId()
       }
+
+      private def finishAdvisory(): Unit = {
+        advisoryState = AdvisoryFinished
+        advisoryDeadline = OptionVal.None
+        cancelTimer(AdvisoryTimeout)
+      }
+
+      private def sendFinalGoAway(errorCode: ErrorCode, debug: String, partOfTermination: Boolean): Unit = {
+        val lastId = freezeAdmissionBoundary()
+        val wasAdvising = advisoryPending
+        if (wasAdvising) finishAdvisory()
+        if (partOfTermination || wasAdvising) lastIdBeforeTermination = lastId
+        sendGoAway(lastId, errorCode, debug)
+      }
+
+      private def sendFinalShutdownGoAway(): Unit =
+        sendFinalGoAway(ErrorCode.NO_ERROR, "Voluntary connection close.", partOfTermination = true)
+
+      private def completeAdvisory(): Unit = if (advisoryPending) {
+        sendFinalShutdownGoAway()
+        completeIfDone()
+      }
+
+      override def pushGOAWAY(errorCode: ErrorCode, debug: String): Unit =
+        // FIXME: handle the connection closing according to the specification
+        sendFinalGoAway(errorCode, debug, partOfTermination = false)
       private var allowReadingIncomingFrames: Boolean = true
       override def allowReadingIncomingFrames(allow: Boolean): Unit = {
         if (allow != allowReadingIncomingFrames)
@@ -450,7 +515,7 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
                     "WINDOW_UPDATE would exceed maximum connection-level flow-control window size")
               case p: PriorityFrame    => multiplexer.updatePriority(p)
               case s: StreamFrameEvent =>
-                if (!terminating)
+                if (!terminating || advisoryPending)
                   handleStreamEvent(s)
                 else if (s.streamId <= lastIdBeforeTermination)
                   handleStreamEvent(s)
@@ -471,7 +536,10 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
               // `enforceSettings(initialLocalSettings)`
 
               case PingFrame(true, data) =>
-                if (data != ConfigurablePing.Ping.data) {
+                if (advisoryState != AdvisoryNotStarted && data == AdvisoryPing.data) {
+                  if (advisoryState == AdvisoryAwaitingAck) completeAdvisory()
+                  // An ACK can be delivered after the advisory timeout. It is not a keepalive ACK.
+                } else if (data != ConfigurablePing.Ping.data) {
                   // We only ever push static data, responding with anything else is wrong
                   pushGOAWAY(ErrorCode.PROTOCOL_ERROR, "Ping ack contained unexpected data")
                 } else {
@@ -524,7 +592,7 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
       private def completeIfDone(): Unit = {
         val noMoreOutgoingStreams = (terminating || isClosed(substreamIn)) && activeStreamCount() == 0
         def allOutgoingDataFlushed = isClosed(frameOut) || multiplexer.hasFlushedAllData
-        if (noMoreOutgoingStreams && allOutgoingDataFlushed) {
+        if (!advisoryPending && noMoreOutgoingStreams && allOutgoingDataFlushed) {
           log.debug("Closing connection after all streams are done and all data has been flushed.")
           if (isServer)
             completeStage()
@@ -629,7 +697,12 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
             debug("Connection reached the configured max-connection-age, closing it gracefully")
             triggerTermination(maxConnectionAgeGrace)
           }
+        case AdvisoryTimeout =>
+          completeAdvisory()
         case CompletionTimeout =>
+          // If the earlier timer callback was delayed, try to deliver the final boundary without delaying close.
+          if (advisoryPending && !isClosed(frameOut))
+            sendFinalShutdownGoAway()
           if (isServer)
             info(
               "Timeout: requests in flight did not complete within the termination deadline (the deadline passed to terminate, or the 'max-connection-age-grace' setting). Closing pending HTTP/2 streams.")
@@ -655,6 +728,36 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
  */
 @InternalApi
 private[pekko] object Http2Demux {
+  private case object AdvisoryTimeout
+  // Distinct from the keepalive PING, and sent at most once per connection.
+  private val AdvisoryPing = PingFrame(ack = false, ByteString("shutdown"))
+
+  private sealed trait AdvisoryState
+  private case object AdvisoryNotStarted extends AdvisoryState
+  private case object AdvisoryQueued extends AdvisoryState
+  private case object AdvisoryAwaitingAck extends AdvisoryState
+  private case object AdvisoryFinished extends AdvisoryState
+
+  // Track only requests which could be processed, not all stream IDs observed by the connection.
+  // Announcing the final boundary closes admission before any later GOAWAY or request can change it.
+  private[http2] final class ServerShutdownBoundary(initialStreamId: Int) {
+    private var largestAdmittedStreamId = initialStreamId
+    private var open = true
+
+    def isOpen: Boolean = open
+
+    def admit(streamId: Int, hasCapacity: Boolean): Boolean =
+      if (open && hasCapacity) {
+        largestAdmittedStreamId = math.max(largestAdmittedStreamId, streamId)
+        true
+      } else false
+
+    def finish(): Int = {
+      open = false
+      largestAdmittedStreamId
+    }
+  }
+
   case object CompletionTimeout
   case object MaxConnectionAge
 }

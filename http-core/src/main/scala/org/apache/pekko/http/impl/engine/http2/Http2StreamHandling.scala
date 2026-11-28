@@ -118,6 +118,8 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
    */
   def lastStreamId(): Int = largestIncomingStreamId
 
+  protected def admitPeerStream(streamId: Int, hasCapacity: Boolean): Boolean = hasCapacity
+
   private var maxConcurrentStreams = Http2Protocol.InitialMaxConcurrentStreams
   def setMaxConcurrentStreams(newValue: Int): Unit = maxConcurrentStreams = newValue
 
@@ -469,9 +471,9 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
 
   case object Idle extends StreamState {
     def handle(event: StreamFrameEvent): StreamState =
-      if (event.isInstanceOf[ParsedHeadersFrame] && activeStreamCount() > settings.maxConcurrentStreams) {
-        // When trying to open a new Stream, if that op would exceed the maxConcurrentStreams, then refuse the op
-        debug("Peer trying to open stream that would exceed `maxConcurrentStreams`, refusing stream")
+      if (event.isInstanceOf[ParsedHeadersFrame] &&
+        !admitPeerStream(event.streamId, activeStreamCount() <= settings.maxConcurrentStreams)) {
+        debug("Refusing a new stream because admission is closed or maxConcurrentStreams would be exceeded")
         multiplexer.pushControlFrame(RstStreamFrame(event.streamId, ErrorCode.REFUSED_STREAM))
         Closed
       } else

@@ -17,6 +17,7 @@ import java.time.Duration
 
 import scala.concurrent.duration.DurationLong
 import scala.jdk.CollectionConverters._
+import scala.jdk.DurationConverters._
 
 import org.apache.pekko
 import pekko.annotation.DoNotInherit
@@ -124,6 +125,22 @@ trait Http2ServerSettings {
    */
   def withMaxConnectionAgeGrace(grace: Duration): Http2ServerSettings =
     withMaxConnectionAgeGrace(JavaDurationConverter.toScala(grace))
+
+  /**
+   * The total time allowed to send the graceful shutdown advisory PING and receive its acknowledgment.
+   * Zero disables the advisory. The setting does not extend any hard termination deadline.
+   *
+   * @since 2.1.0
+   */
+  def getGracefulShutdownAdvisoryTimeout: Duration = gracefulShutdownAdvisoryTimeout.toJava
+
+  /**
+   * Configure the shutdown advisory timeout. Use zero for single-phase graceful shutdown.
+   *
+   * @since 2.1.0
+   */
+  def withGracefulShutdownAdvisoryTimeout(timeout: Duration): Http2ServerSettings =
+    withGracefulShutdownAdvisoryTimeout(timeout.toScala)
 
   /**
    * The jitter applied to the maximum connection age per connection, as a fraction of the configured age:

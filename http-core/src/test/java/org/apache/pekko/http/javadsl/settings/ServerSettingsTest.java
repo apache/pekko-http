@@ -14,6 +14,7 @@
 package org.apache.pekko.http.javadsl.settings;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
@@ -85,6 +86,31 @@ public class ServerSettingsTest {
 
     ServerSettings updated = settings.withStreamCancellationDelay(Duration.ofSeconds(2));
     assertEquals(Duration.ofSeconds(2), updated.getStreamCancellationDelay());
+  }
+
+  @Test
+  public void testHttp2GracefulShutdownAdvisoryWithJavaDurations() {
+    ServerSettings settings = ServerSettings.create("");
+    Http2ServerSettings original = settings.getHttp2Settings();
+    assertEquals(Duration.ZERO, original.getGracefulShutdownAdvisoryTimeout());
+
+    Duration timeout = Duration.ofNanos(1_500);
+    Http2ServerSettings updated =
+        settings
+            .withHttp2Settings(
+                original.withGracefulShutdownAdvisoryTimeout(timeout).withMaxConcurrentStreams(64))
+            .getHttp2Settings();
+    assertEquals(timeout, updated.getGracefulShutdownAdvisoryTimeout());
+    assertEquals(64, updated.getMaxConcurrentStreams());
+    assertEquals(
+        Duration.ZERO,
+        updated
+            .withGracefulShutdownAdvisoryTimeout(Duration.ZERO)
+            .getGracefulShutdownAdvisoryTimeout());
+    assertEquals(Duration.ZERO, original.getGracefulShutdownAdvisoryTimeout());
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> original.withGracefulShutdownAdvisoryTimeout(Duration.ofNanos(-1)));
   }
 
   @Test

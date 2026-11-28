@@ -25,6 +25,8 @@ import pekko.testkit.PekkoSpec
 
 import scala.concurrent.duration._
 
+import com.typesafe.config.ConfigFactory
+
 class Http2ServerSettingsSpec extends PekkoSpec {
 
   "Http2ServerSettings max-concurrent-streams" should {
@@ -86,6 +88,53 @@ class Http2ServerSettingsSpec extends PekkoSpec {
       settings.getMaxConnectionAgeGrace should ===(ChronoUnit.FOREVER.getDuration)
       val roundTripped = settings.withMaxConnectionAgeGrace(settings.getMaxConnectionAgeGrace)
       roundTripped.getMaxConnectionAgeGrace should ===(ChronoUnit.FOREVER.getDuration)
+    }
+  }
+
+  "Http2ServerSettings graceful-shutdown-advisory-timeout" should {
+    val settingKey = "pekko.http.server.http2.graceful-shutdown-advisory-timeout"
+
+    "disable the advisory by default and for a pre-existing config without the key" in {
+      Http2ServerSettings(system).gracefulShutdownAdvisoryTimeout shouldBe Duration.Zero
+      Http2ServerSettings(ConfigFactory.load().withoutPath(settingKey))
+        .gracefulShutdownAdvisoryTimeout shouldBe Duration.Zero
+    }
+
+    "preserve independent legacy and programmatic settings through fluent setters and copy" in {
+      val marker = new Http2InternalServerSettings {}
+      val configured = Http2ServerSettings(s"$settingKey = 2 seconds").withInternalSettings(marker)
+      val markerValue = configured.internalSettings
+      configured.gracefulShutdownAdvisoryTimeout shouldBe 2.seconds
+
+      val enabled = configured.withGracefulShutdownAdvisoryTimeout(3.seconds)
+        .withMaxConnectionAgeGrace(30.seconds)
+        .withFrameTypeThrottleFrameTypes(Set.empty[String])
+      enabled.gracefulShutdownAdvisoryTimeout shouldBe 3.seconds
+      enabled.maxConnectionAgeGrace shouldBe 30.seconds
+      (enabled.internalSettings should be).theSameInstanceAs(markerValue)
+
+      val replacement = Some(new Http2InternalServerSettings {})
+      val copied = enabled.copy(internalSettings = replacement)
+      copied.gracefulShutdownAdvisoryTimeout shouldBe 3.seconds
+      (copied.internalSettings should be).theSameInstanceAs(replacement)
+
+      val disabled = copied.withGracefulShutdownAdvisoryTimeout(Duration.Zero)
+      disabled.gracefulShutdownAdvisoryTimeout shouldBe Duration.Zero
+      (disabled.internalSettings should be).theSameInstanceAs(replacement)
+      configured.gracefulShutdownAdvisoryTimeout shouldBe 2.seconds
+    }
+
+    "not change the client settings when configured on the server" in {
+      Http2ClientSettings(s"$settingKey = 2 seconds") shouldBe Http2ClientSettings("")
+    }
+
+    "reject a negative advisory timeout through both configuration and the Scala setter" in {
+      intercept[IllegalArgumentException] {
+        Http2ServerSettings(s"$settingKey = -1 second")
+      }.getMessage should include("graceful-shutdown-advisory-timeout must be >= 0")
+      intercept[IllegalArgumentException] {
+        Http2ServerSettings(system).withGracefulShutdownAdvisoryTimeout(Duration.Zero - 1.second)
+      }.getMessage should include("graceful-shutdown-advisory-timeout must be >= 0")
     }
   }
 
