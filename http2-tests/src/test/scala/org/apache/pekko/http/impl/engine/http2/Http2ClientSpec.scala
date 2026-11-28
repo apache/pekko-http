@@ -1115,22 +1115,162 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
         user.emitRequest(Get("/"))
         network.expectDecodedHEADERS(streamId, endStream = true)
       }
-      "support trailing headers for responses".inAssertAllStagesStopped(new WaitingForResponseSetup {
-        network.sendHEADERS(streamId, endStream = false,
-          Seq(
-            RawHeader(":status", "200"),
-            RawHeader("content-type", "application/octet-stream")))
+      "expose trailing fields of a successful response with zero content length".inAssertAllStagesStopped(
+        new WaitingForResponseSetup {
+          // The application defines x-results as a list field.
+          val first = RawHeader("x-results", "accepted")
+          val second = RawHeader("x-results", "saved")
+          network.sendHEADERS(streamId, endStream = false,
+            Seq(RawHeader(":status", "200"), `Content-Length`(0)))
+          val response = user.expectResponse()
+          response.status shouldBe StatusCodes.OK
+          response.header("x-results") shouldBe None
+          response.entity shouldBe a[Chunked]
+          val chunks = response.entity.asInstanceOf[Chunked]
+            .chunks.runWith(TestSink[ChunkStreamPart]()(system.classicSystem))
+          chunks.request(1)
 
-        val response = user.expectResponse()
-        response.entity shouldBe a[Chunked]
+          network.sendHEADERS(streamId, endStream = true, Seq(first, second))
+          chunks.expectNext() shouldBe LastChunk(trailer = Seq(first, second))
+          chunks.expectComplete()
+        })
 
-        network.sendDATA(streamId, endStream = false, ByteString("asdf"))
-        network.sendHEADERS(streamId, endStream = true, Seq(RawHeader("grpc-status", "0")))
+      "keep an open zero-length response streamed until an empty DATA frame ends it".inAssertAllStagesStopped(
+        new WaitingForResponseSetup {
+          network.sendHEADERS(streamId, endStream = false,
+            Seq(RawHeader(":status", "200"), `Content-Length`(0)))
+          val response = user.expectResponse()
+          response.status shouldBe StatusCodes.OK
+          response.entity shouldBe a[Chunked]
+          val chunks = response.entity.asInstanceOf[Chunked]
+            .chunks.runWith(TestSink[ChunkStreamPart]()(system.classicSystem))
+          chunks.request(1)
+          chunks.expectNoMessage(100.millis)
 
-        val chunks = response.entity.asInstanceOf[Chunked].chunks.runWith(Sink.seq).futureValue
-        chunks(0) should be(Chunk("asdf"))
-        chunks(1) should be(LastChunk(extension = "", List(RawHeader("grpc-status", "0"))))
-      })
+          network.sendDATA(streamId, endStream = true, ByteString.empty)
+          chunks.expectComplete()
+        })
+
+      "keep an empty response strict when the initial headers end the stream".inAssertAllStagesStopped(
+        new WaitingForResponseSetup {
+          network.sendHEADERS(streamId, endStream = true,
+            Seq(RawHeader(":status", "200"), `Content-Length`(0)))
+          user.expectResponse().entity shouldBe HttpEntity.Empty
+        })
+
+      "keep a zero-length HEAD response strict when completion follows its initial headers".inAssertAllStagesStopped(
+        new TestSetup with NetProbes {
+          val streamId = 1
+          val key = AttributeKey[SimpleRequestResponseAttribute[String]]("test-head-association")
+          val association = SimpleRequestResponseAttribute("head-response")
+          user.emitRequest(HttpRequest(HttpMethods.HEAD).addAttribute(key, association))
+          network.expectDecodedHEADERS(streamId, endStream = true)
+
+          network.sendHEADERS(streamId, endStream = false,
+            Seq(RawHeader(":status", "200"), `Content-Length`(0)))
+          val response = user.expectResponse()
+          response.entity shouldBe HttpEntity.Empty
+          val expectedAttributes = Map(key -> association, AttributeKeys.representationContentLength -> Long.box(0L))
+          response.attributes shouldBe expectedAttributes
+          network.sendDATA(streamId, endStream = true, ByteString.empty)
+        })
+
+      for (declaredLength <- Seq(None, Some(0L), Some(42L))) {
+        s"expose HEAD representation length $declaredLength" in StreamTestKit.assertAllStagesStopped {
+          val setup = new TestSetup with NetProbes
+          import setup._
+          try {
+            val streamId = 1
+            user.emitRequest(HttpRequest(HttpMethods.HEAD))
+            network.expectDecodedHEADERS(streamId, endStream = true)
+
+            network.sendHEADERS(streamId, endStream = true,
+              Seq[HttpHeader](RawHeader(":status", "200")) ++ declaredLength.map(length => `Content-Length`(length)))
+            val response = user.expectResponse()
+            val expected = declaredLength.map(Long.box)
+            val key = AttributeKeys.representationContentLength
+            response.status shouldBe StatusCodes.OK
+            response.attribute(key) shouldBe expected
+            response.header("content-length") shouldBe None
+            response.entity shouldBe HttpEntity.Empty
+
+            val javaResponse: pekko.http.javadsl.model.HttpResponse = response
+            val javaKey = pekko.http.javadsl.model.AttributeKeys.representationContentLength
+            (javaKey eq key) shouldBe true
+            javaResponse.getAttribute(javaKey) shouldBe java.util.Optional.ofNullable(expected.orNull)
+
+            // The strictification limit applies to the actual zero-byte entity, not the representation length.
+            val strict = response.toStrict(1.second, maxBytes = 1L).futureValue
+            strict.entity shouldBe HttpEntity.Empty
+            strict.attribute(key) shouldBe expected
+
+            user.requestOut.sendComplete()
+            expectGracefulCompletion()
+          } finally {
+            network.fromNet.sendComplete()
+            network.toNet.cancel()
+          }
+        }
+      }
+
+      "expose HEAD representation length only on its own stream when a GET finishes first" in
+      StreamTestKit.assertAllStagesStopped {
+        val setup = new TestSetup with NetProbes
+        import setup._
+        val associationKey = AttributeKey[SimpleRequestResponseAttribute[String]]("head-get-association")
+        val headTag = SimpleRequestResponseAttribute("head")
+        val getTag = SimpleRequestResponseAttribute("get")
+        val representationLength = AttributeKeys.representationContentLength
+        val headLength = 42L
+        val getBody = ByteString("GET response")
+        try {
+          user.emitRequest(HttpRequest(HttpMethods.HEAD, uri = "https://www.example.com/head")
+            .addAttribute(associationKey, headTag))
+          network.expectDecodedResponseHEADERSPairs(1, endStream = true) should contain(":method" -> "HEAD")
+          user.emitRequest(Get("https://www.example.com/get").addAttribute(associationKey, getTag))
+          network.expectDecodedResponseHEADERSPairs(3, endStream = true) should contain(":method" -> "GET")
+
+          network.sendHEADERS(3, endStream = false,
+            Seq(RawHeader(":status", "200"), `Content-Length`(getBody.length.toLong)))
+          network.sendDATA(3, endStream = true, getBody)
+          val getResponse = user.expectResponse()
+          getResponse.status shouldBe StatusCodes.OK
+          getResponse.attribute(associationKey) shouldBe Some(getTag)
+          getResponse.attribute(representationLength) shouldBe None
+          getResponse.entity.dataBytes.runFold(ByteString.empty)(_ ++ _).futureValue shouldBe getBody
+
+          network.sendHEADERS(1, endStream = true, Seq(RawHeader(":status", "200"), `Content-Length`(headLength)))
+          val headResponse = user.expectResponse()
+          headResponse.status shouldBe StatusCodes.OK
+          headResponse.attribute(associationKey) shouldBe Some(headTag)
+          headResponse.attribute(representationLength) shouldBe Some(Long.box(headLength))
+          headResponse.entity shouldBe HttpEntity.Empty
+
+          user.requestOut.sendComplete()
+          user.responseIn.expectComplete()
+        } finally {
+          network.fromNet.sendComplete()
+          network.toNet.cancel()
+        }
+      }
+
+      "support trailing headers for responses with a positive content length".inAssertAllStagesStopped(
+        new WaitingForResponseSetup {
+          network.sendHEADERS(streamId, endStream = false,
+            Seq(
+              RawHeader(":status", "200"),
+              RawHeader("content-type", "application/octet-stream"),
+              `Content-Length`(4)))
+
+          val response = user.expectResponse()
+          response.entity shouldBe a[Chunked]
+
+          network.sendDATA(streamId, endStream = false, ByteString("asdf"))
+          network.sendHEADERS(streamId, endStream = true, Seq(RawHeader("grpc-status", "0")))
+
+          val chunks = response.entity.asInstanceOf[Chunked].chunks.runWith(Sink.seq).futureValue
+          chunks shouldBe Seq(Chunk("asdf"), LastChunk(trailer = Seq(RawHeader("grpc-status", "0"))))
+        })
 
     }
 

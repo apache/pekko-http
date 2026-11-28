@@ -76,14 +76,24 @@ private[http2] case class Http2SubStream(
       data = Left(ByteString.empty))
 
   /**
-   * Create the request entity (when we're the server) or response entity (when we're the client) for this substream
+   * Create the request entity for this substream.
    */
-  def createEntity(contentLength: Long, contentTypeOption: OptionVal[ContentType]): RequestEntity = {
+  def createEntity(contentLength: Long, contentTypeOption: OptionVal[ContentType]): RequestEntity =
+    createEntity(contentTypeOption, knownEmpty = contentLength == 0)
+
+  def createResponseEntity(
+      contentLength: Long,
+      contentTypeOption: OptionVal[ContentType],
+      mayHaveTrailers: Boolean): ResponseEntity =
+    // Zero content bytes do not mean the peer has finished sending metadata.
+    createEntity(contentTypeOption, knownEmpty = contentLength == 0 && !mayHaveTrailers)
+
+  private def createEntity(contentTypeOption: OptionVal[ContentType], knownEmpty: Boolean): RequestEntity = {
     def contentType: ContentType = contentTypeOption.getOrElse(ContentTypes.`application/octet-stream`)
 
     data match {
       case Right(data) =>
-        if (data == Source.empty || contentLength == 0 || !hasEntity) {
+        if (data == Source.empty || knownEmpty || !hasEntity) {
           if (contentTypeOption.isEmpty) HttpEntity.Empty
           else HttpEntity.Strict(contentType, ByteString.empty)
         } else {
@@ -201,8 +211,12 @@ private[http] object Http2Blueprint {
       : BidiFlow[HttpRequest, Http2SubStream, Http2SubStream, HttpResponse, NotUsed] =
     BidiFlow.fromFlows(
       Flow[HttpRequest].statefulMap(() =>
-        new RequestRendering(settings, log, connectionScheme, connectionAuthority))((renderer, request) =>
-          (renderer, renderer(request)), _ => None),
+        new RequestRendering(settings, log, connectionScheme, connectionAuthority))((renderer, request) => {
+          val stream = renderer(request)
+          val associated =
+            if (request.method == HttpMethods.HEAD) ResponseParsing.expectHeadResponse(stream) else stream
+          (renderer, associated)
+        }, _ => None),
       StreamUtils.statefulAttrsMap[Http2SubStream, HttpResponse] { attrs =>
         val headerParser = masterHttpHeaderParser.createShallowCopy()
         stream => ResponseParsing.parseResponse(headerParser, settings.parserSettings, attrs)(stream)

@@ -72,6 +72,23 @@ response stream but some of its data is still buffered and has not reached the a
 
 This behavior applies only to HTTP/2 client response entities, not to HTTP/2 server request entities.
 
+## Response trailers
+
+A response that permits content can carry trailing fields even when its content length is zero. If its initial
+headers leave the HTTP/2 stream open, consume the chunked response entity to read these fields from the final
+chunk. Reading only the entity's data bytes does not expose trailing fields.
+
+## Representation length for HEAD responses
+
+For a `200 OK` response to a `HEAD` request, the HTTP/2 client exposes an advertised `Content-Length`
+as representation metadata. Read it with @scala[`response.attribute(AttributeKeys.representationContentLength)`]@java[`response.getAttribute(AttributeKeys.representationContentLength)`]
+using the corresponding DSL's `AttributeKeys`. A missing field gives an empty result; an explicitly advertised
+zero gives a present value of zero.
+
+The value describes the corresponding `GET` representation, not a response body. The attribute does not
+change the response entity or its size limits. When the initial headers end the HTTP/2 stream, the response
+still has a known-empty strict entity. See [RFC 9110 §8.6](https://www.rfc-editor.org/rfc/rfc9110.html#section-8.6).
+
 ## Limiting managed persistent connection lifetime
 
 Managed persistent HTTP/2 clients can periodically retire long-lived connections so that later requests establish
