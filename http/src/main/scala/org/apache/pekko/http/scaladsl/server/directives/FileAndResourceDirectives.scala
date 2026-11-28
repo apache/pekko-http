@@ -28,6 +28,7 @@ import pekko.http.impl.util._
 import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.javadsl
 import pekko.http.javadsl.{ marshalling, model }
+import pekko.http.javadsl.model.headers.LastModified.StaticResourceOrigin
 import pekko.http.javadsl.server.RoutingJavaMapping
 import pekko.http.scaladsl.marshalling.{ Marshaller, ToEntityMarshaller }
 import pekko.http.scaladsl.model._
@@ -87,8 +88,19 @@ trait FileAndResourceDirectives {
     extractSettings.flatMap(settings =>
       if (settings.fileGetConditional) {
         val tag = java.lang.Long.toHexString(lastModified ^ java.lang.Long.reverse(length))
-        val lastModifiedDateTime = DateTime(math.min(lastModified, System.currentTimeMillis))
-        conditional(EntityTag(tag), lastModifiedDateTime)
+        val sampledAt = System.currentTimeMillis()
+        val lastModifiedDateTime = DateTime(math.min(lastModified, sampledAt))
+        mapResponse { response =>
+          // Keep application-supplied validators untouched; only decorate the header from this directive.
+          val headers = response.headers
+          val generated = headers.indexWhere {
+            case h: `Last-Modified` => h.date eq lastModifiedDateTime
+            case _                  => false
+          }
+          if (generated < 0) response
+          else response.withHeaders(headers.updated(generated,
+            StaticResourceOrigin.createHeader(lastModifiedDateTime, sampledAt, lastModified > sampledAt)))
+        } & conditional(EntityTag(tag), lastModifiedDateTime)
       } else pass)
 
   /**

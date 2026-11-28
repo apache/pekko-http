@@ -23,7 +23,7 @@ import pekko.event.LoggingAdapter
 import pekko.http.impl.engine.http2.FrameEvent.ParsedHeadersFrame
 import pekko.http.impl.engine.rendering.DateHeaderRendering
 import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.model.headers.{ Host, `Raw-Request-URI` }
+import pekko.http.scaladsl.model.headers.{ Host, `Last-Modified`, `Raw-Request-URI` }
 import pekko.http.scaladsl.settings.ClientConnectionSettings
 import pekko.http.scaladsl.settings.ServerSettings
 import pekko.util.OptionVal
@@ -218,6 +218,7 @@ private[http2] object HttpMessageRendering {
 
     val it = headersSeq.iterator
     var peerIdSeen, dateSeen = false
+    var lastModified: `Last-Modified` = null
     def addHeader(h: HttpHeader): Unit = headerPairs += h.lowercaseName -> h.value
 
     while (it.hasNext) {
@@ -240,6 +241,10 @@ private[http2] object HttpMessageRendering {
             case x: Date if isServer =>
               addHeader(x)
               dateSeen = true
+
+            case x: `Last-Modified` if isServer =>
+              addHeader(x)
+              if (lastModified eq null) lastModified = x
 
             case x: CustomHeader =>
               addHeader(x)
@@ -265,7 +270,7 @@ private[http2] object HttpMessageRendering {
     }
 
     if (shouldRenderAutoHeaders && !dateSeen && isServer) {
-      headerPairs += dateHeaderRendering.renderHeaderPair()
+      headerPairs += DateHeaderRendering.forLastModified(lastModified, dateHeaderRendering).renderHeaderPair()
     }
 
     if (shouldRenderAutoHeaders && !peerIdSeen) {
