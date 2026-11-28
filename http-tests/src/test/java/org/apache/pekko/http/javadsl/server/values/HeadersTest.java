@@ -14,9 +14,12 @@
 package org.apache.pekko.http.javadsl.server.values;
 
 import static org.apache.pekko.http.javadsl.server.Directives.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.apache.pekko.http.javadsl.model.*;
 import org.apache.pekko.http.javadsl.model.headers.Age;
+import org.apache.pekko.http.javadsl.model.headers.ContentLocation;
 import org.apache.pekko.http.javadsl.model.headers.RawHeader;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.javadsl.testkit.TestRoute;
@@ -25,6 +28,18 @@ import org.junit.jupiter.api.Test;
 public class HeadersTest extends JUnitJupiterRouteTest {
   final RawHeader testHeaderInstance = RawHeader.create("X-Test-Header", "abcdef-test");
   final Age ageHeaderInstance = Age.create(1000);
+
+  @Test
+  public void testContentLocationIsRequestAndResponseMetadata() {
+    ContentLocation header = ContentLocation.create("previous");
+
+    assertEquals("previous", header.getUri().toString());
+    assertEquals(
+        header,
+        HttpRequest.PUT("/draft").addHeader(header).getHeader(ContentLocation.class).orElseThrow());
+    assertTrue(header.renderInResponses());
+    assertTrue(header.renderInRequests());
+  }
 
   @Test
   public void testValueByName() {

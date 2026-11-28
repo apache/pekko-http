@@ -127,6 +127,20 @@ class RequestRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfterA
         }
       }
 
+      "PUT request with Content-Location metadata" in new TestSetup() {
+        HttpRequest(PUT, "/draft", List(`Content-Location`(Uri("previous"))))
+          .withEntity("draft") should renderTo {
+          """PUT /draft HTTP/1.1
+            |Content-Location: previous
+            |Host: test.com:8080
+            |User-Agent: pekko-http/1.0.0
+            |Content-Type: text/plain; charset=UTF-8
+            |Content-Length: 5
+            |
+            |draft"""
+        }
+      }
+
       "PUT request with a custom Transfer-Encoding header" in new TestSetup() {
         HttpRequest(PUT, "/abc/xyz", List(`Transfer-Encoding`(TransferEncodings.Extension("fancy"))))
           .withEntity("The content please!") should renderTo {

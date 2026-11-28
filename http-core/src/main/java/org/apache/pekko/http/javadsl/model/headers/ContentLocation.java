@@ -16,8 +16,10 @@ package org.apache.pekko.http.javadsl.model.headers;
 import org.apache.pekko.http.javadsl.model.Uri;
 
 /**
- * Model for the `ContentLocation` header. Specification:
- * https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html
+ * Model for the {@code Content-Location} header, which describes the representation in a request or
+ * response without changing the target URI.
+ *
+ * @see <a href="https://www.rfc-editor.org/rfc/rfc9110.html#section-8.7">RFC 9110, Section 8.7</a>
  */
 public abstract class ContentLocation extends org.apache.pekko.http.scaladsl.model.HttpHeader {
   public abstract Uri getUri();
