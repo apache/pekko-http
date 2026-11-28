@@ -95,6 +95,7 @@ Scala
     org.apache.pekko.http.scaladsl.model.headers.Trailer
     org.apache.pekko.http.scaladsl.model.http2.PeerClosedStreamException
     org.apache.pekko.http.scaladsl.model.http2.Http2Exception
+    org.apache.pekko.http.scaladsl.model.http2.StreamIdExhaustedException
     org.apache.pekko.http.scaladsl.model.SimpleRequestResponseAttribute
     org.apache.pekko.http.scaladsl.model.RequestResponseAssociation
     ```

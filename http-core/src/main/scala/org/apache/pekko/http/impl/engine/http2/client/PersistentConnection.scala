@@ -22,6 +22,7 @@ import scala.util.{ Failure, Success }
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.annotation.InternalApi
+import pekko.http.impl.engine.http2.ClientStreamIds
 import pekko.http.scaladsl.Http.OutgoingConnection
 import pekko.http.scaladsl.model.{ AttributeKey, HttpRequest, HttpResponse, RequestResponseAssociation, StatusCodes }
 import pekko.http.scaladsl.settings.Http2ClientSettings
@@ -57,12 +58,19 @@ private[http2] object PersistentConnection {
    */
   def managedConnection(connectionFlow: Flow[HttpRequest, HttpResponse, Future[OutgoingConnection]],
       settings: Http2ClientSettings): Flow[HttpRequest, HttpResponse, NotUsed] =
+    managedConnection(connectionFlow, settings, ClientStreamIds.First)
+
+  private[http2] def managedConnection(
+      connectionFlow: Flow[HttpRequest, HttpResponse, Future[OutgoingConnection]],
+      settings: Http2ClientSettings,
+      firstStreamId: Int): Flow[HttpRequest, HttpResponse, NotUsed] =
     Flow.fromGraph(new Stage(connectionFlow,
       settings.maxPersistentAttempts match {
         case 0 => None
         case n => Some(n)
       }, settings.baseConnectionBackoff, settings.maxConnectionBackoff,
-      settings.persistentConnectionMaxAge, settings.persistentConnectionMaxAgeJitter))
+      settings.persistentConnectionMaxAge, settings.persistentConnectionMaxAgeJitter,
+      ClientStreamIds.remainingFrom(firstStreamId)))
 
   private class AssociationTag extends RequestResponseAssociation
   private val associationTagKey = AttributeKey[AssociationTag]("PersistentConnection.associationTagKey")
@@ -73,7 +81,7 @@ private[http2] object PersistentConnection {
 
   private class Stage(connectionFlow: Flow[HttpRequest, HttpResponse, Future[OutgoingConnection]],
       maxAttempts: Option[Int], baseEmbargo: FiniteDuration, _maxBackoff: FiniteDuration,
-      persistentConnectionMaxAge: Duration, persistentConnectionMaxAgeJitter: Double)
+      persistentConnectionMaxAge: Duration, persistentConnectionMaxAgeJitter: Double, requestsPerConnection: Int)
       extends GraphStage[FlowShape[HttpRequest, HttpResponse]] {
     val requestIn = Inlet[HttpRequest]("PersistentConnection.requestIn")
     val responseOut = Outlet[HttpResponse]("PersistentConnection.responseOut")
@@ -138,6 +146,11 @@ private[http2] object PersistentConnection {
 
           override def onPush(): Unit = () // Pull might have happened before the connection failed. Element is kept in slot.
 
+          override def onUpstreamFinish(): Unit =
+            // The final request can arrive in the inlet just before its source completes. It still belongs to this
+            // connection attempt, including when this is a replacement for a retired connection.
+            if (!isAvailable(requestIn)) completeStage()
+
           override def onPull(): Unit = {
             if (!isAvailable(requestIn) && !isClosed(requestIn) && !hasBeenPulled(requestIn)) // requestIn might already have been pulled when we failed and went back to Unconnected
               pull(requestIn)
@@ -148,7 +161,8 @@ private[http2] object PersistentConnection {
             currentConnection = Some(newState)
             become(newState)
             if (requestOutPulled) {
-              if (isAvailable(requestIn)) newState.dispatchRequest(grab(requestIn))
+              if (isAvailable(requestIn)) newState.dispatchBufferedRequest()
+              else if (isClosed(requestIn)) requestOut.complete()
               else if (!hasBeenPulled(requestIn)) pull(requestIn)
             }
           }
@@ -211,6 +225,7 @@ private[http2] object PersistentConnection {
             responseIn: SubSinkInlet[HttpResponse]) extends State {
           private var ongoingRequests: Map[AssociationTag, Map[AttributeKey[?], RequestResponseAssociation]] = Map.empty
           private var retiring = false
+          private var remainingRequests = requestsPerConnection
 
           persistentConnectionMaxAge match {
             case age: FiniteDuration =>
@@ -226,10 +241,8 @@ private[http2] object PersistentConnection {
 
           requestOut.setHandler(new OutHandler {
             override def onPull(): Unit =
-              if (isAvailable(requestIn)) {
-                dispatchRequest(grab(requestIn))
-                if (isClosed(requestIn)) requestOut.complete()
-              } else if (isClosed(requestIn)) requestOut.complete()
+              if (isAvailable(requestIn)) dispatchBufferedRequest()
+              else if (isClosed(requestIn)) requestOut.complete()
               else if (!hasBeenPulled(requestIn)) pull(requestIn)
 
             override def onDownstreamFinish(cause: Throwable): Unit = onDisconnected()
@@ -270,10 +283,13 @@ private[http2] object PersistentConnection {
             }
           }
 
-          def retire(): Unit =
+          def retire(): Unit = retire("configured maximum age reached")
+
+          private def retire(reason: String): Unit =
             if (!retiring) {
               retiring = true
-              log.debug("Persistent HTTP/2 connection reached its configured maximum age, retiring it")
+              cancelTimer(MaxConnectionAgeReached)
+              log.debug("Retiring persistent HTTP/2 connection: {}", reason)
               setHandler(requestIn,
                 new InHandler {
                   override def onPush(): Unit = () // keep at most one next request in the inlet slot
@@ -286,7 +302,12 @@ private[http2] object PersistentConnection {
               requestOut.complete()
             }
 
-          def dispatchRequest(req: HttpRequest): Unit = {
+          def dispatchBufferedRequest(): Unit = {
+            dispatchRequest(grab(requestIn))
+            if (!retiring && isClosed(requestIn)) requestOut.complete()
+          }
+
+          private def dispatchRequest(req: HttpRequest): Unit = {
             val tag = new AssociationTag
             // Some cross-compilation woes here:
             // Explicit type ascription is needed to make both 2.12 and 2.13 compile.
@@ -295,6 +316,10 @@ private[http2] object PersistentConnection {
                 case (key, value: RequestResponseAssociation) => key -> value
               }: PartialFunction[(AttributeKey[?], Any), (AttributeKey[?], RequestResponseAssociation)]))
             requestOut.push(req.addAttribute(associationTagKey, tag))
+            remainingRequests -= 1
+            // Close the inner request side ourselves after its final allotment, before its cancellation could be
+            // mistaken for a connection failure. Unassigned requests stay on the outer side for its replacement.
+            if (remainingRequests == 0) retire("client stream IDs exhausted")
           }
 
           override def onPush(): Unit = dispatchRequest(grab(requestIn))

@@ -102,6 +102,21 @@ The default maximum age is `infinite`, which disables age-based retirement. The 
 programmatically with `Http2ClientSettings.withPersistentConnectionMaxAge` and
 `Http2ClientSettings.withPersistentConnectionMaxAgeJitter`.
 
+## HTTP/2 stream identifier exhaustion
+
+HTTP/2 stream identifiers cannot be reused on a connection. When a direct HTTP/2 connection flow (TLS or prior
+knowledge) allocates its last request stream identifier, it cancels the request input with a
+`org.apache.pekko.http.scaladsl.model.http2.StreamIdExhaustedException` and lets in-flight responses drain within
+`pekko.http.client.http2.completion-timeout`. The cancellation is not an error on the response stream.
+
+Use the request source's `watchTermination` immediately before the connection flow to observe this cancellation.
+The materialized @scala[`Future`]@java[`CompletionStage`] fails with the exception if the request source was
+still open. A queue's successful offer only means the request was buffered upstream, not that it was assigned
+to this connection. Correlate the assigned responses and create a new connection for further requests.
+
+The managed persistent variants retire the exhausted connection and establish a replacement for subsequent unassigned
+requests. They do not replay requests already assigned to the old connection.
+
 ## Request-response ordering
 
 For HTTP/2 connections the responses are not guaranteed to arrive in the same order that the requests were emitted to
