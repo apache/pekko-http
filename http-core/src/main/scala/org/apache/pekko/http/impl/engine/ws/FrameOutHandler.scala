@@ -91,7 +91,9 @@ private[http] class FrameOutHandler(serverSide: Boolean, _closeTimeout: FiniteDu
             push(out, closeFrame)
           case UserHandlerCompleted =>
             setHandler(in, new WaitingForPeerCloseFrame)
-            val frame = if (serverSide) inheritedAttributes.get[FrameOutHandler.CompletionClose].map(_.frame) else None
+            val frame =
+              if (serverSide) inheritedAttributes.get[FrameOutHandler.CompletionClose].map(_.frame)
+              else inheritedAttributes.get[FrameOutHandler.ClientCompletionClose].map(_.frame)
             push(out, frame.getOrElse(FrameEvent.closeFrame(Protocol.CloseCodes.Regular)))
           case UserHandlerErredOut(e) =>
             log.error(e, "Websocket handler failed with {}", e.getMessage)
@@ -215,10 +217,20 @@ private[http] object FrameOutHandler {
   final class CompletionClose(val frame: FrameStart) extends Attributes.Attribute
   val completionCloseKey = AttributeKey[CompletionClose]("pekko.http.websocket.completion-close")
 
-  def completionClose(code: Int, reason: String): CompletionClose = {
+  /** INTERNAL API: only the native client layer installs this validated completion frame. */
+  @InternalApi
+  final class ClientCompletionClose private[FrameOutHandler] (val frame: FrameStart) extends Attributes.Attribute
+
+  def completionClose(code: Int, reason: String): CompletionClose =
+    new CompletionClose(completionFrame(code, reason, serverSide = true))
+
+  def clientCompletionClose(code: Int, reason: String): ClientCompletionClose =
+    new ClientCompletionClose(completionFrame(code, reason, serverSide = false))
+
+  private def completionFrame(code: Int, reason: String, serverSide: Boolean): FrameStart = {
     import Protocol.CloseCodes
-    require(CloseCodes.isValid(code) && code != CloseCodes.ClientRejectsExtension,
-      s"Invalid server WebSocket close status: $code")
+    require(CloseCodes.isValid(code) && (!serverSide || code != CloseCodes.ClientRejectsExtension),
+      s"Invalid ${if (serverSide) "server" else "client"} WebSocket close status: $code")
     require(reason != null && reason.length <= 123, "WebSocket Close reason must be at most 123 UTF-8 bytes")
     val encodedLength =
       try StandardCharsets.UTF_8.newEncoder().encode(CharBuffer.wrap(reason)).remaining()
@@ -227,7 +239,7 @@ private[http] object FrameOutHandler {
           throw new IllegalArgumentException("WebSocket Close reason must be valid UTF-8")
       }
     require(encodedLength <= 123, "WebSocket Close reason must be at most 123 UTF-8 bytes")
-    new CompletionClose(FrameEvent.closeFrame(code, reason))
+    FrameEvent.closeFrame(code, reason)
   }
 
   def create(serverSide: Boolean, closeTimeout: FiniteDuration, log: LoggingAdapter): Flow[Input, FrameStart, NotUsed] =

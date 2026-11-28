@@ -122,6 +122,32 @@ Scala
 Java
 :   @@snip [WebSocketClientExampleTest.java](/docs/src/test/java/docs/http/javadsl/WebSocketClientExampleTest.java) { #WebSocket-client-flow }
 
+## Choosing the Close sent on normal completion
+
+When the client's outgoing message stream completes normally and the client starts the close handshake, it
+sends status 1000 (normal closure) by default. To choose a different WebSocket Close status and an optional
+reason for a connection, use
+@scala[`singleWebSocketRequestWithCompletionClose`]@java[`singleWebSocketRequestWithCompletionClose`]:
+
+Scala
+:   ```scala
+    Http().singleWebSocketRequestWithCompletionClose(request, handler, 1001, "leaving")
+    ```
+
+Java
+:   ```java
+    Http.get(system).singleWebSocketRequestWithCompletionClose(request, handler, 1001, "leaving", materializer);
+    ```
+
+Use an empty string for no reason. The reason must fit in 123 UTF-8 bytes. Queued outgoing messages still
+precede the Close. A close initiated by the server, failure handling, and the close-handshake timeout are
+unchanged.
+
+A client adapter that creates and composes its own connection flows can use
+`webSocketClientFlowWithCompletionClose(request, 1001, "leaving")` instead. Choose the status and reason as
+part of building each connection, with the same connection settings as for `webSocketClientFlow`. The
+option belongs to the connection, not to the application's message handler.
+
 ## webSocketClientLayer
 
 Just like the @ref[Stand-Alone HTTP Layer Usage](connection-level.md#http-client-layer) for regular HTTP requests, the WebSocket layer can be used fully detached from the

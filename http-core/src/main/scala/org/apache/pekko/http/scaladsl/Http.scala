@@ -33,7 +33,7 @@ import pekko.http.impl.engine.http2.Http2
 import pekko.http.impl.engine.http2.OutgoingConnectionBuilderImpl
 import pekko.http.impl.engine.rendering.DateHeaderRendering
 import pekko.http.impl.engine.server._
-import pekko.http.impl.engine.ws.WebSocketClientBlueprint
+import pekko.http.impl.engine.ws.{ FrameOutHandler, WebSocketClientBlueprint }
 import pekko.http.impl.settings.{ ConnectionPoolSetup, HostConnectionPoolSetup }
 import pekko.http.impl.util.StreamUtils
 import pekko.http.scaladsl.model._
@@ -632,7 +632,33 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
       connectionContext: ConnectionContext = defaultClientHttpsContext,
       localAddress: Option[InetSocketAddress] = None,
       settings: ClientConnectionSettings = ClientConnectionSettings(system),
-      log: LoggingAdapter = system.log): Flow[Message, Message, Future[WebSocketUpgradeResponse]] = {
+      log: LoggingAdapter = system.log): Flow[Message, Message, Future[WebSocketUpgradeResponse]] =
+    createWebSocketClientFlow(request, connectionContext, localAddress, settings, log, None)
+
+  /**
+   * Like [[webSocketClientFlow]], but selects the Close code and UTF-8 reason sent when the outgoing message
+   * stream completes normally and the client initiates the close. A peer-initiated close or a failed stream
+   * keeps its existing behavior. The reason must fit in 123 UTF-8 bytes.
+   */
+  def webSocketClientFlowWithCompletionClose(
+      request: WebSocketRequest,
+      closeCode: Int,
+      closeReason: String,
+      connectionContext: ConnectionContext = defaultClientHttpsContext,
+      localAddress: Option[InetSocketAddress] = None,
+      settings: ClientConnectionSettings = ClientConnectionSettings(system),
+      log: LoggingAdapter = system.log): Flow[Message, Message, Future[WebSocketUpgradeResponse]] =
+    createWebSocketClientFlow(request, connectionContext, localAddress, settings, log,
+      Some(FrameOutHandler.clientCompletionClose(closeCode, closeReason)))
+
+  private def createWebSocketClientFlow(
+      request: WebSocketRequest,
+      connectionContext: ConnectionContext,
+      localAddress: Option[InetSocketAddress],
+      settings: ClientConnectionSettings,
+      log: LoggingAdapter,
+      completionClose: Option[FrameOutHandler.ClientCompletionClose])
+      : Flow[Message, Message, Future[WebSocketUpgradeResponse]] = {
     import request.uri
     require(uri.isAbsolute, s"WebSocket request URI must be absolute but was '$uri'")
 
@@ -648,7 +674,13 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
     val host = uri.authority.host.address
     val port = uri.effectivePort
 
-    webSocketClientLayer(request, settings, log)
+    val layer = webSocketClientLayer(request, settings, log)
+    // Set the marker on the native WebSocket layer, below the returned Flow's attributes.
+    val configuredLayer = completionClose match {
+      case Some(close) => layer.addAttributes(Attributes(close))
+      case None        => layer
+    }
+    configuredLayer
       .join(_outgoingTlsConnectionLayer(host, port, settings.withLocalAddressOverride(localAddress), ctx, log))
       // also added webSocketClientLayer but we want to make sure it covers the whole stack
       .addAttributes(cancellationStrategyAttributeForDelay(settings.streamCancellationDelay))
@@ -666,6 +698,23 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
       settings: ClientConnectionSettings = ClientConnectionSettings(system),
       log: LoggingAdapter = system.log)(implicit mat: Materializer): (Future[WebSocketUpgradeResponse], T) =
     webSocketClientFlow(request, connectionContext, localAddress, settings, log)
+      .joinMat(clientFlow)(Keep.both).run()
+
+  /**
+   * Runs a single WebSocket conversation with a custom Close for normal completion of the outgoing message
+   * stream. See [[webSocketClientFlowWithCompletionClose]].
+   */
+  def singleWebSocketRequestWithCompletionClose[T](
+      request: WebSocketRequest,
+      clientFlow: Flow[Message, Message, T],
+      closeCode: Int,
+      closeReason: String,
+      connectionContext: ConnectionContext = defaultClientHttpsContext,
+      localAddress: Option[InetSocketAddress] = None,
+      settings: ClientConnectionSettings = ClientConnectionSettings(system),
+      log: LoggingAdapter = system.log)(implicit mat: Materializer): (Future[WebSocketUpgradeResponse], T) =
+    webSocketClientFlowWithCompletionClose(request, closeCode, closeReason, connectionContext,
+      localAddress, settings, log)
       .joinMat(clientFlow)(Keep.both).run()
 
   /**

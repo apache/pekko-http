@@ -13,41 +13,45 @@
 
 package org.apache.pekko.http.impl.engine.ws
 
-import java.util.Random
+import java.net.InetSocketAddress
 import java.util.concurrent.TimeoutException
+import java.util.{ Optional, Random }
 
-import com.typesafe.config.ConfigFactory
+import scala.concurrent.Future
+import scala.concurrent.duration._
 
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.actor.ActorSystem
-import pekko.http.scaladsl.model.ws.{ InvalidUpgradeResponse, WebSocketUpgradeResponse }
-import pekko.stream.{ ClosedShape, SystemMaterializer }
-import pekko.stream.TLSProtocol._
-
-import scala.concurrent.duration._
-import pekko.http.scaladsl.settings.ClientConnectionSettings
-import pekko.http.scaladsl.Http
+import pekko.http.impl.util._
+import pekko.http.javadsl.model.ws.{ Message => JavaMessage, WebSocketRequest => JavaWebSocketRequest }
+import pekko.http.javadsl.{ Http => JavaHttp }
 import pekko.http.scaladsl.model.headers.{
   Connection,
-  `Sec-WebSocket-Extensions`,
-  `Sec-WebSocket-Key`,
-  `Sec-WebSocket-Protocol`,
-  `Sec-WebSocket-Version`,
-  `User-Agent`,
   HttpOrigin,
   Origin,
   ProductVersion,
   RawHeader,
-  WebSocketExtension
+  WebSocketExtension,
+  `Sec-WebSocket-Extensions`,
+  `Sec-WebSocket-Key`,
+  `Sec-WebSocket-Protocol`,
+  `Sec-WebSocket-Version`,
+  `User-Agent`
 }
 import pekko.http.scaladsl.model.ws._
+import pekko.http.scaladsl.model.ws.{ InvalidUpgradeResponse, WebSocketUpgradeResponse }
 import pekko.http.scaladsl.model.{ HttpHeader, Uri }
+import pekko.http.scaladsl.settings.ClientConnectionSettings
+import pekko.http.scaladsl.{ ClientTransport, Http }
+import pekko.stream.TLSProtocol._
 import pekko.stream.scaladsl._
 import pekko.stream.testkit.{ TestPublisher, TestSubscriber, Utils }
-import pekko.util.ByteString
+import pekko.stream.{ ClosedShape, SystemMaterializer }
 import pekko.testkit._
-import pekko.http.impl.util._
+import pekko.util.ByteString
+
+import com.typesafe.config.ConfigFactory
 
 class WebSocketClientSpec extends PekkoSpecWithMaterializer("pekko.http.client.websocket.log-frames = on") {
   "The client-side WebSocket implementation should" should {
@@ -325,6 +329,48 @@ class WebSocketClientSpec extends PekkoSpecWithMaterializer("pekko.http.client.w
             netIn.sendComplete()
           }
         }
+      }
+    }
+
+    Seq[(String, CompletionCloseConnection => (() => Boolean))](
+      "a composed Scala client flow" -> (_.startScalaFlow()),
+      "a Scala single request" -> (_.startScalaRequest(optIn = true)),
+      "a Java client flow" -> (_.startJavaFlow()),
+      "a Java single request" -> (_.startJavaRequest())).foreach { case (api, startClient) =>
+      s"send the configured client completion Close after the last message using $api" in {
+        withCompletionCloseConnection { client =>
+          client.open(startClient(client))
+          client.messagesOut.sendNext(TextMessage("last"))
+          client.messagesOut.sendComplete()
+          client.expectMaskedFrameOnNetwork(Protocol.Opcode.Text, ByteString("last"), fin = true)
+          client.expectMaskedFrameOnNetwork(Protocol.Opcode.Close, client.configuredPayload, fin = true)
+          client.sendWSCloseFrame(Protocol.CloseCodes.Regular)
+          client.messagesIn.expectComplete()
+          client.finishTransport()
+        }
+      }
+    }
+
+    "retain the default client completion Close without opting in" in {
+      withCompletionCloseConnection { client =>
+        client.open(client.startScalaRequest(optIn = false))
+        client.messagesOut.sendComplete()
+        client.expectMaskedCloseFrame(Protocol.CloseCodes.Regular)
+        client.sendWSCloseFrame(Protocol.CloseCodes.Regular)
+        client.messagesIn.expectComplete()
+        client.finishTransport()
+      }
+    }
+
+    "retain the peer's Close reply when the client has opted into a custom completion Close" in {
+      withCompletionCloseConnection { client =>
+        client.open(client.startScalaRequest(optIn = true))
+        val peerPayload = WSTestUtils.closeFrameData(Protocol.CloseCodes.Regular, ByteString("peer finished"))
+        client.sendWSFrame(Protocol.Opcode.Close, peerPayload, fin = true)
+        client.messagesIn.expectComplete()
+        client.messagesOut.sendComplete()
+        client.expectMaskedFrameOnNetwork(Protocol.Opcode.Close, peerPayload, fin = true)
+        client.finishTransport()
       }
     }
 
@@ -847,6 +893,120 @@ class WebSocketClientSpec extends PekkoSpecWithMaterializer("pekko.http.client.w
       |Connection: upgrade
       |
       |""".stripMarginWithNewline("\r\n")
+  }
+
+  private def withCompletionCloseConnection(run: CompletionCloseConnection => Unit): Unit =
+    Utils.assertAllStagesStopped {
+      val client = new CompletionCloseConnection
+      try run(client)
+      finally client.cleanUp()
+    }
+
+  private class CompletionCloseConnection extends WSTestSetupBase {
+    private val closeCode = Protocol.CloseCodes.GoingAway
+    private val closeReason = "d\u00e9part"
+    private val target = "ws://example.org/ws"
+    private val netOut = ByteStringSinkProbe()
+    private val netIn = TestPublisher.probe[ByteString]()
+    val messagesIn = TestSubscriber.probe[Message]()
+    val messagesOut = TestPublisher.probe[Message]()
+    val configuredPayload: ByteString = WSTestUtils.closeFrameData(closeCode, ByteString(closeReason))
+
+    private val settings = ClientConnectionSettings(system)
+      .withUserAgentHeader(Some(`User-Agent`(List(ProductVersion("pekko-http", "test")))))
+      .withWebsocketRandomFactory(() => new Random(0))
+      .withTransport(new ClientTransport {
+        override def connectTo(host: String, port: Int, settings: ClientConnectionSettings)(
+            implicit system: ActorSystem): Flow[ByteString, ByteString, Future[Http.OutgoingConnection]] =
+          Flow.fromSinkAndSourceMat(netOut.sink, Source.fromPublisher(netIn))(Keep.none)
+            .mapMaterializedValue { _ =>
+              Future.successful(Http.OutgoingConnection(
+                InetSocketAddress.createUnresolved("localhost", 12345),
+                InetSocketAddress.createUnresolved(host, port)))
+            }
+      })
+
+    private def scalaHandler =
+      Flow.fromSinkAndSourceMat(Sink.fromSubscriber(messagesIn), Source.fromPublisher(messagesOut))(Keep.none)
+
+    private def javaHandler =
+      Flow.fromSinkAndSourceMat[JavaMessage, JavaMessage, NotUsed, NotUsed, NotUsed](
+        Sink.fromSubscriber(messagesIn).contramap[JavaMessage](_.asScala),
+        Source.fromPublisher(messagesOut).map[JavaMessage](message => message))(Keep.none).asJava[JavaMessage]
+
+    def startScalaFlow(): () => Boolean = {
+      val connection = Http(system)
+        .webSocketClientFlowWithCompletionClose(WebSocketRequest(target), closeCode, closeReason, settings = settings)
+      // A framework can compose and name the native connection without setting attributes on its application handler.
+      val wrapped = Flow[Message].map(message => message)
+        .viaMat(connection)(Keep.right)
+        .withAttributes(pekko.stream.Attributes.name("wrapper"))
+      val (upgrade, _) = wrapped.joinMat(scalaHandler)(Keep.both).run()
+      () => upgrade.awaitResult(1.second.dilated).isInstanceOf[ValidUpgrade]
+    }
+
+    def startScalaRequest(optIn: Boolean): () => Boolean = {
+      val http = Http(system)
+      val request = WebSocketRequest(target)
+      val (upgrade, _) =
+        if (optIn)
+          http.singleWebSocketRequestWithCompletionClose(request, scalaHandler, closeCode, closeReason,
+            settings = settings)
+        else
+          http.singleWebSocketRequest(request, scalaHandler, settings = settings)
+      () => upgrade.awaitResult(1.second.dilated).isInstanceOf[ValidUpgrade]
+    }
+
+    def startJavaFlow(): () => Boolean = {
+      val session = JavaHttp.get(system).webSocketClientFlowWithCompletionClose(
+        JavaWebSocketRequest.create(target),
+        closeCode,
+        closeReason,
+        pekko.http.javadsl.ConnectionContext.noEncryption(),
+        Optional.empty[InetSocketAddress](),
+        settings,
+        system.log)
+      val (upgrade, _) = session.asScala.joinMat(javaHandler.asScala)(Keep.both).run()
+      () => scala.jdk.javaapi.FutureConverters.asScala(upgrade).awaitResult(1.second.dilated).isValid
+    }
+
+    def startJavaRequest(): () => Boolean = {
+      val result = JavaHttp.get(system).singleWebSocketRequestWithCompletionClose(
+        JavaWebSocketRequest.create(target),
+        javaHandler,
+        closeCode,
+        closeReason,
+        pekko.http.javadsl.ConnectionContext.noEncryption(),
+        Optional.empty[InetSocketAddress](),
+        settings,
+        system.log,
+        materializer)
+      () => scala.jdk.javaapi.FutureConverters.asScala(result.first).awaitResult(1.second.dilated).isValid
+    }
+
+    def open(upgraded: () => Boolean): Unit = {
+      expectBytes(UpgradeRequestBytes)
+      messagesIn.request(1)
+      send(UpgradeResponseBytes)
+      upgraded() shouldBe true
+    }
+
+    def expectBytes(length: Int): ByteString = netOut.expectBytes(length)
+    def expectBytes(bytes: ByteString): Unit = netOut.expectBytes(bytes)
+    def send(bytes: ByteString): Unit = netIn.sendNext(bytes)
+
+    def finishTransport(): Unit = {
+      netIn.sendComplete()
+      netOut.request(1)
+      netOut.expectComplete()
+    }
+
+    def cleanUp(): Unit = {
+      messagesOut.sendComplete()
+      messagesIn.cancel()
+      netIn.sendComplete()
+      netOut.cancel()
+    }
   }
 
   abstract class EstablishedConnectionSetup extends TestSetup {
