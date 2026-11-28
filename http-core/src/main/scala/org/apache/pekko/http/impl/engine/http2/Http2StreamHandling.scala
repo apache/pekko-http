@@ -20,6 +20,7 @@ import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.http.impl.engine.http2.FrameEvent._
 import pekko.http.impl.engine.http2.Http2Protocol.ErrorCode
+import pekko.http.impl.engine.http2.client.ResponseParsing
 import pekko.http.impl.engine.rendering.DateHeaderRendering
 import pekko.http.scaladsl.model.http2.PeerClosedStreamException
 import pekko.http.scaladsl.model.{ AttributeKey, EntityStreamException, ErrorInfo, HttpEntity, HttpMethods }
@@ -75,9 +76,9 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
   private val headRequestStreamIds = mutable.Set.empty[Int]
 
   /**
-   * Server side: for a request stream that declared a `content-length` and is still receiving DATA, the number of
-   * bytes it may still send. RFC 9113 section 8.1.1 makes a request whose DATA payload lengths do not add up to its
-   * `content-length` malformed, and that is a stream error of type PROTOCOL_ERROR.
+   * The number of content bytes still expected on an incoming request with a declared length, or an open
+   * client response stream retained only to deliver trailers at a declared length of zero. A mismatch is a stream
+   * error of type PROTOCOL_ERROR (RFC 9113 section 8.1.1).
    */
   private val remainingContentLength = mutable.Map.empty[Int, Long]
 
@@ -418,7 +419,10 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
 
         case frame @ ParsedHeadersFrame(streamId, endStream, _, _, _) =>
           if (isServer && isHeadRequest(frame)) headRequestStreamIds += streamId
-          val contentLength = if (isServer) declaredContentLength(frame) else -1L
+          val contentLength =
+            if (isServer) declaredContentLength(frame)
+            else if (!endStream && ResponseParsing.hasZeroLengthAndAllowsTrailers(frame, correlationAttributes)) 0L
+            else -1L
           if (!endStream && contentLength >= 0) remainingContentLength.update(streamId, contentLength)
           // Resolve the expectation before collecting or exposing any entity data. It is an
           // informational field block, not the start of the final response substream.
@@ -681,12 +685,13 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     }
 
     /**
-     * The request's DATA does not add up to its `content-length` (RFC 9113 section 8.1.1): fail the entity, stop any
-     * response and reset the stream with PROTOCOL_ERROR. The connection and its other streams carry on.
+     * The message's DATA does not add up to its `content-length` (RFC 9113 section 8.1.1): fail the entity, stop any
+     * outgoing data and reset the stream with PROTOCOL_ERROR. The connection and its other streams carry on.
      */
     private def rejectContentLength(streamId: Int): StreamState = {
+      val messageType = if (isServer) "request" else "response"
       failIncoming(EntityStreamException(ErrorInfo(
-        "HTTP/2 request content does not match its content-length",
+        s"HTTP/2 $messageType content does not match its content-length",
         s"The DATA frames received on stream $streamId do not add up to the declared content-length.")))
       shutdown()
       multiplexer.pushControlFrame(RstStreamFrame(streamId, ErrorCode.PROTOCOL_ERROR))

@@ -21,6 +21,7 @@ import scala.collection.immutable.VectorBuilder
 
 import org.apache.pekko
 import pekko.annotation.InternalApi
+import pekko.http.impl.engine.http2.FrameEvent.ParsedHeadersFrame
 import pekko.http.impl.engine.http2.Http2Compliance.Http2ProtocolException
 import pekko.http.impl.engine.http2.Http2ResponseStatus
 import pekko.http.impl.engine.http2.RequestParsing._
@@ -36,6 +37,41 @@ import pekko.util.OptionVal
 
 @InternalApi
 private[http2] object ResponseParsing {
+  // A HEAD response may carry the length of the corresponding GET without allowing trailers.
+  private object HeadRequest
+  private val headRequestKey = AttributeKey[HeadRequest.type]("pekko.http.internal.http2.head-request")
+  private object ConditionalGetRequest
+  private val conditionalGetRequestKey =
+    AttributeKey[ConditionalGetRequest.type]("pekko.http.internal.http2.conditional-get-request")
+
+  def expectHeadResponse(stream: Http2SubStream): Http2SubStream =
+    stream.withCorrelationAttributes(stream.correlationAttributes.updated(headRequestKey, HeadRequest))
+
+  // Record only validators actually sent in the initial request headers, not any synthetic metadata.
+  def correlateConditionalGet(stream: Http2SubStream): Http2SubStream =
+    if (stream.initialHeaders.keyValuePairs.exists {
+        case (name, _) => name == "if-none-match" || name == "if-modified-since"
+      })
+      stream.withCorrelationAttributes(stream.correlationAttributes.updated(conditionalGetRequestKey,
+        ConditionalGetRequest))
+    else stream
+
+  private def comesFromHeadRequest(correlationAttributes: Map[AttributeKey[?], ?]): Boolean =
+    correlationAttributes.contains(headRequestKey)
+
+  def hasZeroLengthAndAllowsTrailers(
+      frame: ParsedHeadersFrame,
+      correlationAttributes: Map[AttributeKey[?], ?]): Boolean =
+    !comesFromHeadRequest(correlationAttributes) &&
+    frame.keyValuePairs.exists {
+      case ("content-length", value: String) => value.toLongOption.contains(0L)
+      case _                                 => false
+    } &&
+    frame.keyValuePairs.exists {
+      case (":status", value: String) => value.toIntOption.flatMap(StatusCodes.getForKey).exists(_.allowsEntity)
+      case _                          => false
+    }
+
   def parseResponse(httpHeaderParser: HttpHeaderParser, settings: ParserSettings, attributes: Attributes)
       : Http2SubStream => HttpResponse = { subStream =>
     val tlsSessionInfoHeader: Option[`Tls-Session-Info`] =
@@ -67,7 +103,22 @@ private[http2] object ResponseParsing {
         if (Http2ResponseStatus.isInformational(status.intValue) && subStream.initialHeaders.endStream)
           malformedResponse("Informational responses must not end the stream")
 
-        val entity = subStream.createEntity(contentLength, contentType)
+        val correlationAttributes = subStream.correlationAttributes
+        val isHeadResponse = comesFromHeadRequest(correlationAttributes)
+        val entity = subStream.createResponseEntity(contentLength, contentType,
+          mayHaveTrailers = status.allowsEntity && !isHeadResponse)
+        val responseAttributes: Map[AttributeKey[?], Any] =
+          if (isHeadResponse) {
+            val publicAttributes = correlationAttributes - headRequestKey
+            if (status == StatusCodes.OK && contentLength >= 0)
+              publicAttributes.updated(AttributeKeys.representationContentLength, Long.box(contentLength))
+            else publicAttributes
+          } else if (correlationAttributes.contains(conditionalGetRequestKey)) {
+            val publicAttributes = correlationAttributes - conditionalGetRequestKey
+            if (status == StatusCodes.NotModified && contentLength >= 0)
+              publicAttributes.updated(AttributeKeys.representationContentLength, Long.box(contentLength))
+            else publicAttributes
+          } else correlationAttributes
 
         // user access to tls session info
         if (tlsSessionInfoHeader.isDefined) headers += tlsSessionInfoHeader.get
@@ -76,7 +127,7 @@ private[http2] object ResponseParsing {
           status = status,
           headers = headers.result(),
           entity = entity,
-          HttpProtocols.`HTTP/2.0`).withAttributes(subStream.correlationAttributes)
+          HttpProtocols.`HTTP/2.0`).withAttributes(responseAttributes)
         sslSessionAttribute match {
           case Some(sslSession) => response.addAttribute(AttributeKeys.sslSession, SslSessionInfo(sslSession))
           case None             => response
