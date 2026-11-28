@@ -234,8 +234,16 @@ private[http] final class HttpRequestParser(
                     RequestStart(method, uri, protocol, attributes, allHeaders0, createEntity,
                       continueExpectationActive, closeAfterResponseCompletion)
                 }
-              } else RequestStart(method, uri, protocol, attributes, allHeaders0, createEntity,
-                continueExpectationActive, closeAfterResponseCompletion)
+              } else {
+                // RFC 9112 sections 3.2.4 and 3.3: the asterisk target carries no authority, path or query.
+                // Keep the original uriBytes for optional raw request target capture.
+                val targetUri =
+                  if (method == HttpMethods.OPTIONS && protocol == HttpProtocols.`HTTP/1.1` &&
+                    uriBytes.length == 1 && uriBytes(0) == '*'.toByte) Uri.Empty
+                  else uri
+                RequestStart(method, targetUri, protocol, attributes, allHeaders0, createEntity,
+                  continueExpectationActive, closeAfterResponseCompletion)
+              }
 
             emit(requestStart)
           }
