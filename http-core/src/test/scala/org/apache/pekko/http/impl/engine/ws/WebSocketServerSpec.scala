@@ -183,6 +183,44 @@ class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.w
           expectNetworkClose()
         }
       }
+      "for an absolute request target" in Utils.assertAllStagesStopped {
+        new TestSetup {
+          try {
+            send(
+              """GET http://server.example.com/echo?topic=scala HTTP/1.1
+                |Host: server.example.com
+                |Upgrade: websocket
+                |Connection: Upgrade
+                |Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==
+                |Sec-WebSocket-Version: 13
+                |
+                |""")
+
+            val request = expectRequest()
+            request.uri.path.toString shouldBe "/echo"
+            request.uri.query().get("topic") shouldBe Some("scala")
+            responses.sendNext(request.attribute(webSocketUpgrade).get.handleMessages(Flow[Message]))
+
+            expectResponseWithWipedDate(
+              """HTTP/1.1 101 Switching Protocols
+                |Upgrade: websocket
+                |Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
+                |Server: pekko-http/test
+                |Date: XXXX
+                |Connection: upgrade
+                |
+                |""")
+
+            val text = ByteString("hello")
+            sendWSFrame(Protocol.Opcode.Text, text, fin = true, mask = true)
+            expectWSFrame(Protocol.Opcode.Text, text, fin = true)
+          } finally {
+            closeNetworkInput()
+            responses.sendComplete()
+            netOut.cancel()
+          }
+        }
+      }
     }
     "collect application subprotocol offers" should {
       for {
