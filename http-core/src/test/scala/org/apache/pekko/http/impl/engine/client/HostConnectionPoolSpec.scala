@@ -85,6 +85,79 @@ class HostConnectionPoolSpec extends PekkoSpecWithMaterializer(
   testSet(clientServerImplementation = PekkoHttpEngineTCP)
   // testSet(poolImplementation = NewPoolImplementation, clientServerImplementation = PekkoHttpEngineTLS)
 
+  "An HTTP/1.1 TCP connection pool" should {
+    "complete a close-delimited response at EOF and use a new connection for the next request" in {
+      val http = Http()
+      val host = "127.0.0.1"
+      val connections = TestSubscriber.probe[Http.IncomingConnection]()
+      val binding = http.newServerAt(host, 0).connectionSource()
+        .to(Sink.fromSubscriber(connections))
+        .run()
+        .awaitResult(5.seconds.dilated)
+      try {
+        val requests = TestPublisher.probe[(HttpRequest, Int)]()
+        val responses = TestSubscriber.probe[(Try[HttpResponse], Int)]()
+        val pool = Source.fromPublisher(requests)
+          .viaMat(http.newHostConnectionPool[Int](host, binding.localAddress.getPort,
+            defaultSettings.withMaxRetries(0)))(Keep.right)
+          .to(Sink.fromSubscriber(responses))
+          .run()
+        val stopServerConnections = KillSwitches.shared("close-delimited-pool-test")
+        var unfinishedBody = Option.empty[ByteStringSinkProbe]
+
+        try {
+          responses.request(1)
+          requests.sendNext(HttpRequest(uri = "/first") -> 1)
+          val firstConnection = connections.requestNext()
+          val body = TestPublisher.probe[ByteString]()
+          firstConnection.handleWith(Flow[HttpRequest].via(stopServerConnections.flow).map { _ =>
+            HttpResponse(entity = HttpEntity.CloseDelimited(ContentTypes.`text/plain(UTF-8)`,
+              Source.fromPublisher(body).via(stopServerConnections.flow)))
+          })
+
+          val (first, firstId) = responses.expectNext()
+          val firstResponse = first.get
+          val received = ByteStringSinkProbe(firstResponse.entity.dataBytes)
+          unfinishedBody = Some(received)
+          firstId shouldBe 1
+          firstResponse.status shouldBe StatusCodes.OK
+          firstResponse.protocol shouldBe HttpProtocols.`HTTP/1.1`
+          firstResponse.entity shouldBe a[HttpEntity.CloseDelimited]
+          body.sendNext(ByteString("hello "))
+          received.expectUtf8EncodedString("hello ")
+          body.sendNext(ByteString("world"))
+          received.expectUtf8EncodedString("world")
+          received.expectNoBytes(100.millis.dilated)
+          body.sendComplete()
+          received.expectComplete()
+          unfinishedBody = None
+
+          responses.request(1)
+          requests.sendNext(HttpRequest(uri = "/next") -> 2)
+          val secondConnection = connections.requestNext()
+          secondConnection.handleWith(Flow[HttpRequest].via(stopServerConnections.flow)
+            .map(request => HttpResponse(entity = request.uri.path.toString)))
+
+          val (second, secondId) = responses.expectNext()
+          val secondResponse = second.get
+          val nextBody = ByteStringSinkProbe(secondResponse.entity.dataBytes)
+          unfinishedBody = Some(nextBody)
+          secondId shouldBe 2
+          secondResponse.status shouldBe StatusCodes.OK
+          nextBody.expectUtf8EncodedString("/next")
+          nextBody.request(1)
+          nextBody.expectComplete()
+          unfinishedBody = None
+        } finally {
+          stopServerConnections.shutdown()
+          unfinishedBody.foreach(_.cancel())
+          responses.cancel()
+          pool.shutdown().awaitResult(5.seconds.dilated)
+        }
+      } finally binding.unbind().awaitResult(5.seconds.dilated)
+    }
+  }
+
   def testSet(clientServerImplementation: ClientServerImplementation) =
     s"NewPoolImplementation on $clientServerImplementation" should {
       implicit class EnhancedIn(name: String) {
