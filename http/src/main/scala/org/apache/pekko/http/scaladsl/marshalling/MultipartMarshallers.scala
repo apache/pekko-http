@@ -13,8 +13,6 @@
 
 package org.apache.pekko.http.scaladsl.marshalling
 
-import java.util.concurrent.ThreadLocalRandom
-
 import org.apache.pekko
 import pekko.event.LoggingAdapter
 import pekko.http.impl.engine.rendering.BodyPartRenderer
@@ -31,10 +29,10 @@ trait MultipartMarshallers {
     }
 
   /**
-   * The random instance that is used to create multipart boundaries. This can be overridden (e.g. in tests) to
-   * choose how a boundary is created.
+   * The random instance that is used to create multipart boundaries. The default is a shared secure random source.
+   * Override it to customize boundary generation, for example to use fixed boundaries in tests.
    */
-  protected def multipartBoundaryRandom: java.util.Random = ThreadLocalRandom.current()
+  protected def multipartBoundaryRandom: java.util.Random = BodyPartRenderer.defaultBoundaryRandom
 
   /**
    * The length of randomly generated multipart boundaries (before base64 encoding). Can be overridden
