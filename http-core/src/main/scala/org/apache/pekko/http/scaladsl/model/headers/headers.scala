@@ -33,6 +33,7 @@ import pekko.annotation.{ ApiMayChange, InternalApi }
 import pekko.event.Logging
 import pekko.http.impl.model.parser.CharacterClasses
 import pekko.http.impl.model.parser.CharacterClasses.`attr-char`
+import pekko.http.impl.model.parser.StructuredFieldDictionary
 import pekko.http.impl.util._
 import pekko.http.javadsl.{ model => jm }
 import pekko.http.scaladsl.model._
@@ -770,6 +771,100 @@ final case class Origin(origins: Seq[HttpOrigin]) extends jm.headers.Origin with
 
   /** Java API */
   def getOrigins: Iterable[jm.headers.HttpOrigin] = origins.asJava
+}
+
+/**
+ * Typed access to the HTTP Priority field without changing how received headers are stored.
+ *
+ * @since 2.1.0
+ */
+object Priority extends ModeledCompanion[Priority] {
+
+  /** Creates a Priority header with only the urgency parameter specified. */
+  def apply(urgency: Int): Priority = apply(Some(urgency), None)
+
+  /**
+   * Creates a Priority header with at least one explicitly specified parameter. Urgency is in the
+   * range 0 to 7. An omitted parameter is different from explicitly sending its default value.
+   */
+  def apply(urgency: Option[Int], incremental: Option[Boolean]): Priority = {
+    require(urgency.isDefined || incremental.isDefined, "at least one Priority parameter must be specified")
+    require(urgency.forall(n => n >= 0 && n <= 7), "Priority urgency must be between 0 and 7")
+    val value =
+      (urgency.map(n => s"u=$n").iterator ++
+      incremental.map(flag => if (flag) "i" else "i=?0").iterator).mkString(", ")
+    new Priority(urgency, incremental, value)
+  }
+
+  /**
+   * Interprets all Priority fields together, in the supplied model header order. Returns `None`
+   * if there is no readable non-empty dictionary. The header collection is unchanged, and the
+   * result retains the text of unrecognized dictionary members from those model values.
+   */
+  def fromHeaders(headers: Seq[HttpHeader]): Option[Priority] =
+    fromFields(headers.iterator)
+
+  override def parseFromValueString(value: String): Either[List[ErrorInfo], Priority] =
+    parseValue(value).toRight(List(ErrorInfo("Expected a non-empty Priority dictionary")))
+
+  /** INTERNAL API: Java bridge. */
+  @InternalApi
+  private[http] def createJava(
+      urgency: util.OptionalInt, incremental: util.Optional[java.lang.Boolean]): Priority =
+    apply(
+      if (urgency.isPresent) Some(urgency.getAsInt) else None,
+      if (incremental.isPresent) Some(incremental.get().booleanValue()) else None)
+
+  /** INTERNAL API: Java bridge. */
+  @InternalApi
+  private[http] def fromJavaHeaders(headers: Iterable[? <: jm.HttpHeader]): util.Optional[jm.headers.Priority] =
+    pekko.util.OptionalUtil.convertOption[jm.headers.Priority, Priority](
+      fromFields(scala.jdk.javaapi.CollectionConverters.asScala(headers.iterator())))
+
+  private def fromFields(headers: Iterator[jm.HttpHeader]): Option[Priority] = {
+    val values = headers.filter(_.is(lowercaseName)).map(_.value)
+    if (values.hasNext) {
+      val first = values.next()
+      val value = if (values.hasNext) values.mkString(first + ", ", ", ", "") else first
+      parseValue(value)
+    } else None
+  }
+
+  private def parseValue(value: String): Option[Priority] = {
+    import StructuredFieldDictionary.{ BooleanMember, IntegerMember }
+    StructuredFieldDictionary.parse(value).filter(_.nonEmpty).map { members =>
+      val urgency = members.get("u").collect { case IntegerMember(n) if n >= 0 && n <= 7 => n.toInt }
+      val incremental = members.get("i").collect { case BooleanMember(flag) => flag }
+      // Only outer HTTP whitespace is removed. Keep the dictionary's original member spellings and order.
+      new Priority(urgency, incremental, value.trim)
+    }
+  }
+}
+
+/**
+ * The end-to-end Priority header (RFC 9218, section 5). The options distinguish an absent hint from
+ * an explicitly specified one. This header alone does not configure scheduling.
+ *
+ * @since 2.1.0
+ */
+final class Priority private (
+    val urgency: Option[Int],
+    val incremental: Option[Boolean],
+    override val value: String)
+    extends jm.headers.Priority with RequestResponseHeader {
+
+  override def getUrgency(): util.OptionalInt = urgency.fold(util.OptionalInt.empty())(util.OptionalInt.of)
+  override def getIncremental(): util.Optional[java.lang.Boolean] =
+    pekko.util.OptionalUtil.convertOption(incremental.map(flag => java.lang.Boolean.valueOf(flag)))
+
+  protected[http] def renderValue[R <: Rendering](r: R): r.type = r ~~ value
+  protected def companion: ModeledCompanion[Priority] = Priority
+
+  override def equals(other: Any): Boolean = other match {
+    case that: Priority => value == that.value
+    case _              => false
+  }
+  override def hashCode(): Int = value.hashCode
 }
 
 // https://tools.ietf.org/html/rfc7235#section-4.3

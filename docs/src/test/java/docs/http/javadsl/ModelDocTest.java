@@ -22,6 +22,7 @@ import org.apache.pekko.http.javadsl.model.*;
 import org.apache.pekko.http.javadsl.model.headers.*;
 
 import java.util.Optional;
+import java.util.OptionalInt;
 
 // #import-model
 
@@ -98,6 +99,28 @@ public class ModelDocTest {
   }
 
   // #headers
+
+  @Test
+  public void testPriorityHeader() {
+    // #priority-header
+    HttpResponse response =
+        HttpResponse.create()
+            .withHeaders(
+                java.util.List.of(
+                    HttpHeader.parse("Priority", "u=5, hint=\"image, font\";weight=1.5"),
+                    HttpHeader.parse("priority", "u=1, i=?0")));
+    Optional<Priority> receivedPriority = Priority.fromHeaders(response.getHeaders());
+    Priority outgoing = Priority.create(OptionalInt.of(5), Optional.of(true));
+    // #priority-header
+
+    Priority priority = receivedPriority.orElseThrow();
+    assertEquals(OptionalInt.of(1), priority.getUrgency());
+    assertEquals(Optional.of(false), priority.getIncremental());
+    assertEquals("u=5, hint=\"image, font\";weight=1.5, u=1, i=?0", priority.value());
+    assertEquals(Optional.empty(), response.getHeader(Priority.class));
+    assertEquals("u=5, i", outgoing.value());
+    assertEquals(Optional.empty(), Priority.create(3).getIncremental());
+  }
 
   static
   // #attributes
