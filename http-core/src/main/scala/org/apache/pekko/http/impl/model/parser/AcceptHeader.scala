@@ -117,7 +117,7 @@ private[parser] trait AcceptHeader { this: Parser with CommonRules with CommonAc
 
   // RFC 9110 sections 5.6.6 and 12.5.1: parameter slots may be empty.
   def `media-range-decl` = rule {
-    `media-range-def` ~ OWS ~ zeroOrMore(oneOrMore(ws(';')) ~ parameter) ~ zeroOrMore(ws(';')) ~> {
+    `media-range-def` ~ OWS ~ zeroOrMore(oneOrMore(ws(';')) ~ `media-range-parameter`) ~ zeroOrMore(ws(';')) ~> {
       (main, sub, params) =>
         if (sub == "*") {
           val mainLower = main.toRootLowerCase
@@ -130,6 +130,11 @@ private[parser] trait AcceptHeader { this: Parser with CommonRules with CommonAc
           MediaRange(getMediaType(main, sub, p contains "charset", p), q)
         }
     }
+  }
+
+  // Normalize only the case-insensitive quality key (RFC 9110 section 12.4.2).
+  private def `media-range-parameter` = rule {
+    parameter ~> ((param: (String, String)) => if (param._1 == "Q") ("q", param._2) else param)
   }
 
   // this specific ordering PREVENTS that next rule is allowed to parse `*/xyz` as a valid media range

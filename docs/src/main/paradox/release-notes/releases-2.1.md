@@ -24,6 +24,9 @@ Pekko HTTP 2.1.0 has not been released yet. These notes list the changes merged 
 
 ### Behavior Changes
 
+* The `Accept`, `Accept-Charset`, `Accept-Encoding`, and `Accept-Language` headers now recognize an uppercase
+  `Q` parameter as a quality weight, just like lowercase `q`, as specified by [RFC 9110 §12.4.2](https://www.rfc-editor.org/rfc/rfc9110.html#section-12.4.2).
+
 * Server `Accept` negotiation now compares media parameter names case-insensitively, per
   [RFC 9110 §5.6.6](https://www.rfc-editor.org/rfc/rfc9110.html#section-5.6.6). Parameter values are compared as
   before, and the public `MediaRange.matches` method and inbound content-type matching are unchanged.
