@@ -168,6 +168,7 @@ private[http] class HttpResponseRendererFactory(
             var serverSeen: Boolean = false
             var transferEncodingSeen: Boolean = false
             var dateSeen: Boolean = false
+            var lastModified: `Last-Modified` = null
 
             val it = headers.iterator
             while (it.hasNext)
@@ -179,6 +180,10 @@ private[http] class HttpResponseRendererFactory(
                 case x: Date =>
                   render(x)
                   dateSeen = true
+
+                case x: `Last-Modified` =>
+                  render(x)
+                  if (lastModified eq null) lastModified = x
 
                 case x: `Content-Length` =>
                   suppressionWarning(log, x,
@@ -215,7 +220,8 @@ private[http] class HttpResponseRendererFactory(
               }
 
             if (!serverSeen) renderDefaultServerHeader(r)
-            if (!dateSeen) r ~~ dateHeaderRendering.renderHeaderBytes()
+            if (!dateSeen) r ~~
+            DateHeaderRendering.forLastModified(lastModified, dateHeaderRendering).renderHeaderBytes()
 
             // Do we close the connection after this response?
             closeIf {

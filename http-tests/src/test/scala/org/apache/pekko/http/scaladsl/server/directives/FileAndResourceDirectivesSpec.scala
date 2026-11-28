@@ -333,6 +333,189 @@ class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Ins
     }
   }
 
+  "getFromFile response date metadata" should {
+    import java.io.{ ByteArrayInputStream, ByteArrayOutputStream, ObjectInputStream, ObjectOutputStream }
+    import java.nio.file.attribute.FileTime
+    import java.util.concurrent.Executors
+    import java.util.concurrent.atomic.AtomicBoolean
+
+    import pekko.http.impl.engine.http2.{ Http2Blueprint, NoOpTelemetry }
+    import pekko.http.impl.engine.rendering.DateHeaderRendering
+    import pekko.http.impl.engine.server.HttpServerBluePrint
+    import pekko.http.javadsl.model.headers.LastModified.StaticResourceOrigin
+    import pekko.http.scaladsl.Http
+    import pekko.http.scaladsl.model.HttpProtocols.{ `HTTP/1.1`, `HTTP/2.0` }
+    import pekko.http.scaladsl.settings.{ ClientConnectionSettings, ServerSettings }
+    import pekko.stream.scaladsl.{ Sink, Source, TLSPlacebo }
+    import pekko.stream.testkit.Utils.assertAllStagesStopped
+
+    def responseDates(
+        protocol: HttpProtocol,
+        fileTime: DateTime,
+        cachedDate: DateTime,
+        suppliedDate: Option[DateTime] = None,
+        expectNotModifiedSince: Option[DateTime] = None): (DateTime, DateTime, DateTime) = {
+      val file = Files.createTempFile("pekko-http-file-date", ".txt")
+      try {
+        val body = "A static file with a last modification time."
+        writeAllText(body, file.toFile)
+        Files.setLastModifiedTime(file, FileTime.fromMillis(fileTime.clicks))
+        val onDisk = DateTime(Files.getLastModifiedTime(file).toMillis)
+
+        // Prime the stock Date cache and hold its scheduled refresh to model an older cached sample.
+        val scheduler =
+          new ExplicitlyTriggeredScheduler(system.settings.config, system.log, Executors.defaultThreadFactory())
+        val primed = new AtomicBoolean(false)
+        val dateRendering = DateHeaderRendering(scheduler,
+          () =>
+            if (primed.get()) System.currentTimeMillis() else cachedDate.clicks)(system.dispatcher)
+        dateRendering.renderHeaderValue() shouldBe cachedDate.toRfc1123DateTimeString
+        primed.set(true)
+
+        val fileRoute = getFromFile(file.toFile, ContentTypes.`text/plain(UTF-8)`)
+        val route = suppliedDate.fold(fileRoute)(date => respondWithHeader(Date(date))(fileRoute))
+        val serverSettings = ServerSettings(system)
+        val connection = if (protocol == `HTTP/2.0`) {
+          val server = Http2Blueprint.serverStack(serverSettings, system.log, telemetry = NoOpTelemetry,
+            dateHeaderRendering = dateRendering).reversed
+            .join(Http2Blueprint.handleWithStreamIdHeader(1)(Route.toFunction(route))(system.dispatcher))
+          Http2Blueprint.clientStack(ClientConnectionSettings(system), system.log, NoOpTelemetry).join(server)
+        } else {
+          val server = HttpServerBluePrint(serverSettings, system.log, isSecureConnection = false,
+            dateHeaderRendering = dateRendering).atop(TLSPlacebo()).reversed.join(Route.toFlow(route))
+          Http().clientLayer(Host("example.org")).atop(TLSPlacebo()).join(server)
+        }
+
+        val (response, receivedBody) = assertAllStagesStopped {
+          Source
+            .single(HttpRequest(
+              uri = "http://example.org/file.txt",
+              headers = expectNotModifiedSince.map(`If-Modified-Since`(_)).toList))
+            .via(connection)
+            .mapAsync(1) { response =>
+              response.entity.toStrict(routeTestTimeout.duration)
+                .map(entity => response -> entity.data.utf8String)(system.dispatcher)
+            }
+            .runWith(Sink.head)
+            .futureValue
+        }
+        response.status shouldBe (if (expectNotModifiedSince.isDefined) StatusCodes.NotModified else StatusCodes.OK)
+        response.protocol shouldBe protocol
+        receivedBody shouldBe (if (expectNotModifiedSince.isDefined) "" else body)
+
+        val dates = response.headers.collect { case Date(date) => date }
+        val lastModified = response.headers.collect { case `Last-Modified`(date) => date }
+        dates should have size 1
+        lastModified should have size 1
+        (dates.head, lastModified.head, onDisk)
+      } finally Files.deleteIfExists(file)
+    }
+
+    for (protocol <- Seq(`HTTP/1.1`, `HTTP/2.0`)) {
+      s"keep the real $protocol Last-Modified value when the cached Date is older" in {
+        val observedNow = DateTime.now
+        val cachedDate = observedNow - 2.minutes.toMillis
+        val (date, lastModified, onDisk) = responseDates(protocol, observedNow - 1.minute.toMillis, cachedDate)
+        onDisk should be > cachedDate
+        onDisk should be <= observedNow
+        lastModified shouldBe onDisk
+        withClue("A real Last-Modified cannot be later than the response Date: ") {
+          lastModified should be <= date
+        }
+      }
+
+      s"replace a future $protocol Last-Modified with the response Date" in {
+        val before = DateTime.now
+        val cachedDate = before - 2.minutes.toMillis
+        val (date, lastModified, onDisk) = responseDates(protocol, before + 1.hour.toMillis, cachedDate)
+        val after = DateTime.now
+        onDisk should be > after
+        lastModified should be >= before
+        lastModified should be <= after
+        withClue("A future file modification must use the response Date: ") {
+          lastModified shouldBe date
+        }
+      }
+
+      s"reuse a suitable cached Date for a historical $protocol modification" in {
+        val observedNow = DateTime.now
+        val cachedDate = observedNow - 1.minute.toMillis
+        val (date, lastModified, onDisk) = responseDates(protocol, observedNow - 2.minutes.toMillis, cachedDate)
+        lastModified shouldBe onDisk
+        lastModified should be < cachedDate
+        date shouldBe cachedDate
+      }
+
+      s"preserve an application-supplied Date on a $protocol static file response" in {
+        val observedNow = DateTime.now
+        val explicitDate = observedNow - 30.seconds.toMillis
+        val (date, lastModified, onDisk) = responseDates(protocol, observedNow - 1.minute.toMillis,
+          observedNow - 2.minutes.toMillis, suppliedDate = Some(explicitDate))
+        lastModified shouldBe onDisk
+        lastModified should be < explicitDate
+        date shouldBe explicitDate
+      }
+
+      s"keep the cached Date from predating a $protocol 304 file validator" in {
+        val observedNow = DateTime.now
+        val mtime = observedNow - 1.minute.toMillis
+        val (date, lastModified, onDisk) = responseDates(protocol, mtime, observedNow - 2.minutes.toMillis,
+          expectNotModifiedSince = Some(mtime))
+        lastModified shouldBe onDisk
+        lastModified should be <= date
+      }
+    }
+
+    "preserve 304 response and Last-Modified model equality before rendering" in {
+      val path = Files.createTempFile("pekko-http-file-date-model", ".txt")
+      try {
+        writeAllText("A cached representation.", path.toFile)
+        Files.setLastModifiedTime(path, FileTime.fromMillis((DateTime.now - 1.minute.toMillis).clicks))
+        val mtime = DateTime(Files.getLastModifiedTime(path).toMillis)
+        val request = HttpRequest(headers = List(`If-Modified-Since`(mtime)))
+        val route = Route.toFunction(getFromFile(path.toFile))
+        val first = route(request).futureValue
+        val second = route(request).futureValue
+
+        first.status shouldBe StatusCodes.NotModified
+        first.attributes shouldBe empty
+        second.attributes shouldBe empty
+        first.header[Date] shouldBe None
+        first shouldBe second
+        first.hashCode shouldBe second.hashCode
+
+        val generated = first.header[`Last-Modified`].getOrElse(fail("Expected a modeled Last-Modified"))
+        val ordinary = `Last-Modified`(mtime)
+        generated shouldBe ordinary
+        generated.hashCode shouldBe ordinary.hashCode
+        generated.value shouldBe ordinary.value
+        generated.productArity shouldBe 1
+        generated match {
+          case `Last-Modified`(extracted) => extracted shouldBe mtime
+        }
+        StaticResourceOrigin.of(generated) should not be null
+        val copied = generated.copy()
+        copied shouldBe ordinary
+        StaticResourceOrigin.of(copied) shouldBe null
+
+        val buffer = new ByteArrayOutputStream()
+        val out = new ObjectOutputStream(buffer)
+        try out.writeObject(generated)
+        finally out.close()
+        val in = new ObjectInputStream(new ByteArrayInputStream(buffer.toByteArray))
+        val restored = try in.readObject().asInstanceOf[`Last-Modified`]
+        finally in.close()
+        restored shouldBe ordinary
+        restored.hashCode shouldBe ordinary.hashCode
+        restored.value shouldBe ordinary.value
+        restored.productArity shouldBe 1
+        StaticResourceOrigin.of(restored) shouldBe null
+        val headerBase = classOf[pekko.http.javadsl.model.headers.LastModified]
+        classOf[java.io.Serializable].isAssignableFrom(headerBase) shouldBe false
+      } finally Files.deleteIfExists(path)
+    }
+  }
+
   "getFromResource" should {
     "reject non-GET requests" in {
       Put() ~> getFromResource("some") ~> check { handled shouldEqual false }
