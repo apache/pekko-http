@@ -278,6 +278,32 @@ class HpackEncoderSpec extends AnyWordSpec with Matchers {
       }
     }
 
+    "distinguish similar locale values for the same name after eviction" in {
+      val encoder = new Encoder(76, true, false, true)
+      val decoder = new Decoder(8192, 76)
+      val out = new ByteStringOutputStream(32)
+      val first = "en-US"
+      val second = "fr-US"
+
+      def encode(value: String): String = {
+        encoder.encodeHeader(out, "k", value, false)
+        val bytes = out.takeByteString().toArray
+        decodeHeaders(decoder, bytes) shouldEqual Seq("k" -> value)
+        hex(bytes)
+      }
+
+      // Two 38-byte entries fit. A third value evicts only the oldest entry.
+      encode(first) shouldEqual "40016b05656e2d5553"
+      encode(second) shouldEqual "7e0566722d5553"
+      encode(first) shouldEqual "bf"
+      encode(second) shouldEqual "be"
+      encode("de-DE") shouldEqual "7e0564652d4445"
+      encode(second) shouldEqual "bf"
+      encode(first) shouldEqual "7e05656e2d5553"
+      encoder.length() shouldEqual 2
+      decoder.length() shouldEqual 2
+    }
+
     "never index sensitive values even when an exact table entry already exists" in {
       val encoder = new Encoder(4096, true, false, true)
       val decoder = new Decoder(8192, 4096)

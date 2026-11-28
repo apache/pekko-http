@@ -39,6 +39,7 @@ import org.apache.pekko.http.shaded.com.twitter.hpack.HpackUtil.IndexType;
 public final class Encoder {
 
   private static final int BUCKET_SIZE = 17;
+  private static final int EXACT_BUCKET_SIZE = 64;
   private static final String EMPTY = "";
 
   // for testing
@@ -48,6 +49,8 @@ public final class Encoder {
 
   // a linked hash map of header fields
   private final HeaderEntry[] headerFields = new HeaderEntry[BUCKET_SIZE];
+  // Exact lookups use a separate chain; name-only lookup still needs the newest matching name.
+  private final HeaderEntry[] exactFields = new HeaderEntry[EXACT_BUCKET_SIZE];
   private final HeaderEntry head = new HeaderEntry(-1, EMPTY, EMPTY, Integer.MAX_VALUE, null);
   private int size;
   private int capacity;
@@ -282,10 +285,17 @@ public final class Encoder {
     if (length() == 0 || name == null || value == null) {
       return null;
     }
-    int h = hash(name);
-    int i = index(h);
-    for (HeaderEntry e = headerFields[i]; e != null; e = e.next) {
-      if (e.hash == h && name.equals(e.name) && value.equals(e.value)) {
+    // An empty name bucket rules out an exact hit; the newest match needs no second lookup.
+    HeaderEntry newest = headerFields[index(hash(name))];
+    if (newest == null) {
+      return null;
+    }
+    if (name.equals(newest.name) && value.equals(newest.value)) {
+      return newest;
+    }
+    int h = pairHash(name, value);
+    for (HeaderEntry e = exactFields[exactIndex(h)]; e != null; e = e.nextExact) {
+      if (name.equals(e.name) && value.equals(e.value)) {
         return e;
       }
     }
@@ -344,6 +354,9 @@ public final class Encoder {
     HeaderEntry old = headerFields[i];
     HeaderEntry e = new HeaderEntry(h, name, value, head.before.index - 1, old);
     headerFields[i] = e;
+    int key = exactIndex(pairHash(name, value));
+    e.nextExact = exactFields[key];
+    exactFields[key] = e;
     e.addBefore(head);
     size += headerSize;
   }
@@ -366,6 +379,7 @@ public final class Encoder {
         } else {
           prev.next = next;
         }
+        unlinkExact(eldest);
         eldest.remove();
         size -= eldest.size();
         return eldest;
@@ -376,9 +390,39 @@ public final class Encoder {
     return null;
   }
 
+  private static int pairHash(String name, String value) {
+    // A bounded fingerprint chooses the bucket; getEntry compares both fields before returning.
+    int length = value.length();
+    int h = 31 * name.hashCode() + length;
+    if (length != 0) {
+      h = 31 * h + value.charAt(length - 1);
+      h = 31 * h + value.charAt(length >>> 1);
+    }
+    return h ^ (h >>> 16);
+  }
+
+  private static int exactIndex(int hash) {
+    return hash & (EXACT_BUCKET_SIZE - 1);
+  }
+
+  private void unlinkExact(HeaderEntry entry) {
+    int bucket = exactIndex(pairHash(entry.name, entry.value));
+    HeaderEntry current = exactFields[bucket];
+    if (current == entry) {
+      exactFields[bucket] = entry.nextExact;
+    } else {
+      while (current.nextExact != entry) {
+        current = current.nextExact;
+      }
+      current.nextExact = entry.nextExact;
+    }
+    entry.nextExact = null;
+  }
+
   /** Remove all entries from the dynamic table. */
   private void clear() {
     Arrays.fill(headerFields, null);
+    Arrays.fill(exactFields, null);
     head.before = head.after = head;
     this.size = 0;
   }
@@ -406,7 +450,7 @@ public final class Encoder {
     HeaderEntry before, after;
 
     // These fields comprise the chained list for header fields with the same hash.
-    HeaderEntry next;
+    HeaderEntry next, nextExact;
     int hash;
 
     // This is used to compute the index in the dynamic table.
