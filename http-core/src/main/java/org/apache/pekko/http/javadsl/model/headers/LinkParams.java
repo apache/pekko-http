@@ -61,4 +61,22 @@ public final class LinkParams {
     return new org.apache.pekko.http.scaladsl.model.headers.LinkParams.type(
         (org.apache.pekko.http.scaladsl.model.MediaType) type);
   }
+
+  /**
+   * Creates a Link extension attribute without a value.
+   *
+   * @since 2.1.0
+   */
+  public static LinkParam extension(String name) {
+    return org.apache.pekko.http.scaladsl.model.headers.LinkParams.extension(name);
+  }
+
+  /**
+   * Creates a Link extension attribute whose decoded value can be empty but not absent.
+   *
+   * @since 2.1.0
+   */
+  public static LinkParam extension(String name, String value) {
+    return org.apache.pekko.http.scaladsl.model.headers.LinkParams.extension(name, value);
+  }
 }

@@ -292,6 +292,18 @@ response. In Pekko HTTP, @scala[*HttpEntity.Default*]@java[*HttpEntityDefault*] 
 An @scala[*HttpEntity.CloseDelimited*]@java[*HttpEntityCloseDelimited*] entity does not, by itself, cause the connection
 to close after a HEAD response. This allows a HEAD response without `Content-Length` on a persistent HTTP/1.1 connection.
 
+### Link extension attributes
+
+A modeled `Link` preserves extension attributes such as `as=style` on a preload link. Standard attributes
+such as `rel` still use their dedicated types. Extension names are normalized to lowercase, and values retain
+their original case. An attribute with no value is distinct from one with an explicitly empty value.
+
+@scala[Use `LinkParams.extension("as", "style")` or `LinkParams.extension("x-enabled")` with `LinkValue`.
+Read an extension's value as an `Option[String]` with `valueOption`.]
+@java[Pass `LinkParams.extension("as", "style")` or `LinkParams.extension("x-enabled")` to `LinkValue.create`.
+From a parsed `LinkValue`, use `param instanceof LinkParam.Extension extension` on an element of `getParams()`
+and read `extension.getValueOption()` as an `Optional<String>`.]
+
 ### Multipart form-data filenames
 
 The @scala[`filename`]@java[`getFilename`] accessor of a form-data body part returns the `filename` parameter as received.

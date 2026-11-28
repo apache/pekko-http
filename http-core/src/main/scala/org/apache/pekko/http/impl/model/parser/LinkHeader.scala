@@ -25,7 +25,7 @@ import pekko.http.scaladsl.model.{ IllegalUriException, ParsingException }
 private[parser] trait LinkHeader { this: Parser with CommonRules with CommonActions =>
   import CharacterClasses._
 
-  // http://tools.ietf.org/html/rfc5988#section-5
+  // https://www.rfc-editor.org/rfc/rfc8288.html#section-3
   def `link` = rule {
     listStart ~ zeroOrMore(`link-value`).separatedBy(listSep) ~ listEnd ~ EOI ~> (Link(_))
   }
@@ -42,8 +42,18 @@ private[parser] trait LinkHeader { this: Parser with CommonRules with CommonActi
     | ws("media") ~ ws('=') ~ word                                   ~> LinkParams.media.apply _
     | ws("title") ~ ws('=') ~ word                                   ~> LinkParams.title.apply _
     | ws("title*") ~ ws('=') ~ word                                  ~> LinkParams.`title*`.apply _ // support full `ext-value` notation from http://tools.ietf.org/html/rfc5987#section-3.2.1
-    | (ws("type") ~ ws('=') ~ (ws('"') ~ `link-media-type` ~ ws('"') | `link-media-type`) ~> LinkParams.`type`.apply _))
-  // TODO: support `link-extension`
+    | ws("type") ~ ws('=') ~
+    (ws('"') ~ `link-media-type` ~ ws('"') | `link-media-type`) ~> LinkParams.`type`.apply _
+    | `link-extension`)
+
+  private def `link-extension` = rule {
+    (token ~> (name => test(LinkParams.isExtensionName(name)) ~ push(name))) ~ optional(ws('=') ~ word) ~>
+    ((name: String, value: Option[String]) =>
+      value match {
+        case Some(s) => LinkParams.extension(name, s)
+        case None    => LinkParams.extension(name)
+      })
+  }
 
   def `relation-types` = rule(
     ws('"') ~ oneOrMore(`relation-type`).separatedBy(oneOrMore(SP)) ~> (_.mkString(" ")) ~ ws('"')

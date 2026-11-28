@@ -24,6 +24,11 @@ Pekko HTTP 2.1.0 has not been released yet. These notes list the changes merged 
 
 ### Behavior Changes
 
+* A `Link` header with an extension attribute such as `as=style` now parses to the `Link` model instead of a
+  raw header. Scala and Java can also create extension attributes with `LinkParams.extension`.
+  Existing Scala 3 `LinkParam` JVM signatures and ordinals are unchanged. Scala callers that exhaustively
+  match the original variants should also handle `LinkParams.Extension` when reading modeled headers.
+
 * A bare `Partitioned` attribute in a parsed `Set-Cookie` header is now stored in the typed
   `HttpCookie.partitioned` field instead of the generic `extension` field. If your code detects
   partitioned cookies by inspecting `extension` (`getExtension()` in Java), use `partitioned`

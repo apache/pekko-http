@@ -13,8 +13,20 @@
 
 package org.apache.pekko.http.javadsl.model.headers;
 
+import java.util.Optional;
+
 public abstract class LinkParam {
   public abstract String key();
 
   public abstract Object value();
+
+  /**
+   * The Java view of an extension attribute on a Link header.
+   *
+   * @since 2.1.0
+   */
+  public interface Extension {
+    /** Returns an empty Optional when the extension was supplied without a value. */
+    Optional<String> getValueOption();
+  }
 }
