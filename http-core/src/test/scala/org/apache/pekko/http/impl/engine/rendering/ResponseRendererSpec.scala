@@ -209,6 +209,25 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
         override def currentTimeMillis() = initial + extraMillis
       }
 
+      "omit Content-Length from a 204 response to a custom method" in new TestSetup() {
+        val method = HttpMethod.custom("BOLT")
+
+        ResponseRenderingContext(HttpResponse(StatusCodes.OK), requestMethod = method) should renderTo(
+          """HTTP/1.1 200 OK
+            |Server: pekko-http/1.0.0
+            |Date: Thu, 25 Aug 2011 09:10:29 GMT
+            |Content-Length: 0
+            |
+            |""", close = false)
+
+        ResponseRenderingContext(HttpResponse(StatusCodes.NoContent), requestMethod = method) should renderTo(
+          """HTTP/1.1 204 No Content
+            |Server: pekko-http/1.0.0
+            |Date: Thu, 25 Aug 2011 09:10:29 GMT
+            |
+            |""", close = false)
+      }
+
       "no Content-Length on CONNECT method" in new TestSetup() {
         ResponseRenderingContext(
           requestMethod = HttpMethods.CONNECT,
