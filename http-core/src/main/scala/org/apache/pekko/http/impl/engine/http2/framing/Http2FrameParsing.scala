@@ -83,14 +83,11 @@ private[http] object Http2FrameParsing {
         HeadersFrame(streamId, endStream, endHeaders, payload.take(payload.remainingSize - paddingLength), priorityInfo)
 
       case FrameType.DATA =>
-        val pad = Flags.PADDED.isSet(flags)
         val endStream = Flags.END_STREAM.isSet(flags)
-
-        val paddingLength =
-          if (pad) payload.readByte() & 0xFF
-          else 0
-
-        DataFrame(streamId, endStream, payload.take(payload.remainingSize - paddingLength))
+        if (Flags.PADDED.isSet(flags)) {
+          val paddingLength = payload.readByte() & 0xFF
+          PaddedDataFrame(streamId, endStream, payload.take(payload.remainingSize - paddingLength), paddingLength + 1)
+        } else DataFrame(streamId, endStream, payload.takeAll())
 
       case FrameType.SETTINGS =>
         val ack = Flags.ACK.isSet(flags)

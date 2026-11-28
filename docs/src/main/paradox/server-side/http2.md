@@ -102,6 +102,11 @@ connection with `FLOW_CONTROL_ERROR`, as required by [RFC 9113 section 6.9.2](ht
 An overflow caused by a stream-specific `WINDOW_UPDATE` still affects only that stream. These rules also
 apply to the HTTP/2 client and do not change HTTP/1.1 fallback behavior.
 
+On receive, both the application data and any padding in a DATA frame count toward its HTTP/2 flow-control
+windows. Padding and its length field are discarded before delivering the entity and do not count toward
+the HTTP Content-Length. Discarded padding can release receive credit even when no entity bytes have been consumed.
+See [RFC 9113 §6.1](https://www.rfc-editor.org/rfc/rfc9113.html#section-6.1).
+
 ## Limiting the lifetime of connections
 
 Long-lived HTTP/2 connections, for example those used by gRPC, can lead to an uneven load distribution across

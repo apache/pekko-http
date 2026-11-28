@@ -71,8 +71,8 @@ private[http2] object FrameLogger {
           LogEntry(streamId, "HEAD", prioInfo + hex(payload), flag(endStream, "ES"), flag(endHeaders, "EH"))
         case ContinuationFrame(streamId, endHeaders, payload) =>
           LogEntry(streamId, "CONT", hex(payload), flag(endHeaders, "EH"))
-        case DataFrame(streamId, endStream, payload) =>
-          LogEntry(streamId, "DATA", hex(payload), flag(endStream, "ES"))
+        case data: DataFrameEvent =>
+          LogEntry(data.streamId, "DATA", hex(data.payload), flag(data.endStream, "ES"))
 
         case GoAwayFrame(lastStreamId, errorCode, debug) =>
           LogEntry(0, "GOAY", s"lastStreamId = $lastStreamId, errorCode = $errorCode, debug = ${debug.utf8String}")

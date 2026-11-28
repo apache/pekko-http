@@ -39,20 +39,28 @@ private[http] object FrameEvent {
       lastStreamId: Int, errorCode: ErrorCode, debug: ByteString = ByteString.empty) extends FrameEvent {
     override def toString: String = s"GoAwayFrame($lastStreamId,$errorCode,debug:<hidden>)"
   }
+  sealed trait DataFrameEvent extends StreamFrameEvent { self: Product =>
+    def endStream: Boolean
+    def payload: ByteString
+    def paddingSize: Int = 0
+    def sizeInWindow: Int
+    final override def frameTypeName: String = "DataFrame"
+  }
+
   final case class DataFrame(
       streamId: Int,
       endStream: Boolean,
-      payload: ByteString) extends StreamFrameEvent {
+      payload: ByteString) extends DataFrameEvent {
+    override def sizeInWindow: Int = payload.size
+  }
 
-    /**
-     * The amount of bytes this frame consumes of a window. According to RFC 7540, 6.9.1:
-     *
-     *        For flow-control calculations, the 9-octet frame header is not
-     *        counted.
-     *
-     * That means this size amounts to data size + padding size field + padding.
-     */
-    def sizeInWindow: Int = payload.size // FIXME: take padding size into account, #1313
+  /** Received DATA with its padding stripped from the entity, but not from flow control (RFC 9113 §6.1). */
+  final case class PaddedDataFrame(
+      streamId: Int,
+      endStream: Boolean,
+      payload: ByteString,
+      override val paddingSize: Int) extends DataFrameEvent {
+    override def sizeInWindow: Int = payload.size + paddingSize // includes the Pad Length field
   }
 
   /**
