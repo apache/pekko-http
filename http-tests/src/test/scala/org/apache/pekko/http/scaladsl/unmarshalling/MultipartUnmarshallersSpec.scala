@@ -454,6 +454,17 @@ trait MultipartUnmarshallersSpec extends PekkoSpecWithMaterializer {
     }
 
     "multipartFormDataUnmarshaller should correctly unmarshal 'multipart/form-data' content" should {
+      "accept a mixed-case boundary parameter name without changing its value" in {
+        val boundary = "Example-Boundary-aB"
+        val part = Multipart.FormData.BodyPart.Strict("note", HttpEntity(ContentTypes.`text/plain(UTF-8)`, "hello"))
+        val form = Multipart.FormData.Strict(Seq(part))
+        val contentType = ContentType.parse(s"multipart/form-data; Boundary=$boundary")
+          .getOrElse(fail("Expected a valid multipart Content-Type"))
+        val entity = HttpEntity(contentType, form.toEntity(boundary).data)
+
+        Unmarshal(entity).to[Multipart.FormData] should haveParts(part)
+      }
+
       for ((entityName, buildEntity) <- entityBuilders) {
         s"part media parameters and quoted charset after a preceding part ($entityName)" in {
           val content = """--params

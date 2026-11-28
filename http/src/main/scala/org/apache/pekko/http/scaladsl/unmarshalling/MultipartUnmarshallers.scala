@@ -85,7 +85,14 @@ trait MultipartUnmarshallers {
       parserSettings: ParserSettings = null): FromEntityUnmarshaller[T] =
     Unmarshaller.withMaterializer { implicit ec => implicit mat => entity =>
       if (entity.contentType.mediaType.isMultipart && mediaRange.matches(entity.contentType.mediaType)) {
-        entity.contentType.mediaType.params.get("boundary") match {
+        val params = entity.contentType.mediaType.params
+        // The parameter name is ASCII case-insensitive, but the boundary value is case-sensitive.
+        val boundaryParam = params.get("boundary").orElse {
+          params.iterator.collectFirst {
+            case (name, value) if "boundary".equalsIgnoreCase(name) && name.forall(_ <= 0x7F) => value
+          }
+        }
+        boundaryParam match {
           case None =>
             FastFuture.failed(
               new RuntimeException("Content-Type with a multipart media type must have a 'boundary' parameter"))
