@@ -38,7 +38,7 @@ import pekko.http.scaladsl.model.HttpEntity._
 import pekko.http.scaladsl.model.HttpMethods._
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers.{ `User-Agent`, Accept, Age, Date, Host, Server }
-import pekko.http.scaladsl.settings.{ ClientConnectionSettings, ConnectionPoolSettings, ServerSettings }
+import pekko.http.scaladsl.settings.{ ClientConnectionSettings, ConnectionPoolSettings, ParserSettings, ServerSettings }
 import pekko.io.Tcp.SO
 import pekko.stream.scaladsl._
 import pekko.stream.stage.{ GraphStage, GraphStageLogic, InHandler, OutHandler }
@@ -89,6 +89,37 @@ class ClientServerSpec extends ClientServerSpecBase(http2 = false) {
         selections shouldBe List("starter", "dessert")
         length shouldBe Some(body.size.toLong)
         data shouldBe body
+      } finally binding.terminate(1.second.dilated).awaitResult(timeout)
+    }
+
+    "keep registered custom methods that differ only by case distinct" in Utils.assertAllStagesStopped {
+      val methodNames = List("BOLT", "Bolt")
+      val methods = methodNames.map(name =>
+        HttpMethod.custom(
+          name, safe = true, idempotent = true, requestEntityAcceptance = RequestEntityAcceptance.Disallowed,
+          contentLengthAllowed = true))
+      val host = "127.0.0.1"
+      val timeout = 3.seconds.dilated
+      val parserSettings = ParserSettings.forServer(system).withCustomMethods(methods: _*)
+      val settings = ServerSettings(system).withParserSettings(parserSettings)
+      val binding = Http().newServerAt(host, 0).withSettings(settings).bind { request =>
+        request.discardEntityBytes().future.map(_ => HttpResponse(entity = request.method.value))
+      }.awaitResult(timeout)
+
+      try {
+        val received = Source(methods)
+          .map(method => HttpRequest(method = method, uri = "/method", protocol = HttpProtocols.`HTTP/1.1`))
+          .via(Http().connectionTo(host).toPort(binding.localAddress.getPort).http())
+          .mapAsync(1) { response =>
+            response.entity.toStrict(timeout).map { entity =>
+              (response.status, response.protocol, entity.data.utf8String)
+            }
+          }
+          .runWith(Sink.seq)
+
+        received.awaitResult(timeout) shouldEqual methodNames.map { name =>
+          (StatusCodes.OK, HttpProtocols.`HTTP/1.1`, name)
+        }
       } finally binding.terminate(1.second.dilated).awaitResult(timeout)
     }
 
