@@ -388,6 +388,25 @@ whether the connection should be secure. HSTS addresses this problem by informin
 site should always use TLS/SSL. See also [RFC 6797](https://tools.ietf.org/html/rfc6797).
 
 
+### Priority
+
+The `Priority` header expresses a preference for processing a response
+([RFC 9218, Section 5](https://www.rfc-editor.org/rfc/rfc9218.html#section-5)). It can be sent with a request or response.
+Create a typed `Priority` header to send an urgency from 0 to 7 or an incremental processing preference, or both.
+An omitted preference remains distinguishable from an explicitly supplied value.
+
+Received `Priority` headers continue to be available as raw headers. To read them as one typed value, call
+`Priority.fromHeaders` on the full collection of model headers. It reads matching header values in order and uses the
+last occurrence of a repeated dictionary member. If the combined field is missing or cannot be read as a non-empty
+dictionary, there is no typed result. The result keeps any unknown member text already present in the supplied model
+headers, not the original wire bytes. The original header collection and request or response scheduling are unchanged.
+
+Scala
+:   @@snip [HeaderSpec.scala](/http-core/src/test/scala/org/apache/pekko/http/scaladsl/model/headers/HeaderSpec.scala) { #priority-header }
+
+Java
+:   @@snip [ModelDocTest.java](/docs/src/test/java/docs/http/javadsl/ModelDocTest.java) { #priority-header }
+
 <a id="custom-headers"></a>
 ## Custom Headers
 

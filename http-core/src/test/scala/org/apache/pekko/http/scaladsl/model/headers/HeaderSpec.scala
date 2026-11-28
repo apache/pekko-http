@@ -22,6 +22,71 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
 class HeaderSpec extends AnyFreeSpec with Matchers {
+  "Priority should" - {
+    "combine received field lines in order without replacing the raw headers" in {
+      // #priority-header
+      val request = HttpRequest(headers = List(
+        RawHeader("Priority", """u=5, hint="image, font";weight=1.5"""),
+        RawHeader("priority", "u=1, i=?0")))
+      val receivedPriority = Priority.fromHeaders(request.headers)
+      val outgoing = Priority(urgency = Some(5), incremental = Some(true))
+      // #priority-header
+
+      val priority = receivedPriority.get
+      priority.urgency shouldEqual Some(1)
+      priority.incremental shouldEqual Some(false)
+      priority.value shouldEqual """u=5, hint="image, font";weight=1.5, u=1, i=?0"""
+      request.headers shouldEqual List(
+        RawHeader("Priority", """u=5, hint="image, font";weight=1.5"""),
+        RawHeader("priority", "u=1, i=?0"))
+      request.header[Priority] shouldEqual None
+      outgoing.toString shouldEqual "Priority: u=5, i"
+      Priority.fromHeaders(List(outgoing)) shouldEqual Some(outgoing)
+      outgoing.renderInRequests shouldEqual true
+      outgoing.renderInResponses shouldEqual true
+    }
+
+    "distinguish omitted hints from explicitly specified defaults on a response" in {
+      val omittedIncremental = Priority(3)
+      val explicitIncremental = Priority(Some(3), Some(false))
+      val incrementalOnly = Priority(None, Some(true))
+
+      Priority.fromHeaders(HttpResponse(headers = List(omittedIncremental)).headers).get.incremental shouldEqual None
+      Priority.fromHeaders(HttpResponse(headers = List(explicitIncremental)).headers).get.incremental shouldEqual
+      Some(false)
+      omittedIncremental.value shouldEqual "u=3"
+      explicitIncremental.value shouldEqual "u=3, i=?0"
+      incrementalOnly.value shouldEqual "i"
+      val receivedIncrementalOnly = Priority.fromHeaders(HttpResponse(headers = List(incrementalOnly)).headers).get
+      receivedIncrementalOnly.urgency shouldEqual None
+      receivedIncrementalOnly.incremental shouldEqual Some(true)
+      Priority.fromHeaders(Nil) shouldEqual None
+    }
+
+    "keep a dictionary of opaque extensions when neither known hint is present" in {
+      val value = """label="a, b";visible, image=picture/webp, data=:YWJj:, timing=1.25"""
+      val priority = Priority.parseFromValueString(s" $value ").toOption.get
+
+      priority.urgency shouldEqual None
+      priority.incremental shouldEqual None
+      priority.value shouldEqual value
+    }
+
+    "read ordinary Structured Field dictionary members with inner lists and parameters" in {
+      import pekko.http.impl.model.parser.StructuredFieldDictionary
+      import StructuredFieldDictionary.{ BooleanMember, IntegerMember, OpaqueMember }
+
+      val value = """group=(primary "secondary asset";visible);v=1, order=-1, toggled=?1, image=picture/webp, """ +
+        """size=2.5, bytes=:YWJj:, text="a \"quoted\", title", order=2"""
+      val fields = StructuredFieldDictionary.parse(value).get
+
+      fields.keysIterator.toList shouldEqual List("group", "order", "toggled", "image", "size", "bytes", "text")
+      fields("group") shouldEqual OpaqueMember
+      fields("toggled") shouldEqual BooleanMember(true)
+      fields("order") shouldEqual IntegerMember(2)
+    }
+  }
+
   "Cookie factories should" - {
     import pekko.http.javadsl.model.headers.{ Cookie => JavaCookie }
 
