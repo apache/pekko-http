@@ -22,6 +22,32 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
 class HeaderSpec extends AnyFreeSpec with Matchers {
+  "Java RangeUnit factory should" - {
+    import pekko.http.javadsl.model.headers.{
+      ByteRange => JavaByteRange,
+      Range => JavaRange,
+      RangeUnit => JavaRangeUnit,
+      RangeUnits => JavaRangeUnits
+    }
+
+    "use the canonical byte unit for standard ASCII spellings" in {
+      Seq("bytes", "BYTES", "ByTeS").foreach { spelling =>
+        val unit = JavaRangeUnit.create(spelling)
+        (unit should be).theSameInstanceAs(JavaRangeUnits.BYTES)
+        val range = JavaRange.create(unit, JavaByteRange.createSlice(0, 1))
+        (range.rangeUnit() should be).theSameInstanceAs(JavaRangeUnits.BYTES)
+      }
+    }
+
+    "retain non-matching names without Unicode case folding or null rejection" in {
+      Seq("Example-Units", "byte\u017f", null).foreach { spelling =>
+        val unit = JavaRangeUnit.create(spelling)
+        unit.name() shouldEqual spelling
+        unit shouldEqual RangeUnits.Other(spelling)
+      }
+    }
+  }
+
   "Cookie factories should" - {
     import pekko.http.javadsl.model.headers.{ Cookie => JavaCookie }
 
