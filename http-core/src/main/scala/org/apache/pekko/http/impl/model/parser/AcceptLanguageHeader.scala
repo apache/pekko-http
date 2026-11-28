@@ -20,9 +20,9 @@ import pekko.http.scaladsl.model.headers._
 
 private[parser] trait AcceptLanguageHeader { this: Parser with CommonRules with CommonActions =>
 
-  // http://tools.ietf.org/html/rfc7231#section-5.3.5
+  // https://www.rfc-editor.org/rfc/rfc9110.html#section-12.5.4
   def `accept-language` = rule {
-    listStart ~ oneOrMore(`language-range-decl`).separatedBy(listSep) ~ listEnd ~ EOI ~> (`Accept-Language`(_))
+    listStart ~ zeroOrMore(`language-range-decl`).separatedBy(listSep) ~ listEnd ~ EOI ~> (`Accept-Language`(_))
   }
 
   def `language-range-decl` = rule {

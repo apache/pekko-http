@@ -173,7 +173,6 @@ object `Accept-Charset` extends ModeledCompanion[`Accept-Charset`] {
 }
 final case class `Accept-Charset`(charsetRanges: Seq[HttpCharsetRange]) extends jm.headers.AcceptCharset
     with RequestHeader {
-  require(charsetRanges.nonEmpty, "charsetRanges must not be empty")
   import `Accept-Charset`.charsetRangesRenderer
   def renderValue[R <: Rendering](r: R): r.type = r ~~ charsetRanges
   protected def companion = `Accept-Charset`
@@ -209,7 +208,6 @@ object `Accept-Language` extends ModeledCompanion[`Accept-Language`] {
 }
 final case class `Accept-Language`(languages: Seq[LanguageRange]) extends jm.headers.AcceptLanguage
     with RequestHeader {
-  require(languages.nonEmpty, "languages must not be empty")
   import `Accept-Language`.languagesRenderer
   def renderValue[R <: Rendering](r: R): r.type = r ~~ languages
   protected def companion = `Accept-Language`
