@@ -500,7 +500,7 @@ class MultipartUnmarshallersSpecCRLF extends MultipartUnmarshallersSpec {
     "round-trip the standard boundary format through direct entities and marshalling" in {
       val part = Multipart.FormData.BodyPart.Strict("name", HttpEntity("value"))
       val models = Seq[Multipart.FormData](
-        Multipart.FormData.Strict(Seq(part)),
+        Multipart.FormData.Strict(List(part)),
         Multipart.FormData(Source.single(part)))
 
       for (model <- models) {
