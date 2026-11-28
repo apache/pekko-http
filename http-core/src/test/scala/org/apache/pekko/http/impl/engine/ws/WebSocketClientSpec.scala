@@ -155,6 +155,7 @@ class WebSocketClientSpec extends PekkoSpecWithMaterializer("pekko.http.client.w
 
     Seq(
       "ws://example.org/path%20with%20spaces?q=two%20words" -> "/path%20with%20spaces?q=two%20words",
+      "ws://example.org/.well-known/example" -> "/.well-known/example",
       "ws://example.org" -> "/",
       "ws://example.org?q=two%20words" -> "/?q=two%20words").foreach { case (uri, target) =>
       s"render the handshake resource name for $uri" in {
