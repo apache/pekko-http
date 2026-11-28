@@ -324,6 +324,18 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
         }
       }
 
+      "parse the standard QUERY method without custom registration" in {
+        val request = parseExpectOk(
+          keyValuePairs = Vector(
+            ":method" -> "QUERY",
+            ":scheme" -> "https",
+            ":authority" -> "example.com",
+            ":path" -> "/search",
+            "content-type" -> "application/x-www-form-urlencoded"),
+          data = Source.single(ByteString("q=cats")))
+        request.method shouldBe HttpMethods.QUERY
+      }
+
       // The ":scheme" pseudo-header field includes the scheme portion of
       // the target URI ([RFC3986], Section 3.1).
       //
