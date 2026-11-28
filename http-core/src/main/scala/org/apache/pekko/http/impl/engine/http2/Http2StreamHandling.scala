@@ -180,6 +180,11 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
         val outStream = OutStream(stream)
         updateState(stream.streamId, _.handleOutgoingCreated(outStream, stream.correlationAttributes),
           "handleOutgoingCreated")
+        // A strict empty entity has no DATA to schedule and no upstream completion callback to send its trailers.
+        outStream.endStreamIfPossible().foreach { frame =>
+          multiplexer.pushControlFrame(frame)
+          handleOutgoingEnded(stream.streamId)
+        }
       }
     } else
       // stream was cancelled by peer before our response was ready

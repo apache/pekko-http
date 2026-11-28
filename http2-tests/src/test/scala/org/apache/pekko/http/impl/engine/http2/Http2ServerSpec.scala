@@ -538,6 +538,19 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
         val trailingResponseHeaders = network.expectDecodedResponseHEADERSPairs(streamId)
         trailingResponseHeaders shouldEqual Seq("etag" -> etag.value, "x-result" -> "Complete")
       })
+
+      "send trailing headers directly after the initial headers of an empty response".inAssertAllStagesStopped(
+        new TestSetup with RequestResponseProbes {
+          val streamId = 1
+          val etag = ETag("saved")
+          network.sendRequest(streamId, Get("/"))
+          user.expectRequest()
+          user.emitResponse(streamId, HttpResponse().addAttribute(AttributeKeys.trailer, Trailer(etag)))
+
+          network.expectDecodedResponseHEADERSPairs(streamId, endStream = false) should contain(":status" -> "200")
+          network.expectDecodedResponseHEADERSPairs(streamId, endStream = true) shouldEqual Seq("etag" -> etag.value)
+        })
+
       "ignore the reserved bit of a stream identifier".inAssertAllStagesStopped(
         new TestSetup with RequestResponseProbes {
           // RFC 9113 5.1.1: the high bit of the stream identifier is reserved and must be ignored when receiving,
@@ -693,6 +706,12 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
         network.expectDecodedResponseHEADERSPairs(streamId = TheStreamId).toMap should contain(":status" -> "200")
       })
 
+      "suppress trailing headers for a HEAD response".inAssertAllStagesStopped(new HeadRequestSetup {
+        sendHeadRequest()
+        user.emitResponse(TheStreamId, HttpResponse().addAttribute(AttributeKeys.trailer, Trailer(ETag("saved"))))
+        network.expectDecodedResponseHEADERSPairs(TheStreamId, endStream = true) should contain(":status" -> "200")
+      })
+
       // RFC 9110 section 9.3.2: the server MUST NOT send content in a response to a HEAD request. The headers are
       // still rendered as they would be for a GET, so that the peer learns the size of the resource.
       "not send the response entity as DATA frames".inAssertAllStagesStopped(new HeadRequestSetup {
@@ -776,6 +795,11 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
         val pairs = responsePairs(HttpResponse(StatusCodes.NoContent))
         pairs should contain(":status" -> "204")
         pairs.keySet should not contain "content-length"
+      })
+
+      "suppress trailing headers for a 204 response".inAssertAllStagesStopped(new GetRequestSetup {
+        val response = HttpResponse(StatusCodes.NoContent).addAttribute(AttributeKeys.trailer, Trailer(ETag("saved")))
+        responsePairs(response) should contain(":status" -> "204")
       })
 
       // 205 is deliberately not exempt: RFC 9112 section 6.3 only lets 1xx, 204 and 304 be self delimiting, so a 205
