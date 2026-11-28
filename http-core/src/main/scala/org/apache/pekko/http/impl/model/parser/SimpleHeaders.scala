@@ -77,42 +77,41 @@ private[parser] trait SimpleHeaders {
     httpMethodDef ~ EOI ~> (`Access-Control-Request-Method`(_))
   }
 
-  // http://tools.ietf.org/html/rfc7234#section-5.1
+  // https://www.rfc-editor.org/rfc/rfc9111.html#section-5.1
   def age = rule { `delta-seconds` ~ EOI ~> (Age(_)) }
 
-  // http://tools.ietf.org/html/rfc7231#section-7.4.1
+  // https://www.rfc-editor.org/rfc/rfc9110.html#section-10.2.1
   def allow = rule {
     listStart ~ zeroOrMore(httpMethodDef).separatedBy(listSep) ~ listEnd ~ EOI ~> (Allow(_))
   }
 
-  // http://tools.ietf.org/html/rfc7235#section-4.2
+  // https://www.rfc-editor.org/rfc/rfc9110.html#section-11.6.2
   def authorization = rule { credentials ~ EOI ~> (Authorization(_)) }
 
-  // http://tools.ietf.org/html/rfc7230#section-6.1
+  // https://www.rfc-editor.org/rfc/rfc9110.html#section-7.6.1
   def connection = rule {
     listStart ~ oneOrMore(token).separatedBy(listSep) ~ listEnd ~ EOI ~> (Connection(_))
   }
 
-  // http://tools.ietf.org/html/rfc7231#section-3.1.2.2
-  // http://tools.ietf.org/html/rfc7231#appendix-D
+  // https://www.rfc-editor.org/rfc/rfc9110.html#section-8.4
   def `content-encoding` = rule {
     listStart ~ oneOrMore(token ~> (x => HttpEncodings.getForKeyCaseInsensitive(x).getOrElse(HttpEncoding.custom(x))))
       .separatedBy(listSep) ~ listEnd ~ EOI ~> (`Content-Encoding`(_))
   }
 
-  // http://tools.ietf.org/html/rfc7230#section-3.3.2
+  // Content-Length: https://www.rfc-editor.org/rfc/rfc9110.html#section-8.6
   def `content-length` = rule {
     longNumberCapped ~> (`Content-Length`(_)) ~ EOI
   }
 
-  // https://tools.ietf.org/html/rfc7231#section-3.1.4.2
+  // https://www.rfc-editor.org/rfc/rfc9110.html#section-8.7
   def `content-location` = rule {
     // we are bit more relaxed than the spec here by also parsing a potential fragment
     // but catch it in the `Content-Location` instance validation (with a `require` in the constructor)
     uriReference ~ EOI ~> (`Content-Location`(_))
   }
 
-  // http://tools.ietf.org/html/rfc7233#section-4.2
+  // https://www.rfc-editor.org/rfc/rfc9110.html#section-14.4
   def `content-range` = rule {
     `byte-content-range` ~ EOI ~> (`Content-Range`(_, _)) | `other-content-range` ~ EOI ~> (`Content-Range`(_, _))
   }
@@ -131,23 +130,23 @@ private[parser] trait SimpleHeaders {
     }
   }
 
-  // http://tools.ietf.org/html/rfc7231#section-7.1.1.2
+  // https://www.rfc-editor.org/rfc/rfc9110.html#section-6.6.1
   def `date` = rule {
     `HTTP-date` ~ EOI ~> (Date(_))
   }
 
-  // http://tools.ietf.org/html/rfc7232#section-2.3
+  // https://www.rfc-editor.org/rfc/rfc9110.html#section-8.8.3
   def etag = rule { `entity-tag` ~ EOI ~> (ETag(_)) }
 
-  // http://tools.ietf.org/html/rfc7231#section-5.1.1
+  // https://www.rfc-editor.org/rfc/rfc9110.html#section-10.1.1
   def `expect` = rule {
     ignoreCase("100-continue") ~ OWS ~ EOI ~ push(Expect.`100-continue`)
   }
 
-  // http://tools.ietf.org/html/rfc7234#section-5.3
+  // https://www.rfc-editor.org/rfc/rfc9111.html#section-5.3
   def `expires` = rule { `expires-date` ~ EOI ~> (Expires(_)) }
 
-  // http://tools.ietf.org/html/rfc7230#section-5.4
+  // https://www.rfc-editor.org/rfc/rfc9110.html#section-7.2
   // We don't accept scoped IPv6 addresses as they should not appear in the Host header,
   // see also https://issues.apache.org/bugzilla/show_bug.cgi?id=35122 (WONTFIX in Apache 2 issue) and
   // https://bugzilla.mozilla.org/show_bug.cgi?id=464162 (FIXED in mozilla)
@@ -157,33 +156,32 @@ private[parser] trait SimpleHeaders {
     runSubParser(newUriParser(_).`hostAndPort-pushed`) ~ EOI ~> (Host(_, _))
   }
 
-  // http://tools.ietf.org/html/rfc7232#section-3.1
+  // https://www.rfc-editor.org/rfc/rfc9110.html#section-13.1.1
   def `if-match` = rule(
     ws('*') ~ EOI ~ push(`If-Match`.`*`)
     | listStart ~ oneOrMore(`entity-tag`).separatedBy(
       listSep) ~ listEnd ~ EOI ~> (tags => `If-Match`(EntityTagRange(tags: _*))))
 
-  // http://tools.ietf.org/html/rfc7232#section-3.3
+  // https://www.rfc-editor.org/rfc/rfc9110.html#section-13.1.3
   def `if-modified-since` = rule { `HTTP-date` ~ EOI ~> (`If-Modified-Since`(_)) }
 
-  // http://tools.ietf.org/html/rfc7232#section-3.2
+  // https://www.rfc-editor.org/rfc/rfc9110.html#section-13.1.2
   def `if-none-match` = rule {
     ws('*') ~ EOI ~ push(`If-None-Match`.`*`) |
     listStart ~ oneOrMore(`entity-tag`).separatedBy(
       listSep) ~ listEnd ~ EOI ~> (tags => `If-None-Match`(EntityTagRange(tags: _*)))
   }
 
-  // http://tools.ietf.org/html/rfc7232#section-3.5
-  // http://tools.ietf.org/html/rfc7233#section-3.2
+  // https://www.rfc-editor.org/rfc/rfc9110.html#section-13.1.5
   def `if-range` = rule { (`entity-tag` ~> (Left(_)) | `HTTP-date` ~> (Right(_))) ~ EOI ~> (`If-Range`(_)) }
 
-  // http://tools.ietf.org/html/rfc7232#section-3.4
+  // https://www.rfc-editor.org/rfc/rfc9110.html#section-13.1.4
   def `if-unmodified-since` = rule { `HTTP-date` ~ EOI ~> (`If-Unmodified-Since`(_)) }
 
-  // http://tools.ietf.org/html/rfc7232#section-2.2
+  // https://www.rfc-editor.org/rfc/rfc9110.html#section-8.8.2
   def `last-modified` = rule { `HTTP-date` ~ EOI ~> (`Last-Modified`(_)) }
 
-  // http://tools.ietf.org/html/rfc7231#section-7.1.2
+  // https://www.rfc-editor.org/rfc/rfc9110.html#section-10.2.2
   def location = rule {
     uriReference ~ EOI ~> (Location(_))
   }
@@ -191,18 +189,18 @@ private[parser] trait SimpleHeaders {
   // http://tools.ietf.org/html/rfc6454#section-7
   def `origin` = rule { `origin-list-or-null` ~ EOI ~> (Origin(_)) }
 
-  // http://tools.ietf.org/html/rfc7235#section-4.3
+  // https://www.rfc-editor.org/rfc/rfc9110.html#section-11.7.1
   def `proxy-authenticate` = rule {
     listStart ~ oneOrMore(challenge).separatedBy(listSep) ~ listEnd ~ EOI ~> (`Proxy-Authenticate`(_))
   }
 
-  // http://tools.ietf.org/html/rfc7235#section-4.4
+  // https://www.rfc-editor.org/rfc/rfc9110.html#section-11.7.2
   def `proxy-authorization` = rule { credentials ~ EOI ~> (`Proxy-Authorization`(_)) }
 
-  // http://tools.ietf.org/html/rfc7233#section-3.1
+  // https://www.rfc-editor.org/rfc/rfc9110.html#section-14.2
   def `range` = rule { `byte-ranges-specifier` /*| `other-ranges-specifier` */ ~ EOI ~> (Range(_, _)) }
 
-  // http://tools.ietf.org/html/rfc7231#section-5.5.2
+  // https://www.rfc-editor.org/rfc/rfc9110.html#section-10.1.3
   def referer = rule {
     // we are bit more relaxed than the spec here by also parsing a potential fragment
     // but catch it in the `Referer` instance validation (with a `require` in the constructor)
@@ -214,7 +212,7 @@ private[parser] trait SimpleHeaders {
     (`HTTP-date` ~> (RetryAfterDateTime(_)) | `delta-seconds` ~> (RetryAfterDuration(_))) ~ EOI ~> (`Retry-After`(_))
   }
 
-  // http://tools.ietf.org/html/rfc7231#section-7.4.2
+  // https://www.rfc-editor.org/rfc/rfc9110.html#section-10.2.4
   def server = rule { products ~ EOI ~> (Server(_)) }
 
   // https://tools.ietf.org/html/rfc6797#section-6
@@ -238,7 +236,7 @@ private[parser] trait SimpleHeaders {
     listStart ~ oneOrMore(`transfer-coding`).separatedBy(listSep) ~ listEnd ~ EOI ~> (TE(_))
   }
 
-  // http://tools.ietf.org/html/rfc7230#section-3.3.1
+  // https://www.rfc-editor.org/rfc/rfc9112.html#section-6.1
   def `transfer-encoding` = rule {
     listStart ~ oneOrMore(`transfer-coding`).separatedBy(listSep) ~ listEnd ~ EOI ~> (`Transfer-Encoding`(_))
   }
@@ -248,7 +246,7 @@ private[parser] trait SimpleHeaders {
     `cookie-pair` ~> (_.toCookie) ~ zeroOrMore(ws(';') ~ `cookie-av`) ~ EOI ~> (`Set-Cookie`(_))
   }
 
-  // http://tools.ietf.org/html/rfc7230#section-6.7
+  // https://www.rfc-editor.org/rfc/rfc9110.html#section-7.8
   def upgrade = rule {
     listStart ~ oneOrMore(protocol).separatedBy(listSep) ~ listEnd ~ EOI ~> (Upgrade(_))
   }
@@ -257,18 +255,16 @@ private[parser] trait SimpleHeaders {
     token ~ optional(ws("/") ~ token) ~> (UpgradeProtocol(_, _))
   }
 
-  // http://tools.ietf.org/html/rfc7231#section-5.5.3
+  // https://www.rfc-editor.org/rfc/rfc9110.html#section-10.1.5
   def `user-agent` = rule { products ~ EOI ~> (`User-Agent`(_)) }
 
-  // http://tools.ietf.org/html/rfc7235#section-4.1
+  // https://www.rfc-editor.org/rfc/rfc9110.html#section-11.6.1
   def `www-authenticate` = rule {
     listStart ~ oneOrMore(challenge).separatedBy(listSep) ~ listEnd ~ EOI ~> (`WWW-Authenticate`(_))
   }
 
-  // de-facto standard as per http://en.wikipedia.org/wiki/X-Forwarded-For
-  // It's not clear in which format IpV6 addresses are to be expected, the ones we've seen in the wild
-  // were not quoted and that's also what the "Transition" section in the draft says:
-  // http://tools.ietf.org/html/draft-ietf-appsawg-http-forwarded-10
+  // X-Forwarded-For is a legacy field. RFC 7239 discusses how IPv6 address formatting differs from Forwarded:
+  // https://www.rfc-editor.org/rfc/rfc7239.html#section-7.4
   def `x-forwarded-for` = {
     def addr =
       rule { (`ip-v4-address` | `ip-v6-address`) ~> (RemoteAddress(_)) | "unknown" ~ push(RemoteAddress.Unknown) }

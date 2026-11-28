@@ -318,12 +318,12 @@ private[http] final class UriParser(
 
   //////////////////////////// ADDITIONAL HTTP-SPECIFIC RULES //////////////////////////
 
-  // http://tools.ietf.org/html/rfc7230#section-2.7
+  // https://www.rfc-editor.org/rfc/rfc9110.html#section-4.1
   def `absolute-path` = rule {
     clearSB() ~ oneOrMore('/' ~ appendSB('/') ~ segment) ~ savePath()
   }
 
-  // http://tools.ietf.org/html/rfc7230#section-5.3
+  // https://www.rfc-editor.org/rfc/rfc9112.html#section-3.2
   def `request-target` = rule(
     `absolute-path` ~ optional('?' ~ rawQueryString) // origin-form
     | `absolute-URI` // absolute-form
@@ -339,8 +339,8 @@ private[http] final class UriParser(
 
   /////////////////////////// ADDITIONAL HTTP/2-SPECIFIC RULES /////////////////////////
 
-  // https://tools.ietf.org/html/rfc7540#section-8.1.2.3
-  // https://tools.ietf.org/html/rfc3986#section-3.2 - without deprecated userinfo
+  // Request pseudo-header fields: https://www.rfc-editor.org/rfc/rfc9113.html#section-8.3.1
+  // The HTTP(S) authority excludes userinfo.
   def `http2-authority-pseudo-header` = hostAndPort
 
   def parseHttp2AuthorityPseudoHeader(): Uri.Authority =
@@ -349,7 +349,7 @@ private[http] final class UriParser(
       case Left(error) => fail(error, "http2-authority-pseudo-header")
     }
 
-  // https://tools.ietf.org/html/rfc7540#section-8.1.2.3
+  // https://www.rfc-editor.org/rfc/rfc9113.html#section-8.3.1
   def `http2-path-pseudo-header` = rule(
     `absolute-path` ~ optional('?' ~ rawQueryString) // origin-form
   ) // TODO: asterisk-form

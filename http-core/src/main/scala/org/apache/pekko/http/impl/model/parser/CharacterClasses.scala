@@ -18,8 +18,7 @@ import org.parboiled2.CharPredicate
 // efficient encoding of *7-bit* ASCII characters
 private[http] object CharacterClasses {
 
-  // http://tools.ietf.org/html/rfc7230#section-1.2 referencing
-  // http://tools.ietf.org/html/rfc5234#appendix-B.1
+  // ABNF core rules: https://www.rfc-editor.org/rfc/rfc5234.html#appendix-B.1
   def ALPHA = CharPredicate.Alpha
   def LOWER_ALPHA = CharPredicate.LowerAlpha
   def UPPER_ALPHA = CharPredicate.UpperAlpha
@@ -36,7 +35,7 @@ private[http] object CharacterClasses {
   val WSP = CharPredicate(SP, HTAB)
   val WSPCRLF = WSP ++ CR ++ LF
 
-  // http://tools.ietf.org/html/rfc7230#section-3.2.6
+  // https://www.rfc-editor.org/rfc/rfc9110.html#section-5.6.2
   val special = CharPredicate("""()<>@,;:\"/[]?={}""")
   val tchar = VCHAR -- special // token-char
 
@@ -70,7 +69,7 @@ private[http] object CharacterClasses {
   val `reg-name-char` = unreserved ++ `sub-delims`
   val `lower-reg-name-char` = `reg-name-char` -- UPPER_ALPHA
 
-  // http://tools.ietf.org/html/rfc7235#section-2.1
+  // https://www.rfc-editor.org/rfc/rfc9110.html#section-11.2
   val `token68-start` = ALPHA ++ DIGIT ++ "-._~+/"
 
   // https://tools.ietf.org/html/rfc6265#section-4.1.1
@@ -82,7 +81,7 @@ private[http] object CharacterClasses {
     CharPredicate((x: Char) => x > 0x7F && java.lang.Character.isDefined(x)) -- `cookie-separator`
   val `av-octet` = CharPredicate('\u0020' to '\u003a', '\u003c' to '\u007e') // http://www.rfc-editor.org/errata_search.php?rfc=6265
 
-  // http://tools.ietf.org/html/rfc5988#section-5
+  // https://www.rfc-editor.org/rfc/rfc8288.html#section-3.3
   val `reg-rel-type-octet` = LOWER_ALPHA ++ DIGIT ++ '.' ++ '-'
 
   // helpers
