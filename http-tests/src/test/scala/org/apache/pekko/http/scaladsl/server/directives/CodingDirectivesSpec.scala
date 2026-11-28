@@ -14,6 +14,7 @@
 package org.apache.pekko.http.scaladsl.server
 package directives
 
+import scala.concurrent.Promise
 import scala.concurrent.duration._
 
 import org.apache.pekko
@@ -345,6 +346,56 @@ class CodingDirectivesSpec extends RoutingSpec with Inside {
         val bytes = chunks.foldLeft(ByteString.empty)(_ ++ _.data)
         Gzip.decode(bytes).awaitResult(1.second.dilated) should readAs(text)
       }
+    }
+    "preserve a declared trailer on an HTTP/1.1 gzip response" in {
+      val first = ByteString("report ")
+      val second = ByteString("complete")
+      val trailer = RawHeader("X-Report-State", "ready")
+      val declaration = TrailerHeader(Seq(trailer.name))
+      val terminal = LastChunk(trailer = List(trailer))
+      val entity =
+        HttpEntity.Chunked(ContentTypes.`text/plain(UTF-8)`, Source(List(Chunk(first), Chunk(second), terminal)))
+      val acceptsTrailers = TE(TransferEncodings.trailers)
+      val receivedTrailerSupport = Promise[(Option[TE], Option[Connection])]()
+
+      val host = "127.0.0.1"
+      val timeout = 3.seconds.dilated
+      val route = extractRequest { request =>
+        receivedTrailerSupport.success((request.header[TE], request.header[Connection]))
+        encodeResponseWith(Gzip) {
+          complete(HttpResponse(headers = List(declaration), entity = entity))
+        }
+      }
+      val binding = Http().newServerAt(host, 0).bind(route).awaitResult(timeout)
+      try {
+        val request = HttpRequest(uri = "/report",
+          headers = List(`Accept-Encoding`(gzip), acceptsTrailers, Connection("TE")))
+        val parts = Source.single(request)
+          .via(Http().connectionTo(host).toPort(binding.localAddress.getPort).http())
+          .mapAsync(1) { result =>
+            result.status shouldEqual OK
+            result.protocol shouldEqual HttpProtocols.`HTTP/1.1`
+            result should haveContentEncoding(gzip)
+            result.header[TrailerHeader] shouldEqual Some(declaration)
+            result.headers.exists(_.is(trailer.lowercaseName)) shouldBe false
+            result.entity match {
+              case chunked: HttpEntity.Chunked => chunked.chunks.runWith(Sink.seq)
+              case other                       => fail(s"Expected a chunked response entity, got $other")
+            }
+          }
+          .runWith(Sink.head)
+          .awaitResult(timeout)
+
+        val (receivedTE, receivedConnection) = receivedTrailerSupport.future.awaitResult(timeout)
+        receivedTE shouldEqual Some(acceptsTrailers)
+        withClue(s"Expected the TE connection option in $receivedConnection: ") {
+          receivedConnection.exists(_.tokens.exists(_.equalsIgnoreCase("TE"))) shouldBe true
+        }
+        parts.lastOption shouldEqual Some(terminal)
+        parts.collect { case last: LastChunk => last } shouldEqual Seq(terminal)
+        val compressed = parts.foldLeft(ByteString.empty)(_ ++ _.data)
+        Gzip.decode(compressed).awaitResult(timeout) shouldEqual (first ++ second)
+      } finally binding.terminate(1.second.dilated).awaitResult(timeout)
     }
     "preserve gzip response bytes across an empty stream element" in {
       val first = ByteString("before ")
