@@ -787,6 +787,29 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
         "expected segment, '/', '?', '#' or 'EOI' (line 1, column 18)", "https://spray.io/ sec\n                 ^")
     }
 
+    "Link standard parameter names are case-insensitive" in {
+      val encodedTitle = "UTF-8'fr'Caf%C3%A9%20du%20coin"
+      val value = """</page>; REL=prev; Anchor="/contents"; Rev=chapter; HREFLANG=de-DE; """ +
+        s"""Media=print; TITLE="Cafe du coin"; Title*=$encodedTitle; TYPE=application/json"""
+      val rendered = """</page>; rel=prev; anchor="/contents"; rev=chapter; hreflang=de-DE; """ +
+        s"""media=print; title="Cafe du coin"; title*=$encodedTitle; type=application/json"""
+      val expected = Link(Uri("/page"), LinkParams.prev, LinkParams.anchor(Uri("/contents")), LinkParams.rev("chapter"),
+        LinkParams.hreflang(Language("de", "DE")), LinkParams.media("print"), LinkParams.title("Cafe du coin"),
+        LinkParams.`title*`(encodedTitle), LinkParams.`type`(`application/json`))
+
+      s"Link: $rendered" =!= expected
+      s"Link: $value" =!= expected.renderedTo(rendered)
+    }
+
+    "Link standard hreflang accepts quoted language tags" in {
+      val value = """</page>; rel=alternate; hreflang=de-DE; hreflang="es-419"; hreflang="sr-Latn-RS""""
+      val rendered = "</page>; rel=alternate; hreflang=de-DE; hreflang=es-419; hreflang=sr-Latn-RS"
+      val expected = Link(Uri("/page"), LinkParams.rel("alternate"), LinkParams.hreflang(Language("de", "DE")),
+        LinkParams.hreflang(Language("es", "419")), LinkParams.hreflang(Language("sr", "Latn", "RS")))
+
+      s"Link: $value" =!= expected.renderedTo(rendered)
+    }
+
     "Link" in {
       "Link: </?page=2>; rel=next" =!= Link(Uri("/?page=2"), LinkParams.next)
       "Link: <https://spray.io>; rel=next" =!= Link(Uri("https://spray.io"), LinkParams.next)
