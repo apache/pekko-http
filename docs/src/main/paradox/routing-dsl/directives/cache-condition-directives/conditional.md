@@ -38,3 +38,25 @@ targeted by the request has already been established and the respective ETag/Las
 
 The @ref[FileAndResourceDirectives](../file-and-resource-directives/index.md) internally use the `conditional` directive for ETag and Last-Modified support
 (if the `pekko.http.routing.file-get-conditional` setting is enabled).
+
+## Evaluating conditions outside a route
+
+An application or framework that selects the representation itself can use `SelectedRepresentationConditions.evaluate`
+from the Scala or Java model API. Call it after normal request checks, only when the original GET or HEAD would otherwise
+return 200 (OK) for an existing selected representation. Leave redirects and failures unchanged. A cache must first
+determine that it can serve the selected stored response and apply its own cache rules. A forwarding intermediary that
+cannot serve the representation must not evaluate the preconditions and must pass them on if it forwards the request. See
+[RFC 9110 §13.2.1](https://www.rfc-editor.org/rfc/rfc9110.html#section-13.2.1) and
+[RFC 9111 §4.3.2](https://www.rfc-editor.org/rfc/rfc9111.html#section-4.3.2).
+
+Pass the original method and the validators for the selected representation, not a different coding's validators.
+An absent ETag still permits `If-None-Match: *` to match that existing representation. For `If-Range`, a date must be
+known to be strong and match the selected representation's date exactly; tag comparison is strong. See
+[RFC 9110 §8.8.2.2](https://www.rfc-editor.org/rfc/rfc9110.html#section-8.8.2.2) and
+[RFC 9110 §13.1.5](https://www.rfc-editor.org/rfc/rfc9110.html#section-13.1.5).
+
+The evaluator does not read an entity or build a response. On `NOT_MODIFIED`, send a 304 with the applicable cache metadata
+for the same representation (including any `Vary` the 200 would include) and no body. `EVALUATE_RANGE` permits the caller
+to consider a modeled Range but does not make it satisfiable or turn it into a 206 response. If `DELEGATE` is returned,
+retain the request's preconditions and use the caller's existing handling. This opt-in helper does not change `conditional`
+or routing defaults.

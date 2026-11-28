@@ -92,6 +92,66 @@ trait FileAndResourceDirectives {
       } else pass)
 
   /**
+   * Serves an identity file or its precompressed gzip variant, selected before evaluating GET preconditions.
+   * The caller must supply distinct strong entity tags for the actual bytes of each variant, and keep those
+   * bytes immutable for the lifetime of this route. Both variants have the same underlying content type.
+   *
+   * This opt-in serves whole representations and does not apply byte ranges or compress files on demand.
+   * Do not enclose it in a directive or filter that changes the selected representation's bytes.
+   *
+   * @group fileandresource
+   */
+  def getFromFileWithPrecompressedGzip(
+      file: File,
+      entityTag: EntityTag,
+      gzipFile: File,
+      gzipEntityTag: EntityTag,
+      contentType: ContentType): Route = {
+    import HttpEncodings.{ gzip, identity }
+    import javadsl.model.SelectedRepresentationDecision._
+
+    require(!entityTag.weak && !gzipEntityTag.weak && entityTag.tag != gzipEntityTag.tag,
+      "Identity and gzip variants require distinct strong entity tags")
+    val vary = RawHeader("Vary", "Accept-Encoding")
+
+    get {
+      extractRequest { request =>
+        if (!file.isFile || !file.canRead) reject
+        else {
+          val encodings = if (gzipFile.isFile && gzipFile.canRead) List(identity, gzip) else List(identity)
+          val negotiator = EncodingNegotiator(request.headers)
+          negotiator.pickEncoding(encodings).orElse(Option.when(!negotiator.hasMatchingFor(identity))(identity)) match {
+            case None           => reject(UnacceptedResponseEncodingRejection(encodings.toSet))
+            case Some(encoding) =>
+              val encoded = encoding == gzip
+              val selectedFile = if (encoded) gzipFile else file
+              val selectedTag = if (encoded) gzipEntityTag else entityTag
+              val lastModified = DateTime(math.min(selectedFile.lastModified, System.currentTimeMillis))
+              val validators: List[HttpHeader] = List(ETag(selectedTag), `Last-Modified`(lastModified))
+
+              val completeSelectedFile: Route = ctx => {
+                val responseHeaders = if (encoded) `Content-Encoding`(gzip) :: validators else validators
+                ctx.complete(HttpResponse(headers = responseHeaders,
+                  entity = HttpEntity.fromFile(contentType, selectedFile)))
+              }
+
+              mapResponse(_.addHeader(vary)) {
+                SelectedRepresentationConditions.evaluate(request.method, request.headers, Some(selectedTag),
+                  Some(lastModified)) match {
+                  case NOT_MODIFIED => complete(HttpResponse(StatusCodes.NotModified, headers = validators))
+                  // The earlier origin checks still run against this same selected representation.
+                  case DELEGATE => conditional(selectedTag, lastModified) { completeSelectedFile }
+                  // This route does not advertise or apply ranges for either representation.
+                  case PROCEED | EVALUATE_RANGE => completeSelectedFile
+                }
+              }
+          }
+        }
+      }
+    }
+  }
+
+  /**
    * Completes GET requests with the content of the given class-path resource.
    * If the resource cannot be found or read the Route rejects the request.
    *

@@ -22,6 +22,7 @@ import org.apache.pekko
 import pekko.http.javadsl.marshalling.Marshaller
 import pekko.http.javadsl.model.ContentType
 import pekko.http.javadsl.model.RequestEntity
+import pekko.http.javadsl.model.headers.EntityTag
 import pekko.http.javadsl.server.{ Route, RoutingJavaMapping }
 import pekko.http.scaladsl.server.{ Directives => D }
 
@@ -154,6 +155,23 @@ abstract class FileAndResourceDirectives extends ExecutionDirectives {
    */
   def getFromFile(file: File, contentType: ContentType): Route = RouteAdapter {
     D.getFromFile(file, contentType.asScala)
+  }
+
+  /**
+   * Serves an identity file or its precompressed gzip variant, selected before evaluating GET preconditions.
+   * Supply distinct strong entity tags for the actual bytes of each variant and keep those bytes immutable
+   * for the lifetime of this route. Both variants have the same underlying content type.
+   *
+   * This opt-in serves whole representations and does not apply byte ranges or compress files on demand.
+   * Do not enclose it in a directive or filter that changes the selected representation's bytes.
+   */
+  def getFromFileWithPrecompressedGzip(
+      file: File,
+      entityTag: EntityTag,
+      gzipFile: File,
+      gzipEntityTag: EntityTag,
+      contentType: ContentType): Route = RouteAdapter {
+    D.getFromFileWithPrecompressedGzip(file, entityTag.asScala, gzipFile, gzipEntityTag.asScala, contentType.asScala)
   }
 
   /**

@@ -13,14 +13,27 @@
 
 package docs.http.javadsl.server.directives;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.zip.GZIPOutputStream;
+import org.apache.pekko.http.javadsl.model.ContentTypes;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
+import org.apache.pekko.http.javadsl.model.headers.AcceptEncoding;
+import org.apache.pekko.http.javadsl.model.headers.ETag;
+import org.apache.pekko.http.javadsl.model.headers.EntityTag;
+import org.apache.pekko.http.javadsl.model.headers.EntityTagRange;
+import org.apache.pekko.http.javadsl.model.headers.HttpEncodings;
+import org.apache.pekko.http.javadsl.model.headers.IfNoneMatch;
 import org.apache.pekko.http.javadsl.server.PathMatchers;
 import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.server.directives.DirectoryRenderer;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import scala.NotImplementedError;
 
 import static org.apache.pekko.http.javadsl.server.PathMatchers.segment;
@@ -101,6 +114,34 @@ public class FileAndResourceDirectivesExamplesTest extends JUnitJupiterRouteTest
     // tests:
     testRoute(route).run(HttpRequest.GET("/logs/example")).assertEntity("example file contents");
     // #getFromFile
+  }
+
+  @Test
+  public void testGetFromFileWithPrecompressedGzip(@TempDir Path directory) throws IOException {
+    final byte[] bytes = "asset content".getBytes(StandardCharsets.UTF_8);
+    final Path file = Files.write(directory.resolve("asset.txt"), bytes);
+    final Path gzipFile = directory.resolve("asset.txt.gz");
+    try (GZIPOutputStream out = new GZIPOutputStream(Files.newOutputStream(gzipFile))) {
+      out.write(bytes);
+    }
+
+    // #getFromFileWithPrecompressedGzip
+    final EntityTag identityTag = EntityTag.create("identity-v1", false);
+    final EntityTag gzipTag = EntityTag.create("gzip-v1", false);
+    final Route route =
+        Directives.getFromFileWithPrecompressedGzip(
+            file.toFile(), identityTag, gzipFile.toFile(), gzipTag, ContentTypes.TEXT_PLAIN_UTF8);
+
+    testRoute(route)
+        .run(
+            HttpRequest.GET("/asset.txt")
+                .addHeader(AcceptEncoding.create(HttpEncodings.GZIP))
+                .addHeader(IfNoneMatch.create(EntityTagRange.create(gzipTag))))
+        .assertStatusCode(StatusCodes.NOT_MODIFIED)
+        .assertHeaderExists(ETag.create(gzipTag))
+        .assertHeaderExists("Vary", "Accept-Encoding")
+        .assertEntity("");
+    // #getFromFileWithPrecompressedGzip
   }
 
   @Disabled("Compile only test")
