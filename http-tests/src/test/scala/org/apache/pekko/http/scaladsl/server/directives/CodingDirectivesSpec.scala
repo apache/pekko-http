@@ -541,6 +541,105 @@ class CodingDirectivesSpec extends RoutingSpec with Inside {
     }
   }
 
+  "response encoding Vary metadata" should {
+    val varyAcceptEncoding = RawHeader("Vary", "Accept-Encoding")
+
+    "identify the same negotiation on encoded and identity responses" in {
+      val route = encodeResponse { yeah }
+      val identityRequests = Seq(
+        Get("/"),
+        Get("/").withHeaders(`Accept-Encoding`()),
+        Get("/").withHeaders(`Accept-Encoding`(identity)),
+        Get("/").withHeaders(`Accept-Encoding`(HttpEncoding.custom("example-coding"))))
+
+      for (request <- identityRequests) {
+        request ~> route ~> check {
+          response should haveNoContentEncoding
+          response.headers.filter(_.is("vary")) shouldEqual Seq(varyAcceptEncoding)
+          responseAs[String] shouldEqual "Yeah!"
+        }
+      }
+
+      Get("/") ~> `Accept-Encoding`(gzip) ~> route ~> check {
+        response should haveContentEncoding(gzip)
+        response.headers.filter(_.is("vary")) shouldEqual Seq(varyAcceptEncoding)
+        Gzip.decode(strictify(responseEntity).data).awaitResult(1.second.dilated) should readAs("Yeah!")
+      }
+    }
+
+    "preserve existing members and avoid appending a duplicate or extending a wildcard" in {
+      val first = RawHeader("vArY", "Accept-Language")
+      val other = RawHeader("Vary", "Origin")
+      val alreadyIncluded = RawHeader("VARY", "Origin, aCcEpT-EnCoDiNg")
+      val wildcard = RawHeader("Vary", "*")
+
+      for ((original, expected) <- Seq(
+          (Seq(first, other), Seq(varyAcceptEncoding, first, other)),
+          (Seq(first, alreadyIncluded), Seq(first, alreadyIncluded)),
+          (Seq(first, wildcard), Seq(first, wildcard)))) {
+        val route = encodeResponse { complete(HttpResponse(headers = original, entity = "Representation")) }
+        Get("/") ~> route ~> check {
+          response.headers.filter(_.is("vary")) shouldEqual expected
+        }
+      }
+    }
+
+    "leave invariant responses and standalone not-modified metadata unchanged" in {
+      val existingVary = RawHeader("Vary", "Accept-Language, Accept-Encoding")
+      val encoded = HttpResponse(headers = Seq(RawHeader("cOnTeNt-EnCoDiNg", "gzip")),
+        entity = HttpEntity(ContentType(`text/plain`, `UTF-8`), yeahGzipped))
+      val fixedResponses = Seq(
+        Ok,
+        HttpResponse(entity = HttpEntity(`application/octet-stream`, ByteString("binary"))),
+        HttpResponse(NoContent),
+        HttpResponse(NotModified),
+        HttpResponse(NotModified, headers = Seq(existingVary)),
+        encoded)
+
+      for (original <- fixedResponses) {
+        Get("/") ~> `Accept-Encoding`(gzip) ~> encodeResponse { complete(original) } ~> check {
+          response shouldEqual original
+        }
+      }
+
+      Get("/") ~> encodeResponseWith(NoCoding) { yeah } ~> check {
+        response.headers.filter(_.is("vary")) shouldBe empty
+        responseAs[String] shouldEqual "Yeah!"
+      }
+    }
+
+    "mark HEAD representation metadata when the supplied response could have been encoded" in {
+      Head("/") ~> encodeResponse { yeah } ~> check {
+        response.headers.filter(_.is("vary")) shouldEqual Seq(varyAcceptEncoding)
+      }
+    }
+
+    "not run an extra custom filter or expose the derived Vary field to the selected filter" in {
+      val gzipCalls = new java.util.concurrent.atomic.AtomicInteger
+      val deflateCalls = new java.util.concurrent.atomic.AtomicInteger
+      val customGzip = pekko.http.scaladsl.coding.Coders.Gzip(messageFilter = message => {
+        gzipCalls.incrementAndGet()
+        !message.headers.exists(_.is("vary"))
+      })
+      val customDeflate = pekko.http.scaladsl.coding.Coders.Deflate(messageFilter = _ => {
+        deflateCalls.incrementAndGet()
+        true
+      })
+      val route = encodeResponseWith(NoCoding, customGzip, customDeflate) { yeah }
+
+      Get("/") ~> route ~> check {
+        response should haveNoContentEncoding
+        response.headers.filter(_.is("vary")) shouldEqual Seq(varyAcceptEncoding)
+      }
+      Get("/") ~> `Accept-Encoding`(gzip) ~> route ~> check {
+        response should haveContentEncoding(gzip)
+        response.headers.filter(_.is("vary")) shouldEqual Seq(varyAcceptEncoding)
+      }
+      gzipCalls.get() shouldBe 1
+      deflateCalls.get() shouldBe 0
+    }
+  }
+
   "the encodeResponseWith directive" should {
     "produce a response encoded with the specified Encoder if the request has a matching Accept-Encoding header" in {
       Get("/") ~> `Accept-Encoding`(gzip) ~> {

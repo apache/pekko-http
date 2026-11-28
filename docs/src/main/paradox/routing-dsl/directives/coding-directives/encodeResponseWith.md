@@ -32,6 +32,10 @@ to `encodeResponseWith`. In Java, create a `FlowCoder` with `FlowCoder.create` a
 `encodeResponseWithFlowCoder`. This does not change the default coders. The encoder flow is materialized once per
 encoded response and must not share codec state between materializations.
 
+Responses subject to content coding selection vary by `Accept-Encoding`, as with @ref[encodeResponse](encodeResponse.md).
+When a custom encoder is offered, the directive conservatively adds `Accept-Encoding` to `Vary`
+without running that encoder's filter just to decide if another request might select it.
+
 ## Example
 
 Scala
