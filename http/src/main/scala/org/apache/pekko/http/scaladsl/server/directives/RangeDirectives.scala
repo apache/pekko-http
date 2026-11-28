@@ -45,7 +45,7 @@ trait RangeDirectives {
    * it on the *inside* of the `conditional(...)` directive, i.e. `conditional(...)` must be
    * on a higher level in your route structure in order to function correctly.
    *
-   * @see [[https://tools.ietf.org/html/rfc7233]]
+   * @see [[https://www.rfc-editor.org/rfc/rfc9110.html#section-15.3.7.2]]
    *
    * @group range
    */
@@ -78,22 +78,33 @@ trait RangeDirectives {
         iRanges.foldLeft(Seq.empty[IndexRange]) { (acc, iRange) =>
           val (mergeCandidates, otherCandidates) = acc.partition(_.distance(iRange) <= rangeCoalescingThreshold)
           val merged = mergeCandidates.foldLeft(iRange)(_.mergeWith(_))
+          // Merging into the current range keeps the surviving ranges in request order.
           otherCandidates :+ merged
         }
 
       def multipartRanges(ranges: Seq[ByteRange], entity: UniversalEntity): Multipart.ByteRanges = {
         val length = entity.contentLength
-        val iRanges: Seq[IndexRange] = ranges.map(indexRange(length))
+        val coalescedRanges = coalesceRanges(ranges.map(indexRange(length)))
+        if (settings.preserveRangeRequestOrder && coalescedRanges.lengthCompare(1) > 0)
+          entity match {
+            case strict: HttpEntity.Strict =>
+              return Multipart.ByteRanges(Source(coalescedRanges).map { range =>
+                Multipart.ByteRanges.BodyPart(
+                  range.contentRange(length),
+                  HttpEntity(strict.contentType, strict.data.slice(range.start.toInt, range.end.toInt)))
+              })
+            case _ =>
+          }
 
         // It's only possible to run once over the input entity data stream because it's not known if the
         // source is reusable.
         // Therefore, ranges need to be sorted to prevent that some selected ranges already start to accumulate data
         // but cannot be sent out because another range is blocking the queue.
-        val coalescedRanges = coalesceRanges(iRanges).sortBy(_.start)
-        val source = coalescedRanges.size match {
+        val sortedRanges = coalescedRanges.sortBy(_.start)
+        val source = sortedRanges.size match {
           case 0 => Source.empty
           case 1 =>
-            val range = coalescedRanges.head
+            val range = sortedRanges.head
             val flow = StreamUtils.sliceBytesTransformer(range.start, range.length)
             val bytes = entity.dataBytes.via(flow)
             val part = Multipart.ByteRanges.BodyPart(range.contentRange(length),
@@ -104,7 +115,7 @@ trait RangeDirectives {
               import GraphDSL.Implicits._
               val bcast = b.add(Broadcast[ByteString](n))
               val merge = b.add(Concat[Multipart.ByteRanges.BodyPart](n))
-              for (range <- coalescedRanges) {
+              for (range <- sortedRanges) {
                 val flow = StreamUtils.sliceBytesTransformer(range.start, range.length)
                 bcast ~> flow.buffer(16, OverflowStrategy.backpressure).prefixAndTail(0).map {
                   case (_, bytes) =>

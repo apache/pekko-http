@@ -40,9 +40,14 @@ Requests with unsatisfiable ranges are rejected with an @apidoc[UnsatisfiableRan
 The `withRangeSupport()` form (without parameters) uses the `range-coalescing-threshold` and `range-count-limit`
 settings from the `pekko.http.routing` configuration.
 
+By default, multipart response parts are sent in ascending byte-offset order. Set
+`pekko.http.routing.preserve-range-request-order = on` to send the surviving parts in the requested order
+when the inner route returns an already strict in-memory entity. Streamed entities still send parts in
+byte-offset order and are read only once. This setting does not change which ranges are selected or coalesced.
+
 This directive is transparent to non-`GET` requests.
 
-See also: [RFC 7233](https://tools.ietf.org/html/rfc7233)
+See also: [RFC 9110 §15.3.7.2](https://www.rfc-editor.org/rfc/rfc9110.html#section-15.3.7.2)
 
 ## Example
 

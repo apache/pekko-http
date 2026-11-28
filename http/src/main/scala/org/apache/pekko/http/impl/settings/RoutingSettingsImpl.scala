@@ -13,6 +13,8 @@
 
 package org.apache.pekko.http.impl.settings
 
+import scala.util.hashing.MurmurHash3
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.http.impl.util._
@@ -32,10 +34,70 @@ private[http] final case class RoutingSettingsImpl(
     useJarFileCache: Boolean,
     rejectUnsafeResourceNames: Boolean) extends pekko.http.scaladsl.settings.RoutingSettings {
 
+  // Keep the nine-field case-class shape (including its extractor). The private constructor opts in
+  // before the snapshot enters the settings cache or is returned; nothing mutates it afterwards.
+  @volatile private var rangeRequestOrder = false
+
+  private def this(
+      verboseErrorMessages: Boolean,
+      fileGetConditional: Boolean,
+      renderVanityFooter: Boolean,
+      rangeCountLimit: Int,
+      rangeCoalescingThreshold: Long,
+      decodeMaxBytesPerChunk: Int,
+      decodeMaxSize: Long,
+      useJarFileCache: Boolean,
+      rejectUnsafeResourceNames: Boolean,
+      rangeRequestOrderEnabled: Boolean) = {
+    this(verboseErrorMessages, fileGetConditional, renderVanityFooter, rangeCountLimit, rangeCoalescingThreshold,
+      decodeMaxBytesPerChunk, decodeMaxSize, useJarFileCache, rejectUnsafeResourceNames)
+    if (rangeRequestOrderEnabled) rangeRequestOrder = true
+  }
+
+  def rangeRequestOrderEnabled: Boolean = rangeRequestOrder
+
+  def copy(
+      verboseErrorMessages: Boolean = this.verboseErrorMessages,
+      fileGetConditional: Boolean = this.fileGetConditional,
+      renderVanityFooter: Boolean = this.renderVanityFooter,
+      rangeCountLimit: Int = this.rangeCountLimit,
+      rangeCoalescingThreshold: Long = this.rangeCoalescingThreshold,
+      decodeMaxBytesPerChunk: Int = this.decodeMaxBytesPerChunk,
+      decodeMaxSize: Long = this.decodeMaxSize,
+      useJarFileCache: Boolean = this.useJarFileCache,
+      rejectUnsafeResourceNames: Boolean = this.rejectUnsafeResourceNames): RoutingSettingsImpl =
+    new RoutingSettingsImpl(verboseErrorMessages, fileGetConditional, renderVanityFooter, rangeCountLimit,
+      rangeCoalescingThreshold, decodeMaxBytesPerChunk, decodeMaxSize, useJarFileCache, rejectUnsafeResourceNames,
+      rangeRequestOrderEnabled)
+
+  override def equals(other: Any): Boolean = other match {
+    case that: RoutingSettingsImpl =>
+      (this eq that) || (
+        verboseErrorMessages == that.verboseErrorMessages &&
+        fileGetConditional == that.fileGetConditional &&
+        renderVanityFooter == that.renderVanityFooter &&
+        rangeCountLimit == that.rangeCountLimit &&
+        rangeCoalescingThreshold == that.rangeCoalescingThreshold &&
+        decodeMaxBytesPerChunk == that.decodeMaxBytesPerChunk &&
+        decodeMaxSize == that.decodeMaxSize &&
+        useJarFileCache == that.useJarFileCache &&
+        rejectUnsafeResourceNames == that.rejectUnsafeResourceNames &&
+        rangeRequestOrderEnabled == that.rangeRequestOrderEnabled)
+    case _ => false
+  }
+
+  override def hashCode(): Int = {
+    val legacy = MurmurHash3.productHash(this, RoutingSettingsImpl.LegacyHashSeed, ignorePrefix = true)
+    if (rangeRequestOrderEnabled) ~legacy else legacy
+  }
+
   override def productPrefix = "RoutingSettings"
 }
 
 object RoutingSettingsImpl extends SettingsCompanionImpl[RoutingSettingsImpl]("pekko.http.routing") {
+  // The legacy synthetic hash uses the class name, not the display product prefix.
+  private val LegacyHashSeed = MurmurHash3.mix(MurmurHash3.productSeed, "RoutingSettingsImpl".hashCode)
+
   def fromSubConfig(root: Config, c: Config) = new RoutingSettingsImpl(
     c.getBoolean("verbose-error-messages"),
     c.getBoolean("file-get-conditional"),
@@ -45,5 +107,6 @@ object RoutingSettingsImpl extends SettingsCompanionImpl[RoutingSettingsImpl]("p
     c.getIntBytes("decode-max-bytes-per-chunk"),
     c.getPossiblyInfiniteBytes("decode-max-size"),
     c.getBoolean("use-jar-file-cache"),
-    c.getBoolean("reject-unsafe-resource-names"))
+    c.getBoolean("reject-unsafe-resource-names"),
+    c.hasPath("preserve-range-request-order") && c.getBoolean("preserve-range-request-order"))
 }
