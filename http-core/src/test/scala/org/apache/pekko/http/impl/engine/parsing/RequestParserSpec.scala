@@ -126,6 +126,35 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
         closeAfterResponseCompletion shouldEqual Seq(false, true)
       }
 
+      // the header value cache must not change how a folded line is read: a value that was cached from an earlier,
+      // unfolded line (or is predefined) still continues on the next line if that line starts with whitespace
+      "with a multi-line header whose first line is a cached value" in new Test {
+        Seq(
+          """GET /a HTTP/1.1
+            |Host: x
+            |User-Agent: curl/7.19.7
+            |
+            |""",
+          """GET /b HTTP/1.1
+            |Host: x
+            |User-Agent: curl/7.19.7
+            | abc
+            |
+            |""") should multiParseTo(
+          HttpRequest(GET, "/a", List(Host("x"), `User-Agent`("curl/7.19.7"))),
+          HttpRequest(GET, "/b", List(Host("x"), `User-Agent`("curl/7.19.7 abc"))))
+      }
+
+      "with a multi-line header whose first line is a predefined value" in new Test {
+        """GET / HTTP/1.1
+          |Host: x
+          |Accept: */*
+          | , text/html
+          |
+          |""" should parseTo(
+          HttpRequest(GET, "/", List(Host("x"), Accept(MediaRanges.`*/*`, MediaTypes.`text/html`))))
+      }
+
       "with multi-line headers" in new Test {
         """DELETE /abc HTTP/1.0
           |User-Agent: curl/7.19.7
