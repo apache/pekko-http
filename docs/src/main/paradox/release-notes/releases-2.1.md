@@ -38,6 +38,9 @@ Pekko HTTP 2.1.0 has not been released yet. These notes list the changes merged 
   partitioned cookies by inspecting `extension` (`getExtension()` in Java), use `partitioned`
   (`partitioned()` in Java) instead ([PR1562](https://github.com/apache/pekko-http/pull/1562)).
 
+* Multipart unmarshallers now recognize the `boundary` parameter name in any ASCII letter case.
+  The boundary value remains case-sensitive.
+
 * Empty `Accept-Charset` and `Accept-Language` fields now parse as typed headers with empty range lists,
   rather than as raw headers. Scala and Java constructors also accept empty lists. Response selection is
   unchanged: an empty field continues to use the same negotiation defaults as an absent field.
