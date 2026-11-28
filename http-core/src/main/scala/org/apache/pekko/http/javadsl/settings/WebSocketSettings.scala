@@ -155,6 +155,23 @@ trait WebSocketSettings { self: WebSocketSettingsImpl =>
   def withOpeningTimeout(newValue: JDuration): WebSocketSettings =
     copy(openingTimeout = JavaDurationConverter.toScala(newValue))
 
+  /**
+   * Incoming WebSocket frame payload limit in bytes, before decompression. The default,
+   * `Long.MAX_VALUE`, leaves the limit disabled.
+   *
+   * @since 2.1.0
+   */
+  def getMaxInboundFramePayloadLength: Long = self.maxInboundFramePayloadLength
+
+  /**
+   * Set the incoming WebSocket frame payload limit. Must be at least 125 bytes.
+   * Use `Long.MAX_VALUE` to disable it.
+   *
+   * @since 2.1.0
+   */
+  def withMaxInboundFramePayloadLength(newValue: Long): WebSocketSettings =
+    copy(maxInboundFramePayloadLength = newValue)
+
 }
 
 object WebSocketSettings {

@@ -254,7 +254,8 @@ private[http] object Handshake {
         subprotocol.map(p => `Sec-WebSocket-Protocol`(Seq(p))).toList :::
         List(UpgradeHeader, ConnectionUpgradeHeader, `Sec-WebSocket-Accept`.forKey(key)) :::
         extensionHeaders :::
-        List(UpgradeToOtherProtocolResponseHeader(WebSocket.framing.join(frameHandler)))
+        List(UpgradeToOtherProtocolResponseHeader(
+          WebSocket.framing(settings.maxInboundFramePayloadLength).join(frameHandler)))
 
       HttpResponse(StatusCodes.SwitchingProtocols, responseHeaders)
     }

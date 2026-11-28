@@ -93,6 +93,9 @@ private[http] class FrameOutHandler(serverSide: Boolean, _closeTimeout: FiniteDu
             setHandler(in, new WaitingForPeerCloseFrame)
             val frame = if (serverSide) inheritedAttributes.get[FrameOutHandler.CompletionClose].map(_.frame) else None
             push(out, frame.getOrElse(FrameEvent.closeFrame(Protocol.CloseCodes.Regular)))
+          case UserHandlerErredOut(_: FramePayloadLimitExceeded) =>
+            push(out, FrameEvent.closeFrame(Protocol.CloseCodes.TooBig))
+            completeStage()
           case UserHandlerErredOut(e) =>
             log.error(e, "Websocket handler failed with {}", e.getMessage)
             setHandler(in, new WaitingForPeerCloseFrame)
@@ -130,6 +133,14 @@ private[http] class FrameOutHandler(serverSide: Boolean, _closeTimeout: FiniteDu
 
       override def onUpstreamFinish(): Unit =
         fail(out, new IllegalStateException("Mustn't complete before user has completed"))
+
+      override def onUpstreamFailure(cause: Throwable): Unit = cause match {
+        case _: FramePayloadLimitExceeded =>
+          // The peer has already initiated the close; keep its pending reply.
+          becomeSendOutCloseFrameAndComplete(closeFrame)
+          absorbTermination()
+        case _ => super.onUpstreamFailure(cause)
+      }
     }
 
     /**
@@ -189,6 +200,14 @@ private[http] class FrameOutHandler(serverSide: Boolean, _closeTimeout: FiniteDu
     private trait ProcotolExceptionHandling extends InHandler {
       @tailrec override final def onUpstreamFailure(cause: Throwable): Unit =
         cause match {
+          case _: FramePayloadLimitExceeded =>
+            getHandler(in) match {
+              case Idle =>
+                becomeSendOutCloseFrameAndComplete(FrameEvent.closeFrame(Protocol.CloseCodes.TooBig))
+                absorbTermination()
+              case _: SendOutCloseFrameAndComplete => absorbTermination()
+              case _                               => completeStage() // A Close was already sent.
+            }
           case p: ProtocolException =>
             becomeSendOutCloseFrameAndComplete(FrameEvent.closeFrame(Protocol.CloseCodes.ProtocolError))
             absorbTermination()
