@@ -381,6 +381,35 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
       }
 
     }
+    "a streamed response with bytes after an ordinary empty element" - {
+      val bytes = source(ByteString("abc"), ByteString.empty, ByteString("defg"))
+
+      "render all bytes and keep the connection open when the length is known" in new TestSetup() {
+        ResponseRenderingContext(
+          HttpResponse(200,
+            entity = Default(ContentTypes.`text/plain(UTF-8)`, 7, bytes))) should renderTo(
+          """HTTP/1.1 200 OK
+            |Server: pekko-http/1.0.0
+            |Date: Thu, 25 Aug 2011 09:10:29 GMT
+            |Content-Type: text/plain; charset=UTF-8
+            |Content-Length: 7
+            |
+            |abcdefg""", close = false)
+      }
+
+      "render all bytes and request connection close when the entity is close-delimited" in new TestSetup() {
+        ResponseRenderingContext(
+          HttpResponse(200,
+            entity = CloseDelimited(ContentTypes.`text/plain(UTF-8)`, bytes))) should renderTo(
+          """HTTP/1.1 200 OK
+            |Server: pekko-http/1.0.0
+            |Date: Thu, 25 Aug 2011 09:10:29 GMT
+            |Connection: close
+            |Content-Type: text/plain; charset=UTF-8
+            |
+            |abcdefg""", close = true)
+      }
+    }
     "a response with a CloseDelimited body" - {
       "without data" in new TestSetup() {
         ResponseRenderingContext(
