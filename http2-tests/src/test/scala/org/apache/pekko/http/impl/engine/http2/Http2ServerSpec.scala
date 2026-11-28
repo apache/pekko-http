@@ -480,7 +480,34 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
       }
 
       "fail if Http2StreamIdHeader missing" in pending
-      "automatically add `Date` header" in pending
+      "add a canonical Date header and preserve an explicitly supplied Date".inAssertAllStagesStopped(
+        new TestSetup with RequestResponseProbes {
+          import headers.Date
+
+          def responseDates(streamId: Int, response: HttpResponse): Seq[String] = {
+            network.sendRequest(streamId,
+              HttpRequest(uri = "https://www.example.com/", protocol = HttpProtocols.`HTTP/2.0`))
+            user.expectRequest()
+            user.emitResponse(streamId, response)
+            // The usual decoded response helper omits Date.
+            val pairs = network.decodeHeaders(network.expectHeaderBlock(streamId))
+            pairs should contain(":status" -> "200")
+            pairs.collect { case ("date", value) => value }
+          }
+
+          val generatedDates = responseDates(1, HttpResponse())
+          generatedDates should have size 1
+          val generated = generatedDates.head
+          val imfFixdate = """[A-Z][a-z]{2}, \d{2} [A-Z][a-z]{2} \d{4} \d{2}:\d{2}:\d{2} GMT"""
+          (generated should fullyMatch).regex(imfFixdate)
+          HttpHeader.parse("Date", generated) match {
+            case HttpHeader.ParsingResult.Ok(Date(date), Nil) => date.toRfc1123DateTimeString shouldBe generated
+            case other                                        => fail(s"Expected a valid generated Date header, got $other")
+          }
+
+          val supplied = Date(DateTime(1994, 11, 6, 8, 49, 37))
+          responseDates(3, HttpResponse(headers = List(supplied))) shouldBe Seq("Sun, 06 Nov 1994 08:49:37 GMT")
+        })
 
       "support custom methods".inAssertAllStagesStopped(new TestSetup with RequestResponseProbes {
         lazy val customMethod = HttpMethod.custom("BANANA")
