@@ -99,9 +99,7 @@ private[http] object BodyPartRenderer {
             if (isAvailable(out) && firstBoundaryRendered) completeRendering()
 
           private def completeRendering(): Unit = {
-            val r = new ByteStringRendering(boundary.length + 4)
-            renderFinalBoundary(r, boundary)
-            push(out, chunkStream(r.get))
+            push(out, chunkStream(closingBoundary(boundary)))
             completeStage()
           }
 
@@ -112,6 +110,27 @@ private[http] object BodyPartRenderer {
         Source.single(Chunk(byteString))
 
     }
+
+  // Render a part's metadata without materializing its bytes. Ordered file ranges keep the metadata and the
+  // payload in a single stream so that they can share one file handle for the whole response.
+  def byteRangePartHeader(
+      boundary: String,
+      first: Boolean,
+      representation: HttpEntity,
+      range: ContentRange.Default,
+      log: LoggingAdapter): ByteString = {
+    val r = new ByteStringRendering(128)
+    renderBoundary(r, boundary, suppressInitialCrLf = first)
+    renderEntityContentType(r, representation)
+    renderHeaders(r, `Content-Range`(RangeUnits.Bytes, range) :: Nil, log)
+    r.get
+  }
+
+  def closingBoundary(boundary: String): ByteString = {
+    val r = new ByteStringRendering(boundary.length + 4)
+    renderFinalBoundary(r, boundary)
+    r.get
+  }
 
   def strict(parts: Seq[Multipart.BodyPart.Strict], boundary: String,
       partHeadersSizeHint: Int, log: LoggingAdapter): ByteString =
