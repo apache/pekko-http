@@ -27,7 +27,7 @@ import pekko.stream.stage._
 import pekko.util.ByteString
 import HttpEntity._
 import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
-import java.util.concurrent.ThreadLocalRandom
+import java.security.SecureRandom
 
 import pekko.annotation.InternalApi
 
@@ -145,10 +145,13 @@ private[http] object BodyPartRenderer {
     case x => r ~~ x
   }
 
+  // Both direct entities and marshallers draw from the same lazily initialized secure source.
+  lazy val defaultBoundaryRandom: SecureRandom = new SecureRandom()
+
   /**
    * Creates a new random number of the given length and base64 encodes it (using a custom "safe" alphabet).
    */
-  def randomBoundary(length: Int = 18, random: java.util.Random = ThreadLocalRandom.current()): String = {
+  def randomBoundary(length: Int = 18, random: java.util.Random = defaultBoundaryRandom): String = {
     val array = new Array[Byte](length)
     random.nextBytes(array)
     Base64.custom().encodeToString(array, false)
