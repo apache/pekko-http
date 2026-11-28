@@ -59,6 +59,11 @@ public enum Coder {
         underlying.encodeMessage((org.apache.pekko.http.scaladsl.model.HttpMessage) message);
   }
 
+  /**
+   * Decodes one layer of the response only when this coder matches its outermost content coding.
+   * Any remaining content codings are kept in their original order. A response without a matching
+   * outermost coding is returned unchanged.
+   */
   public HttpResponse decodeMessage(HttpResponse message) {
     return (HttpResponse)
         underlying.decodeMessage((org.apache.pekko.http.scaladsl.model.HttpMessage) message);

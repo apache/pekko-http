@@ -19,7 +19,7 @@ import org.apache.pekko
 import pekko.NotUsed
 import pekko.annotation.InternalApi
 import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.model.headers.HttpEncoding
+import pekko.http.scaladsl.model.headers.{ `Content-Encoding`, HttpEncoding, HttpEncodings }
 import pekko.stream.{ FlowShape, Materializer }
 import pekko.stream.scaladsl.{ Flow, Sink, Source }
 import pekko.stream.stage.GraphStage
@@ -28,12 +28,12 @@ import pekko.util.ByteString
 trait Decoder {
   def encoding: HttpEncoding
 
+  /**
+   * Decodes a message explicitly with this decoder. For responses, built-in decoders remove only a
+   * matching outermost content coding; no match leaves the response unchanged.
+   */
   def decodeMessage(message: HttpMessage): message.Self =
-    if (message.headers.exists(Encoder.isContentEncodingHeader))
-      message
-        .transformEntityDataBytes(decoderFlow)
-        .withHeaders(message.headers.filterNot(Encoder.isContentEncodingHeader))
-    else message.self
+    Decoder.decodeLegacyMessage(this, message)
 
   def decodeData[T](t: T)(implicit mapper: DataMapper[T]): T = mapper.transformDataBytes(t, decoderFlow)
 
@@ -46,6 +46,47 @@ trait Decoder {
 }
 object Decoder {
   val MaxBytesPerChunkDefault: Int = 65536
+
+  private def decodeLegacyMessage(decoder: Decoder, message: HttpMessage): message.Self =
+    if (message.headers.exists(Encoder.isContentEncodingHeader))
+      message
+        .transformEntityDataBytes(decoder.decoderFlow)
+        .withHeaders(message.headers.filterNot(Encoder.isContentEncodingHeader))
+    else message.self
+
+  private[coding] def decodeBuiltInMessage(decoder: Decoder, message: HttpMessage): message.Self =
+    message match {
+      case _: HttpResponse =>
+        val headers = message.headers
+        // List-valued fields preserve their order across field lines (RFC 9110 sections 5.3 and 8.4).
+        val index = headers.lastIndexWhere(Encoder.isContentEncodingHeader)
+        if (index < 0) message.self
+        else {
+          val encodings: Seq[HttpEncoding] = headers(index) match {
+            case ce: `Content-Encoding` => ce.encodings
+            case raw                    => `Content-Encoding`.parseFromValueString(raw.value).fold(_ => Nil, _.encodings)
+          }
+          val expected = decoder.encoding
+          if (encodings.lastOption.exists { last =>
+              last.value.equalsIgnoreCase(expected.value) ||
+              (expected == HttpEncodings.gzip && last.value.equalsIgnoreCase("x-gzip"))
+            }) {
+            val remaining = encodings.dropRight(1)
+            val replacement = if (remaining.isEmpty) Nil else List(`Content-Encoding`(remaining))
+            message
+              .transformEntityDataBytes(decoder.decoderFlow)
+              .withHeaders(headers.patch(index, replacement, 1))
+          } else message.self
+        }
+      case _ => decodeLegacyMessage(decoder, message)
+    }
+}
+
+/** INTERNAL API: opts built-in coders into removing only their response's outermost matching coding. */
+@InternalApi
+private[coding] trait BuiltInResponseDecoder extends Decoder {
+  override def decodeMessage(message: HttpMessage): message.Self =
+    Decoder.decodeBuiltInMessage(this, message)
 }
 
 /**
@@ -59,14 +100,18 @@ trait StreamDecoder extends Decoder { outer =>
   protected def newDecompressorStage(maxBytesPerChunk: Int): () => GraphStage[FlowShape[ByteString, ByteString]]
 
   def maxBytesPerChunk: Int = Decoder.MaxBytesPerChunkDefault
-  def withMaxBytesPerChunk(newMaxBytesPerChunk: Int): Decoder =
-    new StreamDecoder {
+  def withMaxBytesPerChunk(newMaxBytesPerChunk: Int): Decoder = {
+    class Configured extends StreamDecoder {
       def encoding: HttpEncoding = outer.encoding
       override def maxBytesPerChunk: Int = newMaxBytesPerChunk
 
       def newDecompressorStage(maxBytesPerChunk: Int): () => GraphStage[FlowShape[ByteString, ByteString]] =
         outer.newDecompressorStage(maxBytesPerChunk)
     }
+
+    if (outer.isInstanceOf[BuiltInResponseDecoder]) new Configured with BuiltInResponseDecoder
+    else new Configured
+  }
 
   def decoderFlow: Flow[ByteString, ByteString, NotUsed] =
     Flow.fromGraph(newDecompressorStage(maxBytesPerChunk)())
