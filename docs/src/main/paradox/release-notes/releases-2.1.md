@@ -28,3 +28,7 @@ Pekko HTTP 2.1.0 has not been released yet. These notes list the changes merged 
   `HttpCookie.partitioned` field instead of the generic `extension` field. If your code detects
   partitioned cookies by inspecting `extension` (`getExtension()` in Java), use `partitioned`
   (`partitioned()` in Java) instead ([PR1562](https://github.com/apache/pekko-http/pull/1562)).
+* On server WebSocket upgrades, Pekko HTTP renders the generated `Sec-WebSocket-Accept` response
+  header exactly once, even if response processing changes the header list. Application changes
+  to `Sec-WebSocket-Protocol`, `Sec-WebSocket-Extensions`, and other headers are not affected
+  by this change ([PR1608](https://github.com/apache/pekko-http/pull/1608)).

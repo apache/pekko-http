@@ -22,7 +22,7 @@ import pekko.annotation.InternalApi
 import pekko.event.LoggingAdapter
 import RenderSupport._
 import ResponseRenderingContext.CloseRequested
-import pekko.http.impl.engine.server.UpgradeToOtherProtocolResponseHeader
+import pekko.http.impl.engine.server.{ ProtocolSwitchResponseHeader, WebSocketUpgradeResponseHeader }
 import pekko.http.impl.util._
 import pekko.http.scaladsl.model.HttpProtocols._
 import pekko.http.scaladsl.model._
@@ -244,7 +244,7 @@ private[http] class HttpResponseRendererFactory(
               r ~~ Connection ~~ (if (close) CloseBytes else KeepAliveBytes) ~~ CrLf
             else if (connHeader != null && connHeader.hasUpgrade) {
               r ~~ connHeader
-              HttpHeader.fastFind(classOf[UpgradeToOtherProtocolResponseHeader], headers) match {
+              HttpHeader.fastFind(classOf[ProtocolSwitchResponseHeader], headers) match {
                 case OptionVal.Some(header) => closeMode = SwitchToOtherProtocol(header.handlerFor(ctx.response))
                 case _                      => // nothing to do here...
               }
@@ -277,7 +277,14 @@ private[http] class HttpResponseRendererFactory(
           @tailrec def completeResponseRendering(entity: ResponseEntity): StrictOrStreamed =
             entity match {
               case HttpEntity.Strict(_, data) =>
-                renderHeaders(headers)
+                val headersToRender =
+                  if (status.intValue == StatusCodes.SwitchingProtocols.intValue)
+                    HttpHeader.fastFind(classOf[WebSocketUpgradeResponseHeader], headers) match {
+                      case OptionVal.Some(webSocket) => webSocket.headersWithGeneratedAccept(headers)
+                      case _                         => headers
+                    }
+                  else headers
+                renderHeaders(headersToRender)
                 renderEntityContentType(r, entity)
                 renderContentLengthHeader(data.length) ~~ CrLf
 
