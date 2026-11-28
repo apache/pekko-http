@@ -52,6 +52,16 @@ class HttpCookieSpec extends AnyFreeSpec with Matchers {
           Optional.of(SameSite.Lax)).getSameSite must be(Optional.of(SameSite.Lax))
       }
     }
+    "reject invalid arguments" - {
+      "non-token cookie name" in {
+        val error = the[IllegalArgumentException] thrownBy HttpCookie.create(" ", "dark")
+        error.getMessage must include("not allowed in cookie name")
+      }
+      "semicolon in a cookie value" in {
+        val error = the[IllegalArgumentException] thrownBy HttpCookie.create("theme", ";")
+        error.getMessage must include("not allowed in cookie content")
+      }
+    }
     "SameSite conversation to Scala" - {
       "convert Strict" in {
         SameSite.Strict.asScala() must be(sh.SameSite.Strict)
