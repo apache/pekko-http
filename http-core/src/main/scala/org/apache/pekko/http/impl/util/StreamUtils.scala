@@ -24,7 +24,7 @@ import org.apache.pekko
 import pekko.NotUsed
 import pekko.actor.Cancellable
 import pekko.annotation.InternalApi
-import pekko.http.scaladsl.model.HttpEntity
+import pekko.http.scaladsl.model.{ EntityStreamException, ErrorInfo, HttpEntity, HttpResponse }
 import pekko.http.scaladsl.util.FastFuture
 import pekko.stream._
 import pekko.stream.impl.fusing.GraphInterpreter
@@ -272,6 +272,40 @@ private[http] object StreamUtils {
    */
   def statefulAttrsMap[T, U](functionConstructor: Attributes => T => U): Flow[T, U, NotUsed] =
     Flow[T].via(ExposeAttributes[T, U](functionConstructor))
+
+  /**
+   * Collects response entities into `HttpEntity.Strict` entities using the given timeout and maximum number of bytes.
+   * Responses that already carry a strict entity are passed through unchanged, as long as that entity is within
+   * the maximum number of bytes. An entity that is bigger fails the stream with an `EntityStreamException`, whether
+   * it is strict, declares its length up front or only turns out to be too big while it is collected.
+   *
+   * With `parallelism == 1` responses keep their original order, which is what the HTTP/1.1 client needs where
+   * responses on a connection are sequential anyway. With a bigger value up to `parallelism` entities are collected
+   * concurrently and responses are emitted in the order in which their entities complete.
+   */
+  def strictifyResponseEntities(
+      timeout: FiniteDuration,
+      maxBytes: Long,
+      parallelism: Int): Flow[HttpResponse, HttpResponse, NotUsed] = {
+    def strictify(response: HttpResponse): Source[HttpResponse, Any] =
+      response.entity match {
+        case entity if entity.contentLengthOption.exists(_ > maxBytes) =>
+          // the limit applies to every entity whose size is known up front, which includes the strict entities
+          // the HTTP/1.1 parser creates when a whole response arrives in one read
+          Source.failed(new EntityStreamException(new ErrorInfo("Response entity too large",
+            s"Response entity of size ${entity.contentLengthOption.get} was longer than the maximum of $maxBytes")))
+        case _: HttpEntity.Strict => Source.single(response)
+        case entity               =>
+          entity.dataBytes
+            .via(new ToStrict(timeout, Some(maxBytes), entity.contentType))
+            .map(strict => response.withEntity(strict))
+      }
+
+    val flow =
+      if (parallelism <= 1) Flow[HttpResponse].flatMapConcat(strictify)
+      else Flow[HttpResponse].flatMapMerge(parallelism, strictify)
+    flow.named("strictifyResponseEntities")
+  }
 
   trait ScheduleSupport extends GraphStageLogic { self =>
 
