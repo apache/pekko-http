@@ -56,6 +56,24 @@ class HeaderSpec extends AnyFreeSpec with Matchers {
     }
   }
 
+  "Sec-WebSocket-Extensions should" - {
+    "parse bare and quoted token values identically" in {
+      val bare = "test-extension; mode=basic"
+      val expected = `Sec-WebSocket-Extensions`(Vector(WebSocketExtension("test-extension", Map("mode" -> "basic"))))
+
+      for (value <- Seq(bare, "test-extension; mode=\"basic\"")) {
+        withClue(s"$value: ") {
+          HttpHeader.parse("Sec-WebSocket-Extensions", value) match {
+            case HttpHeader.ParsingResult.Ok(header, Nil) =>
+              header shouldBe expected
+              header.value shouldBe bare
+            case other => fail(s"Expected a modeled WebSocket extensions header, got $other")
+          }
+        }
+      }
+    }
+  }
+
   "ModeledCompanion should" - {
     "provide parseFromValueString method" - {
       "successful parse run" in {
