@@ -110,6 +110,32 @@ class CacheConditionDirectivesSpec extends RoutingSpec {
       }
     }
 
+    "revalidate the selected QUERY result with If-Modified-Since" in {
+      val request = HttpRequest(HttpMethods.QUERY, entity = HttpEntity("status=active"))
+      val route = query { taggedAndTimestamped }
+
+      request ~> ifModifiedSince ~> route ~> check {
+        status shouldEqual NotModified
+        headers should contain theSameElementsAs responseHeaders
+        response.entity shouldEqual HttpEntity.Empty
+      }
+      request ~> `If-Modified-Since`(timestamp - 1000) ~> route ~> check {
+        status shouldEqual OK
+        headers should contain theSameElementsAs responseHeaders
+      }
+      request ~> `If-None-Match`(EntityTag("old")) ~> ifModifiedSince ~> route ~> check {
+        status shouldEqual OK
+      }
+      request ~> `If-None-Match`(tag) ~> ifModifiedSince ~> route ~> check {
+        status shouldEqual PreconditionFailed
+      }
+
+      val dateOnlyRoute = query { timestampedOnly }
+      request ~> `If-None-Match`(EntityTag("old")) ~> ifModifiedSince ~> dateOnlyRoute ~> check {
+        status shouldEqual OK
+      }
+    }
+
     "return NotModified for matching weak resources" in {
       val weakTag = tag.copy(weak = true)
       Get() ~> `If-None-Match`(tag) ~> weak ~> check {
