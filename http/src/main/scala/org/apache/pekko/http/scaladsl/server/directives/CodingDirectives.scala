@@ -172,16 +172,44 @@ object CodingDirectives extends CodingDirectives {
   import BasicDirectives._
   import RouteDirectives._
 
-  private def _encodeResponse(encoders: Seq[Encoder]): Directive0 =
+  private val VaryAcceptEncoding = headers.RawHeader("Vary", "Accept-Encoding")
+
+  private def withAcceptEncodingVary(response: HttpResponse): HttpResponse = {
+    val alreadyVaries = response.headers.exists { header =>
+      header.is("vary") && header.value.split(',').exists { field =>
+        val name = field.trim
+        name == "*" || name.equalsIgnoreCase("Accept-Encoding")
+      }
+    }
+    if (alreadyVaries) response else response.addHeader(VaryAcceptEncoding)
+  }
+
+  private def _encodeResponse(encoders: Seq[Encoder]): Directive0 = {
+    val onlyDefaultEncoders =
+      encoders.forall(encoder => DefaultEncodeResponseEncoders.exists(_ eq encoder))
+
     BasicDirectives.extractRequest.flatMap { request =>
       val negotiator = EncodingNegotiator(request.headers)
       val encodings: List[HttpEncoding] = encoders.map(_.encoding).toList
       val bestEncoder = negotiator.pickEncoding(encodings).flatMap(be => encoders.find(_.encoding == be))
+      val offersContentCoding = encodings.exists(_ != HttpEncodings.identity)
+
+      def varyIfNegotiated(original: HttpResponse, encoded: HttpResponse): HttpResponse =
+        // Do not invoke custom filters merely to decide whether another encoding might apply.
+        // Only stock encoders let us rule out a media type without evaluating an application callback.
+        if (offersContentCoding && original.status.allowsEntity &&
+          (!onlyDefaultEncoders || original.entity.contentType.mediaType.isCompressible) &&
+          !original.headers.exists(_.is("content-encoding")))
+          withAcceptEncodingVary(encoded)
+        else encoded
+
       bestEncoder match {
-        case Some(encoder) => mapResponse(encoder.encodeMessage(_))
+        case Some(encoder) => mapResponse(response => varyIfNegotiated(response, encoder.encodeMessage(response)))
         case _             =>
-          if (encoders.contains(Coders.NoCoding) && !negotiator.hasMatchingFor(HttpEncodings.identity)) pass
+          if (encoders.contains(Coders.NoCoding) && !negotiator.hasMatchingFor(HttpEncodings.identity))
+            mapResponse(response => varyIfNegotiated(response, response))
           else reject(UnacceptedResponseEncodingRejection(encodings.toSet))
       }
     }
+  }
 }

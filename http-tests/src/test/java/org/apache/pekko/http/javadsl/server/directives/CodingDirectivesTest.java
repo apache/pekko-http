@@ -28,6 +28,7 @@ import org.apache.pekko.http.javadsl.model.HttpResponse;
 import org.apache.pekko.http.javadsl.model.headers.AcceptEncoding;
 import org.apache.pekko.http.javadsl.model.headers.ContentEncoding;
 import org.apache.pekko.http.javadsl.model.headers.HttpEncodings;
+import org.apache.pekko.http.javadsl.model.headers.RawHeader;
 import org.apache.pekko.http.javadsl.testkit.*;
 import org.apache.pekko.stream.javadsl.Compression;
 import org.apache.pekko.stream.javadsl.Flow;
@@ -43,7 +44,7 @@ public class CodingDirectivesTest extends JUnitJupiterRouteTest {
     TestRoute route = testRoute(encodeResponse(() -> complete("TestString")));
 
     TestRouteResult response = route.run(HttpRequest.create());
-    response.assertStatusCode(200);
+    response.assertStatusCode(200).assertHeaderExists(RawHeader.create("Vary", "Accept-Encoding"));
 
     Assertions.assertEquals("TestString", response.entityBytes().utf8String());
   }
@@ -57,7 +58,8 @@ public class CodingDirectivesTest extends JUnitJupiterRouteTest {
     TestRouteResult response = route.run(request);
     response
         .assertStatusCode(200)
-        .assertHeaderExists(ContentEncoding.create(HttpEncodings.DEFLATE));
+        .assertHeaderExists(ContentEncoding.create(HttpEncodings.DEFLATE))
+        .assertHeaderExists(RawHeader.create("Vary", "Accept-Encoding"));
 
     ByteString decompressed =
         Coder.Deflate.decode(response.entityBytes(), materializer())
