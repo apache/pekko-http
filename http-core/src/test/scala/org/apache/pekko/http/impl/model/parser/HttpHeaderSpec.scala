@@ -277,6 +277,21 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
       "Accept-Ranges: none" =!= `Accept-Ranges`()
     }
 
+    "Accept-Ranges range unit casing" in {
+      "Accept-Ranges: bYtEs, BytesCustom" =!=
+        `Accept-Ranges`(RangeUnits.Bytes, RangeUnits.Other("BytesCustom")).renderedTo("bytes, BytesCustom")
+      "Accept-Ranges: nOnE" =!= `Accept-Ranges`().renderedTo("none")
+      "Accept-Ranges: NoneCustom" =!= `Accept-Ranges`(RangeUnits.Other("NoneCustom"))
+    }
+
+    for (unit <- Seq("bytes-custom", "none-custom")) {
+      s"Accept-Ranges extension unit $unit" in {
+        val expected = `Accept-Ranges`(RangeUnits.Other(unit))
+        s"Accept-Ranges: $unit" =!= expected.renderedTo(unit)
+        pekko.http.javadsl.model.HttpHeader.parse("Accept-Ranges", unit) shouldEqual expected
+      }
+    }
+
     "Accept-Query" in {
       "Accept-Query: " =!= `Accept-Query`(Seq.empty[MediaRange])
       // basic token form
@@ -562,6 +577,10 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
         .renderedTo("bytes */999999999999999999")
     }
 
+    "Content-Range range unit casing" in {
+      "Content-Range: ByTeS 0-1/10" =!= `Content-Range`(ContentRange(0, 1, 10)).renderedTo("bytes 0-1/10")
+    }
+
     "Cookie (RFC 6265)" in {
       "Cookie: SID=31d4d96e407aad42" =!= Cookie("SID" -> "31d4d96e407aad42")
       "Cookie: SID=31d4d96e407aad42; lang=en>US" =!= Cookie("SID" -> "31d4d96e407aad42", "lang" -> "en>US")
@@ -841,6 +860,12 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
       "Range: bytes=0-" =!= Range(ByteRange.fromOffset(0))
       "Range: bytes=-1" =!= Range(ByteRange.suffix(1))
       "Range: bytes=0-1, 2-3, -99" =!= Range(ByteRange(0, 1), ByteRange(2, 3), ByteRange.suffix(99))
+    }
+
+    "Range range unit casing" in {
+      "Range: bYtEs=0-1" =!= Range(ByteRange(0, 1)).renderedTo("bytes=0-1")
+      // RFC 9110 verified erratum 7306 clarifies OWS after '='.
+      "Range: bytes= 0-1" =!= Range(ByteRange(0, 1)).renderedTo("bytes=0-1")
     }
 
     "Sec-WebSocket-Accept" in {

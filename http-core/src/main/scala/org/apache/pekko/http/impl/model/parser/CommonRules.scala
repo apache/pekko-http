@@ -475,7 +475,8 @@ private[parser] trait CommonRules extends StringBuilding { this: Parser =>
 
   def `byte-ranges-specifier` = rule { `bytes-unit` ~ ws('=') ~ `byte-range-set` }
 
-  def `bytes-unit` = rule { "bytes" ~ OWS ~ push(RangeUnits.Bytes) }
+  // Preserve the existing lowercase path; new case variants must match a whole unit name.
+  def `bytes-unit` = rule { ("bytes" | ignoreCase("bytes") ~ !tchar) ~ OWS ~ push(RangeUnits.Bytes) }
 
   def `complete-length` = rule { longNumberCapped }
 
@@ -493,7 +494,8 @@ private[parser] trait CommonRules extends StringBuilding { this: Parser =>
 
   def `other-ranges-specifier` = rule { `other-range-unit` ~ ws('=') ~ `other-range-set` }
 
-  def `range-unit` = rule { `bytes-unit` | `other-range-unit` }
+  // Accept-Ranges also accepts extension units, so a built-in name must match the whole token.
+  def `range-unit` = rule { `bytes-unit` ~ !tchar | `other-range-unit` }
 
   def `suffix-byte-range-spec` = rule { '-' ~ `suffix-length` ~> (ByteRange.suffix(_)) }
 
