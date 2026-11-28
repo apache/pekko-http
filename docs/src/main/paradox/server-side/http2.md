@@ -27,6 +27,13 @@ This lets a client start sending the body even when the server is configured to 
 entity before dispatching the request. Unlike HTTP/1.1, the application can send its final response
 without reading the entity and the client may already have received the interim response.
 
+## Representation length in HEAD responses
+
+A `HEAD` response has no body. Its `Content-Length`, when present, describes the representation that a `GET`
+would return ([RFC 9110, Section 8.6](https://www.rfc-editor.org/rfc/rfc9110.html#section-8.6)).
+As with HTTP/1.1, Pekko HTTP omits a synthesized zero `Content-Length` for `HEAD`, even if the empty entity has a
+content type. A positive representation length is still sent when the response status permits it.
+
 ## Use `newServerAt(...).bind()` and HTTPS
 
 HTTP/2 is primarily used over a secure HTTPS connection which takes care of protocol negotiation and falling back to HTTP/1.1 over TLS when the client does not support HTTP/2.

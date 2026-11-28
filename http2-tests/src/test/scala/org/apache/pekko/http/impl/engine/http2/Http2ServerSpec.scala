@@ -703,13 +703,28 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
         request.entity shouldBe HttpEntity.Empty
 
         user.emitResponse(TheStreamId, HttpResponse())
-        network.expectDecodedResponseHEADERSPairs(streamId = TheStreamId).toMap should contain(":status" -> "200")
+        val pairs = network.expectDecodedResponseHEADERSPairs(streamId = TheStreamId, endStream = true).toMap
+        pairs should contain(":status" -> "200")
+        pairs.keySet should not contain "content-length"
       })
 
-      "suppress trailing headers for a HEAD response".inAssertAllStagesStopped(new HeadRequestSetup {
+      "suppress trailing headers for a HEAD response without advertising a zero length".inAssertAllStagesStopped(
+        new HeadRequestSetup {
+          sendHeadRequest()
+          user.emitResponse(TheStreamId, HttpResponse().addAttribute(AttributeKeys.trailer, Trailer(ETag("saved"))))
+          val pairs = network.expectDecodedResponseHEADERSPairs(TheStreamId, endStream = true).toMap
+          pairs should contain(":status" -> "200")
+          pairs.keySet should not contain "content-length"
+        })
+
+      "omit a zero content-length for a typed empty entity".inAssertAllStagesStopped(new HeadRequestSetup {
         sendHeadRequest()
-        user.emitResponse(TheStreamId, HttpResponse().addAttribute(AttributeKeys.trailer, Trailer(ETag("saved"))))
-        network.expectDecodedResponseHEADERSPairs(TheStreamId, endStream = true) should contain(":status" -> "200")
+        user.emitResponse(TheStreamId,
+          HttpResponse(entity = HttpEntity.empty(ContentTypes.`application/octet-stream`)))
+
+        val pairs = network.expectDecodedResponseHEADERSPairs(streamId = TheStreamId, endStream = true).toMap
+        pairs should contain("content-type" -> "application/octet-stream")
+        pairs.keySet should not contain "content-length"
       })
 
       // RFC 9110 section 9.3.2: the server MUST NOT send content in a response to a HEAD request. The headers are
