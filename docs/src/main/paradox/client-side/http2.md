@@ -23,6 +23,11 @@ unexpected when coming from a background with non-"streaming first" HTTP Clients
 
 Apache Pekko HTTP's HTTP/2 client disables [server push](https://www.rfc-editor.org/rfc/rfc9113.html#section-8.4) on each connection (`SETTINGS_ENABLE_PUSH = 0`).
 
+Stream limits are directional. `pekko.http.client.http2.max-concurrent-streams` sets the limit the client advertises
+for peer-initiated streams. For streams the client initiates, it honors the peer's unsigned
+[`SETTINGS_MAX_CONCURRENT_STREAMS`](https://www.rfc-editor.org/rfc/rfc9113.html#section-6.5.2) value. A zero peer
+limit prevents the client from starting new streams on that connection.
+
 ## Create the client 
 
 There are three mechanisms for a client to establish an HTTP/2 connection. Apache Pekko HTTP supports:

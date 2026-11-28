@@ -119,7 +119,10 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
   def lastStreamId(): Int = largestIncomingStreamId
 
   private var maxConcurrentStreams = Http2Protocol.InitialMaxConcurrentStreams
-  def setMaxConcurrentStreams(newValue: Int): Unit = maxConcurrentStreams = newValue
+  def setMaxConcurrentStreams(newValue: Int): Unit =
+    // RFC 9113 permits an unsigned 32-bit value. The upper half of that range arrives as a negative Int
+    // and is effectively unbounded for the nonnegative Int active-stream count.
+    maxConcurrentStreams = if (newValue < 0) Int.MaxValue else newValue
 
   /**
    * @return true if the number of outgoing Active streams (Active includes Open
