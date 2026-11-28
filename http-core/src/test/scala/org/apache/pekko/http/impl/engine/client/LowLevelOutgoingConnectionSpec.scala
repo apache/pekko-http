@@ -1086,6 +1086,46 @@ class LowLevelOutgoingConnectionSpec extends PekkoSpecWithMaterializer with Insi
       responses.expectComplete()
     }
 
+    "keep final HTTP/1.1 responses associated after 103 Early Hints" in new TestSetup {
+      sendStandardRequest()
+      sendWireData(
+        """HTTP/1.1 103 Early Hints
+          |Link: </site.css>; rel=preload; as=style
+          |
+          |HTTP/1.1 200 OK
+          |Content-Length: 5
+          |
+          |hello""")
+
+      val getResponse = expectResponse()
+      getResponse.status shouldEqual StatusCodes.OK
+      getResponse.headers.exists(_.is("link")) shouldBe false
+      getResponse.entity.toStrict(3.seconds.dilated).awaitResult(3.seconds.dilated).data.utf8String shouldEqual "hello"
+
+      requestsSub.sendNext(HttpRequest(method = HttpMethods.HEAD, uri = "/metadata"))
+      expectWireData(
+        """HEAD /metadata HTTP/1.1
+          |Host: example.com
+          |User-Agent: pekko-http/test
+          |
+          |""")
+      sendWireData(
+        """HTTP/1.1 200 OK
+          |Content-Length: 9
+          |
+          |""")
+
+      val headResponse = expectResponse()
+      headResponse.status shouldEqual StatusCodes.OK
+      headResponse.entity.contentLengthOption shouldEqual Some(9L)
+      headResponse.entity.dataBytes.runWith(Sink.seq).awaitResult(3.seconds.dilated) shouldBe empty
+
+      requestsSub.sendComplete()
+      netOut.expectComplete()
+      closeNetworkInput()
+      responses.expectComplete()
+    }
+
     "receive Content-Length for HEAD requests" in new TestSetup {
       requestsSub.sendNext(HttpRequest(method = HttpMethods.HEAD))
       expectWireData(
