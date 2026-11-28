@@ -778,6 +778,117 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
       request.protocol should ===(HttpProtocols.`HTTP/2.0`)
     }
 
+    // RFC 9113 section 8.3.1: a Host header that identifies a different entity than :authority makes the request
+    // malformed, otherwise request.uri and the Host header would name different authorities
+    "accept a 'host' header that matches ':authority'" in {
+      val request: HttpRequest = parseExpectOk(
+        keyValuePairs = Vector(
+          ":method" -> "GET",
+          ":scheme" -> "https",
+          ":authority" -> "Example.org:443",
+          ":path" -> "/",
+          "host" -> "example.org"))
+
+      request.uri.authority.host.address should ===("example.org")
+      request.headers should contain(Host(Uri.Host("example.org")))
+    }
+
+    "accept a 'host' header that spells the IPv6 address of ':authority' differently" in {
+      val request: HttpRequest = parseExpectOk(
+        keyValuePairs = Vector(
+          ":method" -> "GET",
+          ":scheme" -> "https",
+          ":authority" -> "[2001:db8::1]:8443",
+          ":path" -> "/",
+          "host" -> "[2001:0DB8:0:0:0:0:0:1]:8443"))
+
+      request.uri.authority.host should ===(Uri.Host("[2001:db8::1]"))
+      request.uri.authority.port should ===(8443)
+    }
+
+    "reject a 'host' header that names another IPv6 address than ':authority'" in {
+      val info = parseExpectError(
+        keyValuePairs = Vector(
+          ":method" -> "GET",
+          ":scheme" -> "https",
+          ":authority" -> "[2001:db8::1]",
+          ":path" -> "/",
+          "host" -> "[2001:db8::2]"))
+      info.summary should ===("Malformed request: 'host' header does not match the ':authority' pseudo-header")
+    }
+
+    "reject a 'host' header that names another host than ':authority'" in {
+      val info = parseExpectError(
+        keyValuePairs = Vector(
+          ":method" -> "GET",
+          ":scheme" -> "https",
+          ":authority" -> "example.org",
+          ":path" -> "/",
+          "host" -> "other.example"))
+      info.summary should ===("Malformed request: 'host' header does not match the ':authority' pseudo-header")
+    }
+
+    "reject a 'host' header that names another port than ':authority'" in {
+      val info = parseExpectError(
+        keyValuePairs = Vector(
+          ":method" -> "GET",
+          ":scheme" -> "https",
+          ":authority" -> "localhost:8000",
+          ":path" -> "/",
+          "host" -> "localhost:9000"))
+      info.summary should ===("Malformed request: 'host' header does not match the ':authority' pseudo-header")
+    }
+
+    "accept a 'host' header with the default port of the scheme when ':authority' has no port" in {
+      val request: HttpRequest = parseExpectOk(
+        keyValuePairs = Vector(
+          ":method" -> "GET",
+          ":scheme" -> "http",
+          ":authority" -> "example.org",
+          ":path" -> "/",
+          "host" -> "example.org:80"))
+
+      request.uri.authority should ===(Uri.Authority(Uri.Host("example.org")))
+    }
+
+    "reject a 'host' header whose value cannot be parsed" in {
+      val info = parseExpectError(
+        keyValuePairs = Vector(
+          ":method" -> "GET",
+          ":scheme" -> "https",
+          ":authority" -> "example.org",
+          ":path" -> "/",
+          "host" -> "exa mple.org"))
+      info.summary should ===("Malformed request: 'host' header does not match the ':authority' pseudo-header")
+    }
+
+    "reject a second 'host' header that does not match ':authority'" in {
+      val info = parseExpectError(
+        keyValuePairs = Vector(
+          ":method" -> "GET",
+          ":scheme" -> "https",
+          ":authority" -> "example.org",
+          ":path" -> "/",
+          "host" -> "example.org",
+          "accept" -> "*/*",
+          "host" -> "other.example"))
+      info.summary should ===("Malformed request: 'host' header does not match the ':authority' pseudo-header")
+    }
+
+    "keep a 'host' header among the other headers, in the order received" in {
+      val request: HttpRequest = parseExpectOk(
+        keyValuePairs = Vector(
+          ":method" -> "GET",
+          ":scheme" -> "https",
+          ":authority" -> "example.org",
+          ":path" -> "/",
+          "user-agent" -> "test",
+          "host" -> "example.org",
+          "accept" -> "*/*"))
+
+      request.headers.map(_.lowercaseName) should ===(Seq("user-agent", "host", "accept"))
+    }
+
     "reject requests with multiple content length headers" in {
       val info = parseExpectError(
         keyValuePairs = Vector(
