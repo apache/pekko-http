@@ -18,7 +18,7 @@ import pekko.annotation.InternalApi
 import pekko.http.impl.engine.http2.FrameEvent._
 import pekko.http.impl.engine.http2.Http2Protocol.ErrorCode
 import pekko.http.impl.engine.rendering.DateHeaderRendering
-import pekko.http.scaladsl.model.{ AttributeKey, HttpEntity }
+import pekko.http.scaladsl.model.{ AttributeKey, EntityStreamException, ErrorInfo, HttpEntity }
 import pekko.http.scaladsl.model.http2.PeerClosedStreamException
 import pekko.http.scaladsl.settings.Http2CommonSettings
 import pekko.macros.LogHelper
@@ -65,6 +65,40 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
   def tryPullSubStreams(): Unit
 
   private val streamStates = new mutable.LongMap[StreamState](settings.maxConcurrentStreams)
+
+  /**
+   * Server side: for a request stream that declared a `content-length` and is still receiving DATA, the number of
+   * bytes it may still send. RFC 9113 section 8.1.1 makes a request whose DATA payload lengths do not add up to its
+   * `content-length` malformed, and that is a stream error of type PROTOCOL_ERROR.
+   */
+  private val remainingContentLength = mutable.Map.empty[Int, Long]
+
+  /**
+   * The `content-length` of a request, or -1 if it has none or one that `RequestParsing` rejects as malformed. Both use
+   * the same parser, so every length the request parser accepts is accounted for here.
+   */
+  private def declaredContentLength(frame: ParsedHeadersFrame): Long =
+    frame.keyValuePairs.collectFirst { case ("content-length", value: String) => value } match {
+      case Some(value) => RequestParsing.parseContentLength(value)
+      case None        => -1L
+    }
+
+  /**
+   * Accounts `payloadLength` received bytes against the declared `content-length` of the stream, if it has one, and
+   * returns whether they exceed it or, if the stream ends here, fall short of it.
+   */
+  private def violatesContentLength(streamId: Int, payloadLength: Int, endStream: Boolean): Boolean =
+    remainingContentLength.get(streamId) match {
+      case Some(remaining) =>
+        val left = remaining - payloadLength
+        if (left < 0 || (endStream && left != 0)) true
+        else {
+          if (endStream) remainingContentLength -= streamId
+          else remainingContentLength.update(streamId, left)
+          false
+        }
+      case None => false
+    }
   private var largestIncomingStreamId = 0
   private var outstandingConnectionLevelWindow = Http2Protocol.InitialWindowSize
   private var totalBufferedData = 0
@@ -188,6 +222,7 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     newState match {
       case Closed =>
         streamStates.remove(streamId)
+        remainingContentLength -= streamId
         if (streamStates.isEmpty) onAllStreamsClosed()
         tryPullSubStreams()
       case newState => streamStates.put(streamId, newState)
@@ -297,7 +332,13 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
         correlationAttributes: Map[AttributeKey[_], _] = Map.empty): StreamState =
       event match {
         case frame @ ParsedHeadersFrame(streamId, endStream, _, _) =>
-          if (endStream) {
+          val contentLength = if (isServer) declaredContentLength(frame) else -1L
+          if (!endStream && contentLength >= 0) remainingContentLength.update(streamId, contentLength)
+          if (endStream && contentLength > 0) {
+            // the request ends without the content its `content-length` announces, so it is malformed
+            multiplexer.pushControlFrame(RstStreamFrame(streamId, ErrorCode.PROTOCOL_ERROR))
+            Closed
+          } else if (endStream) {
             dispatchSubstream(frame, Left(ByteString.empty), correlationAttributes)
             nextStateEmpty
           } else if (settings.minCollectStrictEntitySize > 0)
@@ -373,6 +414,9 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
       copy(extraInitialWindow = extraInitialWindow + delta)
     // the data collected so far is dropped together with this state, so stop reserving connection-level window for it
     override protected def onRstStreamFrame(rstStreamFrame: RstStreamFrame): Unit =
+      totalBufferedData -= collectedData.length
+    // nothing has been dispatched yet, only the collected data has to be released
+    override protected def failIncoming(cause: Throwable): Unit =
       totalBufferedData -= collectedData.length
   }
   case class OpenReceivingDataFirst(buffer: IncomingStreamBuffer, extraInitialWindow: Int = 0)
@@ -462,7 +506,12 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
           pushGOAWAY(ErrorCode.FLOW_CONTROL_ERROR, "Received more data than connection-level window would allow")
           Closed
         } else {
-          val nextState = onDataFrame(d)
+          val nextState =
+            if (violatesContentLength(d.streamId, d.payload.length, d.endStream)) {
+              // ReceivingData accounted for these bytes, but they are dropped with the stream
+              totalBufferedData -= d.payload.length
+              rejectContentLength(d.streamId)
+            } else onDataFrame(d)
 
           val windowSizeIncrement =
             flowController.onConnectionDataReceived(outstandingConnectionLevelWindow, totalBufferedData)
@@ -476,6 +525,9 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
         onRstStreamFrame(r)
         Closed
 
+      case h: ParsedHeadersFrame if h.endStream && violatesContentLength(h.streamId, 0, endStream = true) =>
+        rejectContentLength(h.streamId)
+
       case h: ParsedHeadersFrame =>
         onTrailer(h)
 
@@ -484,6 +536,24 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
 
       case _ => receivedUnexpectedFrame(event)
     }
+
+    /**
+     * The request's DATA does not add up to its `content-length` (RFC 9113 section 8.1.1): fail the entity, stop any
+     * response and reset the stream with PROTOCOL_ERROR. The connection and its other streams carry on.
+     */
+    private def rejectContentLength(streamId: Int): StreamState = {
+      failIncoming(EntityStreamException(ErrorInfo(
+        "HTTP/2 request content does not match its content-length",
+        s"The DATA frames received on stream $streamId do not add up to the declared content-length.")))
+      shutdown()
+      multiplexer.pushControlFrame(RstStreamFrame(streamId, ErrorCode.PROTOCOL_ERROR))
+      multiplexer.closeStream(streamId)
+      Closed
+    }
+
+    /** Fails what the application sees of the incoming data with `cause`, and releases what is buffered of it */
+    protected def failIncoming(cause: Throwable): Unit = ()
+
     protected def onDataFrame(dataFrame: DataFrame): StreamState
     protected def onTrailer(parsedHeadersFrame: ParsedHeadersFrame): StreamState
     protected def incrementWindow(delta: Int): StreamState
@@ -504,6 +574,8 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
 
     override protected def onRstStreamFrame(rstStreamFrame: RstStreamFrame): Unit =
       buffer.onRstStreamFrame(rstStreamFrame)
+
+    override protected def failIncoming(cause: Throwable): Unit = buffer.fail(cause)
 
     override def incomingStreamPulled(): StreamState = {
       buffer.dispatchNextChunk()
@@ -605,6 +677,7 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
       multiplexer.pushControlFrame(RstStreamFrame(streamId, ErrorCode.CANCEL))
       // FIXME: go through state machine and don't manipulate vars directly here
       streamStates.remove(streamId)
+      remainingContentLength -= streamId
       wasClosed = true
       discardBuffer()
       trailingHeaders = None
@@ -712,10 +785,12 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
      * `onDataFrame` resets a single stream and leaves the connection running, so anything kept counted there would
      * stall the whole connection for good.
      */
-    def shutdown(): Unit = {
+    def shutdown(): Unit = fail(Http2StreamHandling.ConnectionWasAbortedException)
+
+    def fail(cause: Throwable): Unit = {
       discardBuffer()
       trailingHeaders = None
-      if (!outlet.isClosed) outlet.fail(Http2StreamHandling.ConnectionWasAbortedException)
+      if (!outlet.isClosed) outlet.fail(cause)
     }
   }
 
