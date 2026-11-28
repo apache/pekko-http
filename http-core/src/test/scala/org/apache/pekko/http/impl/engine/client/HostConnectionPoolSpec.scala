@@ -216,7 +216,7 @@ class HostConnectionPoolSpec extends PekkoSpecWithMaterializer(
             reqInProbe.expectUtf8EncodedString("test")
 
             // the server rejects the request before the request entity has been sent completely
-            conn1.pushResponse(HttpResponse(StatusCodes.PayloadTooLarge, entity = "too large"))
+            conn1.pushResponse(HttpResponse(StatusCodes.ContentTooLarge, entity = "too large"))
             expectResponseEntityAsString() shouldEqual "too large"
 
             // the rest of the request entity is not sent
