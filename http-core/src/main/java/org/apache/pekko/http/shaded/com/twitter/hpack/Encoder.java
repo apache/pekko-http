@@ -34,6 +34,7 @@ package org.apache.pekko.http.shaded.com.twitter.hpack;
 import java.util.Arrays;
 import org.apache.pekko.http.impl.util.ByteStringOutputStream;
 import org.apache.pekko.http.impl.util.StringTools;
+import org.apache.pekko.http.javadsl.settings.HpackIndexingPolicy;
 import org.apache.pekko.http.shaded.com.twitter.hpack.HpackUtil.IndexType;
 
 public final class Encoder {
@@ -76,7 +77,16 @@ public final class Encoder {
   /** Encode the header field into the header block. */
   public void encodeHeader(
       ByteStringOutputStream out, String name, String value, boolean sensitive) {
+    encodeHeader(out, name, value, sensitive, null);
+  }
 
+  /** Apply the supplied policy only if the field would be inserted. */
+  public void encodeHeader(
+      ByteStringOutputStream out,
+      String name,
+      String value,
+      boolean sensitive,
+      HpackIndexingPolicy policy) {
     // If the header value is sensitive then it must never be indexed
     if (sensitive) {
       int nameIndex = getNameIndex(name);
@@ -120,14 +130,15 @@ public final class Encoder {
           // char is written as its own octet: a char above 0xFF is written as '?', and a surrogate
           // pair as a single '?'. Such a field is not indexed, so that both tables keep the same
           // entries and size.
-          boolean index = useIndexing && isLatin1(name) && isLatin1(value);
-          if (index) {
+          if (useIndexing
+              && isLatin1(name)
+              && isLatin1(value)
+              && (policy == null || !policy.skipInsertion(name, value))) {
             ensureCapacity(headerSize);
-          }
-          IndexType indexType = index ? IndexType.INCREMENTAL : IndexType.NONE;
-          encodeLiteral(out, name, value, indexType, nameIndex);
-          if (index) {
+            encodeLiteral(out, name, value, IndexType.INCREMENTAL, nameIndex);
             add(name, value);
+          } else {
+            encodeLiteral(out, name, value, IndexType.NONE, nameIndex);
           }
         }
       }

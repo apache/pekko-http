@@ -102,6 +102,36 @@ The default maximum age is `infinite`, which disables age-based retirement. The 
 programmatically with `Http2ClientSettings.withPersistentConnectionMaxAge` and
 `Http2ClientSettings.withPersistentConnectionMaxAgeJitter`.
 
+## HPACK dynamic table insertion
+
+If an outgoing field usually carries a new value, adding it to the HPACK dynamic table can push out entries
+that are more useful. To skip new entries for specific names, set the applicable option:
+
+```hocon
+pekko.http.client.http2.hpack-no-index-headers = ["x-request-id"]
+pekko.http.server.http2.hpack-no-index-headers = ["x-request-id"]
+```
+
+The client option affects outgoing requests; the server option affects outgoing responses. Both apply to the
+corresponding HTTP/2 header and trailer fields. Each list is empty by default. Use literal HTTP field names or the standard `:method`, `:scheme`, `:authority`, `:path` and `:status`
+selectors; matching is case-insensitive and does not change any HTTP/2 field rules. Exact static or dynamic table matches still use
+their index, and available name indexes can still be used. This option uses HPACK's
+[literal without indexing](https://www.rfc-editor.org/rfc/rfc7541.html#section-6.2.2) representation when
+it would otherwise add a new entry. It is a performance option, **not** the HPACK never-indexed
+representation or a confidentiality control. It can make field blocks larger, especially if values repeat.
+Measure with your own traffic before enabling it.
+
+For a field-value-aware strategy, use the shared Java/Scala `HpackIndexingPolicy` SAM in
+`org.apache.pekko.http.javadsl.settings`. Return `true` to skip insertion for that name/value pair.
+The encoder invokes the policy only when it would otherwise insert the field. Callbacks must be
+non-blocking; a programmatic policy instance can be shared by concurrent connections and must be
+thread-safe. Combine decisions in a lambda when needed.
+
+Use `withHpackIndexingPolicy` on the Scala HTTP/2 client or server settings, Java
+`Http2ClientSettings`, or Java `Http2ServerSettings`. A programmatic policy replaces that role's configured name list.
+The field names and values passed to a custom policy are the outbound values; the policy
+does not change their representation or normalization.
+
 ## Request-response ordering
 
 For HTTP/2 connections the responses are not guaranteed to arrive in the same order that the requests were emitted to

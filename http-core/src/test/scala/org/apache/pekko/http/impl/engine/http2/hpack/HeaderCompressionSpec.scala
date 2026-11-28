@@ -25,9 +25,10 @@ import pekko.http.impl.engine.http2.FrameEvent
 import pekko.http.impl.engine.http2.FrameEvent._
 import pekko.http.impl.engine.http2.Http2Protocol.SettingIdentifier
 import pekko.http.impl.engine.parsing.HttpHeaderParser
-import pekko.http.scaladsl.model.DateTime
+import pekko.http.scaladsl.model.{ DateTime, HttpHeader }
 import pekko.http.scaladsl.model.headers.{ RawHeader, `Last-Modified` }
-import pekko.http.scaladsl.settings.ParserSettings
+import pekko.http.scaladsl.settings.Http2CommonSettings.HpackPolicyOptions
+import pekko.http.scaladsl.settings.{ Http2ClientSettings, Http2CommonSettings, ParserSettings }
 import pekko.stream.scaladsl.{ Sink, Source }
 import pekko.testkit._
 import pekko.util.ByteString
@@ -62,6 +63,53 @@ class HeaderCompressionSpec extends PekkoSpec {
       decoded shouldEqual Seq.fill(4)(`Last-Modified`(DateTime(1994, 11, 6, 8, 49, 37)))
       (decoded(0) eq decoded(2)) shouldBe false
       (decoded(1) eq decoded(3)) shouldBe true
+    }
+
+    "replace the configured name list with a value-dependent programmatic policy" in {
+      val settings = Http2ClientSettings(
+        """pekko.http.client.http2.hpack-no-index-headers = ["x-list-only"]""")
+      val fields = List(headers(1, Seq("x-label" -> "special")), headers(3, Seq("x-list-only" -> "normal")))
+      def representations(settings: Http2ClientSettings): Seq[Int] =
+        Await.result(Source(fields).via(HeaderCompression.withPolicy(settings.hpackPolicyOptions)).runWith(Sink.seq),
+          3.seconds.dilated).map(_.asInstanceOf[HeadersFrame].headerBlockFragment.head & 0xC0)
+
+      representations(settings) shouldBe Seq(0x40, 0)
+      val explicit = settings.withHpackIndexingPolicy((name, value) => name == "x-label" && value == "special")
+      representations(explicit.withMaxConcurrentStreams(9)) shouldBe Seq(0, 0x40)
+    }
+
+    "match configured names case-insensitively without rewriting the source name" in {
+      val names = Set("x-synthetic-trace")
+      Http2CommonSettings.matchesNoIndexHeader(names, "x-synthetic-trace") shouldBe true
+      Http2CommonSettings.matchesNoIndexHeader(names, "X-Synthetic-Trace") shouldBe true
+      Http2CommonSettings.matchesNoIndexHeader(names, "X-Other-Trace") shouldBe false
+    }
+
+    "use the opt-in policy only for configured names and keep decoder synchronization" in {
+      val selected = "x-synthetic-trace"
+      val normal = "x-label"
+      val values = Seq(
+        headers(1, Seq(selected -> "first")),
+        headers(3, Seq(normal -> "stable")),
+        headers(5, Seq(selected -> "second")),
+        headers(7, Seq(normal -> "stable")))
+      val blocks = Await.result(
+        Source(values.toList).via(
+          HeaderCompression.withPolicy(Some(HpackPolicyOptions(names = Set(selected))))).runWith(Sink.seq),
+        3.seconds.dilated)
+      blocks.map { frame =>
+        frame.asInstanceOf[HeadersFrame].headerBlockFragment.head & 0xC0
+      } shouldBe Seq(0x00, 0x40, 0x00, 0x80)
+
+      val settings = ParserSettings(system)
+      val decompression = new HeaderDecompression(HttpHeaderParser(settings, system.log), settings, 8192)
+      val decoded = Await.result(Source(blocks.toList).via(decompression).runWith(Sink.seq), 3.seconds.dilated)
+      decoded.flatMap(_.asInstanceOf[ParsedHeadersFrame].keyValuePairs).map { case (name, value) =>
+        name -> value.asInstanceOf[HttpHeader].value
+      } shouldBe Seq(selected -> "first", normal -> "stable", selected -> "second", normal -> "stable")
+
+      val defaultBlocks = compress(values: _*)
+      (defaultBlocks.head.asInstanceOf[HeadersFrame].headerBlockFragment.head & 0xC0) shouldBe 0x40
     }
 
     "emit only the smallest and final table sizes while preserving every settings acknowledgement" in {

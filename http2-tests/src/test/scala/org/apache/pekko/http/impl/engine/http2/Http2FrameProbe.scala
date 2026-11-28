@@ -128,6 +128,26 @@ private[http2] trait Http2FrameProbeDelegator extends Http2FrameProbe {
 }
 
 private[http] object Http2FrameProbe extends Matchers {
+
+  /** Read complete ordinary header blocks with one decoder, recording previously indexed fields. */
+  final class IndexedHeaderProbe(names: Set[String]) {
+    private val decoder = new pekko.http.shaded.com.twitter.hpack.Decoder(8192, 4096)
+    private val marker = new Object
+
+    def read(block: ByteString): Map[String, (String, Boolean)] = {
+      val seen = Map.newBuilder[String, (String, Boolean)]
+      decoder.decode(block.asInputStream,
+        (name: String, value: String, cached: AnyRef, _: Boolean) => {
+          if (names.contains(name)) {
+            seen += name -> (value -> (cached eq marker))
+            marker
+          } else cached
+        })
+      decoder.endHeaderBlock() shouldBe false
+      seen.result()
+    }
+  }
+
   case class FrameHeader(frameType: FrameType, flags: ByteFlag, streamId: Int, payloadLength: Int)
 
   def apply()(implicit system: ActorSystem): Http2FrameProbe =

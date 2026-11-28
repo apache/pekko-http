@@ -28,7 +28,7 @@ import pekko.http.impl.engine.ws.ByteStringSinkProbe
 import pekko.http.scaladsl.client.RequestBuilding.Get
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers.{ CacheDirectives, ETag, RawHeader }
-import pekko.http.scaladsl.settings.ServerSettings
+import pekko.http.scaladsl.settings.{ Http2ServerSettings, ServerSettings }
 import pekko.stream.OverflowStrategy
 import pekko.stream.scaladsl.{ BidiFlow, Flow, Source, SourceQueueWithComplete }
 import pekko.stream.testkit.TestPublisher
@@ -249,6 +249,36 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
           user.emitResponse(streamId, HttpResponse())
           network.expectDecodedHEADERS(streamId).status shouldBe StatusCodes.OK
         })
+
+      for (programmatic <- List(false, true))
+        s"apply the ${if (programmatic) "programmatic" else "configured"} outbound HPACK insertion policy on the connection"
+          .inAssertAllStagesStopped(
+            new TestSetup with RequestResponseProbes {
+              override def settings: ServerSettings =
+                super.settings.withHttp2Settings(
+                  if (programmatic)
+                    super.settings.http2Settings.withHpackIndexingPolicy((name, value) =>
+                      name == "x-synthetic-trace" && value == "trace-value")
+                  else Http2ServerSettings(
+                    """pekko.http.server.http2.hpack-no-index-headers = ["X-Synthetic-Trace"]"""))
+
+              val selected = "x-synthetic-trace"
+              val normal = "x-label"
+              val request = HttpRequest(uri = "https://www.example.com/")
+              val response = HttpResponse(headers = List(
+                RawHeader("X-Synthetic-Trace", "trace-value"),
+                RawHeader(normal, "stable-label")))
+              val fields = new Http2FrameProbe.IndexedHeaderProbe(Set(selected, normal))
+
+              for (streamId <- List(1, 3)) {
+                network.sendRequest(streamId, request)
+                user.expectRequest()
+                user.emitResponse(streamId, response)
+                val seen = fields.read(network.expectHeaderBlock(streamId))
+                seen(selected) shouldBe ("trace-value" -> false)
+                seen(normal) shouldBe ("stable-label" -> (streamId == 3))
+              }
+            })
 
       "GET request in one HEADERS frame".inAssertAllStagesStopped(new SimpleRequestResponseRoundtripSetup {
         requestResponseRoundtrip(
