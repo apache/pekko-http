@@ -133,6 +133,17 @@ class HpackEncoderSpec extends AnyWordSpec with Matchers {
       } shouldEqual expectedTable
     }
 
+    "apply a table size update in a block without fields" in {
+      val encoder = new Encoder(4096)
+      val decoder = new Decoder(8192, 4096)
+      val out = new ByteStringOutputStream(16)
+      val updatedCapacity = 2048
+
+      encoder.setMaxHeaderTableSize(out, updatedCapacity)
+      decodeHeaders(decoder, out.takeByteString().toArray) shouldBe empty
+      decoder.getMaxHeaderTableSize() shouldBe updatedCapacity
+    }
+
     "decode consecutive requests without Huffman coding from RFC 7541 Appendix C.3" in {
       val decoder = new Decoder(8192, 4096)
       val authority = ":authority" -> "www.example.com"
