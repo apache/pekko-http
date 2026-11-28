@@ -15,6 +15,7 @@ package org.apache.pekko.http.scaladsl.server.directives
 
 import org.apache.pekko
 import pekko.http.scaladsl.model.{ ContentTypes, HttpEntity, HttpMethods, HttpRequest, StatusCodes }
+import pekko.http.scaladsl.model.headers.Allow
 import pekko.http.scaladsl.server._
 import pekko.stream.scaladsl.Source
 
@@ -25,6 +26,12 @@ class MethodDirectivesSpec extends RoutingSpec {
 
     "block POST requests" in {
       Post() ~> getOrPut ~> check { handled shouldEqual false }
+    }
+    "include the allowed methods in a sealed 405 response" in {
+      Post() ~> Route.seal(getOrPut) ~> check {
+        status shouldEqual StatusCodes.MethodNotAllowed
+        header[Allow].map(_.methods.toSet) shouldEqual Some(Set(HttpMethods.GET, HttpMethods.PUT))
+      }
     }
     "let GET requests pass" in {
       Get() ~> getOrPut ~> check { response shouldEqual Ok }
