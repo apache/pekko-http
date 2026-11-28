@@ -39,6 +39,10 @@ private[http] object ParserOutput {
   sealed trait MessageOutput extends RequestOutput with ResponseOutput
   sealed trait ErrorOutput extends MessageOutput
 
+  // Private parser-to-controller metadata, stripped before constructing the application's HttpRequest.
+  private[http] val ExplicitHttp10Close: AttributeKey[Unit] =
+    AttributeKey[Unit]("pekko.http.internal.explicit-http10-close")
+
   final case class RequestStart(
       method: HttpMethod,
       uri: Uri,

@@ -771,13 +771,13 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
         (`HTTP/1.1`, false,      CLOSE,    `HTTP/1.1`,  NONE,    true,        CLOSE,       true),
         (`HTTP/1.1`, false,      CLOSE,    `HTTP/1.1`,  CLOSE,   false,       CLOSE,       true),
         (`HTTP/1.1`, false,      CLOSE,    `HTTP/1.1`,  CLOSE,   true,        CLOSE,       true),
-        (`HTTP/1.1`, false,      CLOSE,    `HTTP/1.1`,  KEEPA,   false,       KEEPA,       false),
+        (`HTTP/1.1`, false,      CLOSE,    `HTTP/1.1`,  KEEPA,   false,       CLOSE,       true),
         (`HTTP/1.1`, false,      CLOSE,    `HTTP/1.1`,  KEEPA,   true,        CLOSE,       true),
         (`HTTP/1.1`, false,      CLOSE,    `HTTP/1.0`,  NONE,    false,       CLOSE,       true),
         (`HTTP/1.1`, false,      CLOSE,    `HTTP/1.0`,  NONE,    true,        CLOSE,       true),
         (`HTTP/1.1`, false,      CLOSE,    `HTTP/1.0`,  CLOSE,   false,       CLOSE,       true),
         (`HTTP/1.1`, false,      CLOSE,    `HTTP/1.0`,  CLOSE,   true,        CLOSE,       true),
-        (`HTTP/1.1`, false,      CLOSE,    `HTTP/1.0`,  KEEPA,   false,       KEEPA,       false),
+        (`HTTP/1.1`, false,      CLOSE,    `HTTP/1.0`,  KEEPA,   false,       CLOSE,       true),
         (`HTTP/1.1`, false,      CLOSE,    `HTTP/1.0`,  KEEPA,   true,        CLOSE,       true),
         (`HTTP/1.1`, true,       NONE,     `HTTP/1.1`,  NONE,    false,       NONE,        false),
         (`HTTP/1.1`, true,       NONE,     `HTTP/1.1`,  NONE,    true,        NONE,        false),
@@ -795,14 +795,14 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
         (`HTTP/1.1`, true,       CLOSE,    `HTTP/1.1`,  NONE,    true,        CLOSE,       true),
         (`HTTP/1.1`, true,       CLOSE,    `HTTP/1.1`,  CLOSE,   false,       CLOSE,       true),
         (`HTTP/1.1`, true,       CLOSE,    `HTTP/1.1`,  CLOSE,   true,        CLOSE,       true),
-        (`HTTP/1.1`, true,       CLOSE,    `HTTP/1.1`,  KEEPA,   false,       KEEPA,       false),
-        (`HTTP/1.1`, true,       CLOSE,    `HTTP/1.1`,  KEEPA,   true,        KEEPA,       false),
+        (`HTTP/1.1`, true,       CLOSE,    `HTTP/1.1`,  KEEPA,   false,       CLOSE,       true),
+        (`HTTP/1.1`, true,       CLOSE,    `HTTP/1.1`,  KEEPA,   true,        CLOSE,       true),
         (`HTTP/1.1`, true,       CLOSE,    `HTTP/1.0`,  NONE,    false,       CLOSE,       true),
         (`HTTP/1.1`, true,       CLOSE,    `HTTP/1.0`,  NONE,    true,        CLOSE,       true),
         (`HTTP/1.1`, true,       CLOSE,    `HTTP/1.0`,  CLOSE,   false,       CLOSE,       true),
         (`HTTP/1.1`, true,       CLOSE,    `HTTP/1.0`,  CLOSE,   true,        CLOSE,       true),
-        (`HTTP/1.1`, true,       CLOSE,    `HTTP/1.0`,  KEEPA,   false,       KEEPA,       false),
-        (`HTTP/1.1`, true,       CLOSE,    `HTTP/1.0`,  KEEPA,   true,        KEEPA,       false),
+        (`HTTP/1.1`, true,       CLOSE,    `HTTP/1.0`,  KEEPA,   false,       CLOSE,       true),
+        (`HTTP/1.1`, true,       CLOSE,    `HTTP/1.0`,  KEEPA,   true,        CLOSE,       true),
         (`HTTP/1.0`, false,      NONE,     `HTTP/1.1`,  NONE,    false,       CLOSE,       true),
         (`HTTP/1.0`, false,      NONE,     `HTTP/1.1`,  NONE,    true,        CLOSE,       true),
         (`HTTP/1.0`, false,      NONE,     `HTTP/1.1`,  CLOSE,   false,       CLOSE,       true),
@@ -815,6 +815,8 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
         (`HTTP/1.0`, false,      NONE,     `HTTP/1.0`,  CLOSE,   true,        NONE,        true),
         (`HTTP/1.0`, false,      NONE,     `HTTP/1.0`,  KEEPA,   false,       KEEPA,       false),
         (`HTTP/1.0`, false,      NONE,     `HTTP/1.0`,  KEEPA,   true,        NONE,        true),
+        (`HTTP/1.0`, false,      CLOSE,    `HTTP/1.0`,  NONE,    false,       CLOSE,       true),
+        (`HTTP/1.0`, false,      CLOSE,    `HTTP/1.0`,  KEEPA,   false,       CLOSE,       true),
         (`HTTP/1.0`, false,      KEEPA,    `HTTP/1.1`,  NONE,    false,       KEEPA,       false),
         (`HTTP/1.0`, false,      KEEPA,    `HTTP/1.1`,  NONE,    true,        CLOSE,       true),
         (`HTTP/1.0`, false,      KEEPA,    `HTTP/1.1`,  CLOSE,   false,       CLOSE,       true),
@@ -854,8 +856,9 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
       //#connection-header-table
       // format: ON
 
-      def closing(requested: Boolean): CloseRequested =
-        if (requested) CloseRequested.RequestAskedForClosing
+      def closing(protocol: HttpProtocol, requestConnection: Option[Connection]): CloseRequested =
+        if (requestConnection.exists(_.hasClose)) CloseRequested.RequestExplicitlyAskedForClosing
+        else if (HttpMessage.connectionCloseExpected(protocol, requestConnection)) CloseRequested.RequestAskedForClosing
         else CloseRequested.Unspecified
 
       forAll(table)((reqProto, headReq, reqCH, resProto, resCH, resCD, renCH, close) =>
@@ -867,7 +870,7 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
             else HttpEntity("ENTITY"), protocol = resProto),
           requestMethod = if (headReq) HttpMethods.HEAD else HttpMethods.GET,
           requestProtocol = reqProto,
-          closeRequested = closing(HttpMessage.connectionCloseExpected(reqProto, reqCH))) should renderTo(
+          closeRequested = closing(reqProto, reqCH)) should renderTo(
           s"""${resProto.value} 200 OK
                  |Server: pekko-http/1.0.0
                  |Date: Thu, 25 Aug 2011 09:10:29 GMT

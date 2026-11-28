@@ -221,9 +221,9 @@ private[http] class HttpResponseRendererFactory(
             closeIf {
               // if we are prohibited to keep-alive by the spec
               alwaysClose ||
-              // if the controller asked for closing (error, early response, etc. overrides anything
+              // an explicit client close or a forced close from the controller cannot be overridden
               ctx.closeRequested.wasForced ||
-              // if the client wants to close and the response doesn't override
+              // an implicit HTTP/1.0 close can still be overridden
               (ctx.closeRequested.shouldClose && ((connHeader eq null) || !connHeader.hasKeepAlive)) ||
               // if the application wants to close explicitly
               (protocol match {
@@ -236,8 +236,10 @@ private[http] class HttpResponseRendererFactory(
 
             // Do we render an explicit Connection header?
             val renderConnectionHeader =
-              protocol == `HTTP/1.0` && !close || protocol == `HTTP/1.1` && close || // if we don't follow the default behavior
-              close != ctx.closeRequested.shouldClose || // if we override the client's closing request
+              protocol == `HTTP/1.0` &&
+              (!close || ctx.closeRequested == CloseRequested.RequestExplicitlyAskedForClosing) ||
+              protocol == `HTTP/1.1` && close ||
+              close != ctx.closeRequested.shouldClose || // if we override an implicit HTTP/1.0 close
               protocol != ctx.requestProtocol // if we reply with a mismatching protocol (let's be very explicit in this case)
 
             if (renderConnectionHeader)
@@ -362,6 +364,10 @@ private[http] object ResponseRenderingContext {
     case object RequestAskedForClosing extends CloseRequested {
       override def shouldClose: Boolean = true
       override def wasForced: Boolean = false
+    }
+    case object RequestExplicitlyAskedForClosing extends CloseRequested {
+      override def shouldClose: Boolean = true
+      override def wasForced: Boolean = true
     }
     case object ForceClose extends CloseRequested {
       override def shouldClose: Boolean = true

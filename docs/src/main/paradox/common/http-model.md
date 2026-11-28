@@ -368,9 +368,14 @@ Date
 Connection
 : On the server-side Apache Pekko HTTP watches for explicitly added `Connection: close` response headers and as such honors
 the potential wish of the application to close the connection after the respective response has been sent out.
+An explicit `Connection: close` on the request also takes precedence over a response's `Connection: keep-alive`.
+The server sends the final response with `Connection: close` and then closes the connection, as described in
+[RFC 9112 §9.6](https://www.rfc-editor.org/rfc/rfc9112.html#section-9.6).
+If an HTTP/1.0 request lists both `close` and `keep-alive`, `close` takes precedence.
+This does not change the HTTP/1.0 behavior when the request merely has no keep-alive option and does not explicitly ask to close.
 The actual logic for determining whether to close the connection is quite involved. It takes into account the
 request's method, protocol and potential @apidoc[Connection] header as well as the response's protocol, entity and
-potential @apidoc[Connection] header. See @github[this test](/http-core/src/test/scala/org/apache/pekko/http/impl/engine/rendering/ResponseRendererSpec.scala) { #connection-header-table } for a full table of what happens when.
+potential @apidoc[Connection] header. The @github[renderer tests](/http-core/src/test/scala/org/apache/pekko/http/impl/engine/rendering/ResponseRendererSpec.scala) { #connection-header-table } cover selected combinations.
 
 Strict-Transport-Security
 : HTTP Strict Transport Security (HSTS) is a web security policy mechanism which is communicated by the

@@ -1449,6 +1449,60 @@ class HttpServerSpec extends PekkoSpec(
       })
     }
 
+    for ((protocol, requestConnection) <- Seq(
+        HttpProtocols.`HTTP/1.1` -> Connection("close"),
+        HttpProtocols.`HTTP/1.0` -> Connection("close"),
+        HttpProtocols.`HTTP/1.0` -> Connection("close", "keep-alive")))
+      s"honor explicit request connection close with a keep-alive response on ${protocol.value} (${requestConnection.value})" in
+      assertAllStagesStopped(new TestSetup {
+        send(s"""GET / ${protocol.value}
+                |Host: example.com
+                |Connection: ${requestConnection.value}
+                |
+                |""")
+
+        val received = expectRequest()
+        received.protocol shouldBe protocol
+        received.header[Connection] shouldBe Some(requestConnection)
+        received.attributes shouldBe empty
+
+        responses.sendNext(HttpResponse(headers = Connection("keep-alive") :: Nil, entity = "done",
+          protocol = protocol))
+        expectResponseWithWipedDate(
+          s"""${protocol.value} 200 OK
+             |Server: pekko-http/test
+             |Date: XXXX
+             |Connection: close
+             |Content-Type: text/plain; charset=UTF-8
+             |Content-Length: 4
+             |
+             |done""")
+        expectNetworkClose()
+        closeNetworkInput()
+      })
+
+    "preserve a keep-alive response for an HTTP/1.0 request without an explicit close" in
+    assertAllStagesStopped(new TestSetup {
+      send("""GET / HTTP/1.0
+             |Host: example.com
+             |
+             |""")
+
+      expectRequest().header[Connection] shouldBe None
+      responses.sendNext(HttpResponse(headers = Connection("keep-alive") :: Nil, entity = "done",
+        protocol = HttpProtocols.`HTTP/1.0`))
+      expectResponseWithWipedDate(
+        """HTTP/1.0 200 OK
+          |Server: pekko-http/test
+          |Date: XXXX
+          |Connection: Keep-Alive
+          |Content-Type: text/plain; charset=UTF-8
+          |Content-Length: 4
+          |
+          |done""")
+      shutdownBlueprint()
+    })
+
     "add `Connection: close` to early responses" in assertAllStagesStopped(new TestSetup {
       send("""POST / HTTP/1.1
              |Host: example.com

@@ -74,6 +74,9 @@ private[http] final class HttpRequestParser(
       private var uriBytes: ByteString = null
       // whether `protocol` of the underlying parser belongs to the message currently being parsed
       private var protocolParsed: Boolean = false
+      private var explicitHttp10Close = false
+
+      override protected def onExplicitHttp10Close(): Unit = explicitHttp10Close = true
 
       override def onPush(): Unit = handleParserOutput(parseSessionBytes(grab(in)))
       override def onPull(): Unit = handleParserOutput(doPull())
@@ -100,6 +103,7 @@ private[http] final class HttpRequestParser(
           uri = null
           uriBytes = null
           protocolParsed = false
+          explicitHttp10Close = false
           var cursor = parseMethod(input, offset)
           cursor = parseRequestTarget(input, cursor)
           cursor = parseProtocol(input, cursor)
@@ -219,9 +223,12 @@ private[http] final class HttpRequestParser(
                 `Raw-Request-URI`(uriBytes.decodeString(HttpCharsets.`US-ASCII`.nioCharset)) :: headers
               else headers
 
-            val attributes: Map[AttributeKey[?], Any] =
+            val attributes0: Map[AttributeKey[?], Any] =
               if (settings.includeSslSessionAttribute) Map(AttributeKeys.sslSession -> SslSessionInfo(sslSession))
               else Map.empty
+            val attributes =
+              if (explicitHttp10Close) attributes0.updated(ExplicitHttp10Close, ())
+              else attributes0
 
             val requestStart =
               if (method == HttpMethods.GET) {
