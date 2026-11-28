@@ -39,6 +39,56 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
   val `application/vnd.spray` = MediaType.applicationBinary("vnd.spray", MediaType.Compressible)
   val PROPFIND = HttpMethod.custom("PROPFIND")
 
+  "Date preserves a UTC leap second across all three HTTP-date formats" in {
+    val canonical = "Sat, 31 Dec 2016 23:59:60 GMT"
+    def parseDate(value: String): Date =
+      Date.parseFromValueString(value).fold(errors => fail(errors.mkString(", ")), date => date)
+
+    // Resolve the obsolete two-digit year against a fixed clock.
+    val rfc850 = new HeaderParser("Saturday, 31-Dec-16 23:59:60 GMT" + org.parboiled2.EOI) {
+      override protected def rfc850Now: Instant = Instant.parse("2026-01-01T00:00:00Z")
+    }
+    val obsolete = HeaderParser.dispatch(rfc850, "date") match {
+      case HeaderParser.Success(date: Date) => date
+      case other                            => fail(s"Expected a typed Date, got $other")
+    }
+
+    val typed = parseDate(canonical)
+    val leap = typed.date
+    Seq(typed, obsolete, parseDate("Sat Dec 31 23:59:60 2016")).foreach { date =>
+      date.date shouldBe leap
+      date.date.second shouldBe 60
+      date.value shouldBe canonical
+    }
+
+    val previous = DateTime(2016, 12, 31, 23, 59, 59)
+    val next = DateTime(2017, 1, 1)
+    (previous < leap) shouldBe true
+    (leap < next) shouldBe true
+    Set(previous, leap, next) should have size 3
+    leap.clicks shouldBe previous.clicks
+    DateTime(leap.clicks) shouldBe previous
+    leap.plus(0) shouldBe leap
+    leap.plus(999) shouldBe leap
+    leap.plus(1000) shouldBe next
+    leap.minus(1) shouldBe previous
+    leap.minus(1000) shouldBe previous
+    leap.minus(leap.clicks + 1001L) shouldBe DateTime(1969, 12, 31, 23, 59, 59)
+  }
+
+  "Java Date access retains the UTC leap second and its legacy epoch projection" in {
+    val canonical = "Tue, 30 Jun 2015 23:59:60 GMT"
+    val typed = pekko.http.javadsl.model.HttpHeader.parse("Date", canonical) match {
+      case date: pekko.http.javadsl.model.headers.Date => date
+      case other                                       => fail(s"Expected a Java Date, got $other")
+    }
+    val leap = typed.date()
+    leap.second() shouldBe 60
+    leap.toRfc1123DateTimeString() shouldBe canonical
+    val projected = pekko.http.javadsl.model.DateTime.create(leap.clicks())
+    projected.toRfc1123DateTimeString() shouldBe "Tue, 30 Jun 2015 23:59:59 GMT"
+  }
+
   "RFC 850 uses a rolling UTC timestamp cutoff without changing cookie expiry" in {
     def parseAt(now: String, name: String, value: String): HeaderParser.Result =
       HeaderParser.dispatch(new HeaderParser(value + org.parboiled2.EOI) {
@@ -65,6 +115,23 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
     HeaderParser.Success(Date(DateTime(1974, 2, 28, 12, 0, 1)))
     parseAt(now, "set-cookie", "sid=value; Expires=Tuesday, 23-Nov-76 12:00:00 GMT") shouldBe
     HeaderParser.Success(`Set-Cookie`(HttpCookie("sid", "value", expires = Some(DateTime(1976, 11, 23, 12)))))
+  }
+
+  "parse a standard space-padded asctime day in date response headers" in {
+    val instant = DateTime(2026, 1, 5, 12, 34, 56)
+    val value = "Mon Jan  5 12:34:56 2026"
+    val canonical = "Mon, 05 Jan 2026 12:34:56 GMT"
+    val headers = Seq[HttpHeader](Date(instant), Expires(instant), `Last-Modified`(instant), `Retry-After`(instant))
+
+    for (expected <- headers) {
+      HttpHeader.parse(expected.name, value) match {
+        case HttpHeader.ParsingResult.Ok(header, Nil) =>
+          header shouldEqual expected
+          header.value shouldEqual canonical
+        case other =>
+          fail(s"Expected modeled ${expected.name}, got $other")
+      }
+    }
   }
 
   "Partitioned Set-Cookie" - {

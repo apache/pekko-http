@@ -100,18 +100,32 @@ private[parser] trait CommonRules extends StringBuilding { this: Parser =>
   // ******************************************************************************************
 
   def `HTTP-date`: Rule1[DateTime] = rule {
-    (`rfc850-date` | `legacy-HTTP-date`) ~ OWS
+    parseHttpDate(allowLeapSecond = false)
   }
 
-  private def `legacy-HTTP-date`: Rule1[DateTime] = rule {
-    `IMF-fixdate` | `asctime-date` | '0' ~ push(DateTime.MinValue)
+  // Leave the other HTTP-date fields and cookie expiry on their existing date model behavior.
+  def dateHeaderValue: Rule1[DateTime] = rule {
+    parseHttpDate(allowLeapSecond = true)
+  }
+
+  private def parseHttpDate(allowLeapSecond: Boolean): Rule1[DateTime] = rule {
+    (`rfc850-date`(allowLeapSecond) |
+    `legacy-HTTP-date`(allowNormalizedAsctimeDay = true, allowLeapSecond = allowLeapSecond)) ~ OWS
+  }
+
+  private def `legacy-HTTP-date`(allowNormalizedAsctimeDay: Boolean, allowLeapSecond: Boolean): Rule1[DateTime] = rule {
+    parseImfFixdate(allowLeapSecond) | parseAsctimeDate(allowNormalizedAsctimeDay, allowLeapSecond) |
+    '0' ~ push(DateTime.MinValue)
   }
 
   // `cookie-IMF-fixdate` below is a copy of this rule for cookie Expires dates: keep the two in sync when
   // the date shape changes.
-  def `IMF-fixdate` = rule { // mixture of the spec-ed `IMF-fixdate` and `rfc850-date`
+  def `IMF-fixdate` = rule { parseImfFixdate(allowLeapSecond = false) }
+
+  private def parseImfFixdate(allowLeapSecond: Boolean) = rule { // mixture of IMF-fixdate and rfc850-date
     (`day-name-l` | `day-name`) ~ ", " ~ (date1 | date2) ~ ' ' ~ `time-of-day` ~ ' ' ~ ("GMT" | "UTC") ~> {
-      (wkday, day, month, year, hour, min, sec) => createDateTime(year, month, day, hour, min, sec, wkday)
+      (wkday, day, month, year, hour, min, sec) =>
+        createDateTime(year, month, day, hour, min, sec, wkday, allowLeapSecond)
     }
   }
 
@@ -139,7 +153,7 @@ private[parser] trait CommonRules extends StringBuilding { this: Parser =>
   def minute = rule { digit2 }
   def second = rule { digit2 }
 
-  private def `rfc850-date` = rule {
+  private def `rfc850-date`(allowLeapSecond: Boolean) = rule {
     `day-name-l` ~ ", " ~ digit2 ~ '-' ~ month ~ '-' ~ digit2 ~ ' ' ~ `time-of-day` ~ " GMT" ~> {
       (wkday, day, month, twoDigitYear, hour, min, sec) =>
         markTimeDependentDate()
@@ -151,7 +165,7 @@ private[parser] trait CommonRules extends StringBuilding { this: Parser =>
           withinYear(month, day, hour, min, sec) > withinYear(
             cutoff.getMonthValue, cutoff.getDayOfMonth, cutoff.getHour, cutoff.getMinute, cutoff.getSecond)
         val year = if (beyondCutoff) recentYear - 100 else recentYear
-        createDateTime(year, month, day, hour, min, sec, wkday)
+        createDateTime(year, month, day, hour, min, sec, wkday, allowLeapSecond)
     }
   }
 
@@ -164,9 +178,15 @@ private[parser] trait CommonRules extends StringBuilding { this: Parser =>
 
   // `cookie-asctime-date` below is a copy of this rule for cookie Expires dates: keep the two in sync when
   // the date shape changes.
-  def `asctime-date` = rule {
-    `day-name` ~ ' ' ~ date3 ~ ' ' ~ `time-of-day` ~ ' ' ~ year ~> {
-      (wkday, month, day, hour, min, sec, year) => createDateTime(year, month, day, hour, min, sec, wkday)
+  def `asctime-date` = rule { parseAsctimeDate(allowNormalizedDay = false, allowLeapSecond = false) }
+
+  private def parseAsctimeDate(allowNormalizedDay: Boolean, allowLeapSecond: Boolean): Rule1[DateTime] = rule {
+    // HttpHeader.parse normalizes the space padding before a one-digit asctime day.
+    // Only the HTTP-date rule accepts that normalized form, not the cookie expiry fallback.
+    `day-name` ~ ' ' ~
+    (date3 | test(allowNormalizedDay) ~ month ~ ' ' ~ digit) ~ ' ' ~ `time-of-day` ~ ' ' ~ year ~> {
+      (wkday, month, day, hour, min, sec, year) =>
+        createDateTime(year, month, day, hour, min, sec, wkday, allowLeapSecond)
     }
   }
 
@@ -331,7 +351,8 @@ private[parser] trait CommonRules extends StringBuilding { this: Parser =>
   // Cookie receivers accept one or two digits per time component and interpret dates as UTC (RFC 6265, section 5.1.1).
   // Keep this separate from HTTP-date: this only extends the existing date shapes, not the full token algorithm.
   def `cookie-expires-date`: Rule1[DateTime] = rule {
-    (`cookie-IMF-fixdate` | `cookie-asctime-date` | `legacy-HTTP-date` |
+    (`cookie-IMF-fixdate` | `cookie-asctime-date` |
+    `legacy-HTTP-date`(allowNormalizedAsctimeDay = false, allowLeapSecond = false) |
     zeroOrMore(ANY) ~ push(DateTime.MinValue)) ~ OWS
   }
 
@@ -573,8 +594,18 @@ private[parser] trait CommonRules extends StringBuilding { this: Parser =>
 
   private def digitInt(c: Char): Int = c - '0'
 
-  private def createDateTime(year: Int, month: Int, day: Int, hour: Int, min: Int, sec: Int, wkday: Int) = {
-    val dt = DateTime(year, month, day, hour, min, sec)
+  private def createDateTime(
+      year: Int,
+      month: Int,
+      day: Int,
+      hour: Int,
+      min: Int,
+      sec: Int,
+      wkday: Int,
+      allowLeapSecond: Boolean = false): DateTime = {
+    val dt =
+      if (sec == 60 && allowLeapSecond && hour == 23 && min == 59) DateTime.atUtcLeapSecond(year, month, day)
+      else DateTime(year, month, day, hour, min, sec)
     if (dt.weekday != wkday)
       throw ParsingException(s"Illegal weekday in date $dt: is '${DateTime.weekday(wkday)}' but " +
         s"should be '${DateTime.weekday(dt.weekday)}'")

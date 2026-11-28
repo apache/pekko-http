@@ -21,12 +21,22 @@
 package org.apache.pekko.http.scaladsl.model
 
 import org.apache.pekko
+import pekko.annotation.InternalApi
 import pekko.http.impl.util._
 
 /**
  * Immutable, fast and efficient Date + Time implementation without any dependencies.
  * Does not support TimeZones, all DateTime values are always GMT based.
  * Note that this implementation discards milliseconds (i.e. rounds down to full seconds).
+ *
+ * When an HTTP `Date` header describes a positive UTC leap second, its time has `second == 60`.
+ * Its `clicks` projects onto the preceding second. Within the epoch factory's supported range,
+ * reconstructing only from `clicks` therefore gives the preceding ordinary second.
+ * Comparison uses the leap-second label to keep the instants ordered. The component and epoch
+ * factories and the ISO parser do not create leap-second values. To round-trip a leap second,
+ * use the HTTP `Date` representation rather than the ISO parser.
+ * Ordinary epoch arithmetic is not leap-second-aware. From a parsed leap second, arithmetic
+ * preserves that second until the result crosses into an adjacent ordinary second.
  */
 final case class DateTime private (
     year: Int, // the year
@@ -54,12 +64,20 @@ final case class DateTime private (
   /**
    * Creates a new `DateTime` that represents the point in time the given number of ms later.
    */
-  def +(millis: Long): DateTime = DateTime(clicks + millis)
+  def +(millis: Long): DateTime =
+    if (second != 60) DateTime(clicks + millis)
+    else if (millis >= 0L && millis < 1000L) this
+    else {
+      // A negative delta moves back from the end of the projected preceding second.
+      val projected = clicks + (if (millis < 0L) millis + 1000L else millis)
+      // The epoch factory rounds negative fractional seconds toward zero.
+      DateTime(projected - Math.floorMod(projected, 1000L))
+    }
 
   /**
    * Creates a new `DateTime` that represents the point in time the given number of ms earlier.
    */
-  def -(millis: Long): DateTime = DateTime(clicks - millis)
+  def -(millis: Long): DateTime = this + (-millis)
 
   /**
    * Creates a new `DateTime` that represents the point in time the given number of ms earlier.
@@ -127,12 +145,15 @@ final case class DateTime private (
 
   private def put_##[R <: Rendering](r: R, i: Int): r.type = r ~~ (i / 10 + '0').toChar ~~ (i % 10 + '0').toChar
 
-  def compare(that: DateTime): Int = math.signum(clicks - that.clicks).toInt
+  def compare(that: DateTime): Int = {
+    val byClicks = java.lang.Long.compare(clicks, that.clicks)
+    if (byClicks != 0) byClicks else java.lang.Boolean.compare(second == 60, that.second == 60)
+  }
 
   override def hashCode() = clicks.##
 
   override def equals(obj: Any) = obj match {
-    case x: DateTime => x.clicks == clicks
+    case x: DateTime => x.clicks == clicks && (x.second == 60) == (second == 60)
     case _           => false
   }
 }
@@ -168,14 +189,8 @@ object DateTime {
     require(0 <= second && second <= 59, "second must be >= 0 and <= 59")
 
     val isLeap = isLeapYear(year)
-    if (day > 28) {
-      val monthLength = month match {
-        case 2              => if (isLeap) 29 else 28
-        case 4 | 6 | 9 | 11 => 30
-        case _              => 31
-      }
-      require(day <= monthLength, "day must exist in the specified month and year")
-    }
+    if (day > 28)
+      require(day <= monthLength(month, isLeap), "day must exist in the specified month and year")
 
     // compute yearday from month/monthday
     val m = month - 1
@@ -193,6 +208,23 @@ object DateTime {
     val c = (dn - 1) * 86400L + hour * 3600L + minute * 60L + second // seconds since Jan 1, 1970, 00:00:00
 
     new DateTime(year, month, day, hour, minute, second, weekday = d % 7, clicks = c * 1000, isLeapYear = isLeap)
+  }
+
+  /**
+   * INTERNAL API: receive the structural form of a positive UTC leap second in an HTTP Date header.
+   * This checks the calendar boundary without requiring a table of announced leap seconds.
+   */
+  @InternalApi private[http] def atUtcLeapSecond(year: Int, month: Int, day: Int): DateTime = {
+    require(year >= 1972, "UTC leap seconds were introduced in 1972")
+    val preceding = apply(year, month, day, 23, 59, 59)
+    require(day == monthLength(month, preceding.isLeapYear), "a UTC leap second must be at the end of a month")
+    new DateTime(year, month, day, 23, 59, 60, preceding.weekday, preceding.clicks, preceding.isLeapYear)
+  }
+
+  private def monthLength(month: Int, isLeap: Boolean): Int = month match {
+    case 2              => if (isLeap) 29 else 28
+    case 4 | 6 | 9 | 11 => 30
+    case _              => 31
   }
 
   /**

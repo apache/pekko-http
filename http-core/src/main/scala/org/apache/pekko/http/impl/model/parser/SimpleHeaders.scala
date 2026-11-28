@@ -132,7 +132,7 @@ private[parser] trait SimpleHeaders {
 
   // https://www.rfc-editor.org/rfc/rfc9110.html#section-6.6.1
   def `date` = rule {
-    `HTTP-date` ~ EOI ~> (Date(_))
+    dateHeaderValue ~ EOI ~> (Date(_))
   }
 
   // https://www.rfc-editor.org/rfc/rfc9110.html#section-8.8.3
