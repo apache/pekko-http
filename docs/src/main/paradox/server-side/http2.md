@@ -101,6 +101,19 @@ connection with `FLOW_CONTROL_ERROR`, as required by [RFC 9113 section 6.9.2](ht
 An overflow caused by a stream-specific `WINDOW_UPDATE` still affects only that stream. These rules also
 apply to the HTTP/2 client and do not change HTTP/1.1 fallback behavior.
 
+## Known representation size on a 304 response
+
+Use `conditionalWithRepresentationLength` if the application knows the byte length of the selected
+representation. If the directive answers a conditional GET received as HTTP/2 with `304 Not Modified`, the
+response can advertise that length without enclosing any content. The count must match the content of the
+`200 OK` response that the same request would otherwise receive, including any applied content coding, as required by
+[RFC 9110, Section 8.6](https://www.rfc-editor.org/rfc/rfc9110.html#section-8.6).
+
+Pass `Some(tag), None, length` in Scala or `Optional.of(tag), Optional.empty(), length` and the inner route
+supplier in Java for an ETag-based check. Use the usual `conditional` directive if the length is unknown. The
+usual directive, HEAD requests and HTTP/1.x requests keep their existing behavior. This also excludes the
+initial HTTP/1.1 h2c upgrade request; subsequent HTTP/2 requests on that connection can use the option.
+
 ## Limiting the lifetime of connections
 
 Long-lived HTTP/2 connections, for example those used by gRPC, can lead to an uneven load distribution across

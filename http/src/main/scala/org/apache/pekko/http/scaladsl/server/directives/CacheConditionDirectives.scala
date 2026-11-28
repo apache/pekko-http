@@ -15,6 +15,7 @@ package org.apache.pekko.http.scaladsl.server
 package directives
 
 import org.apache.pekko
+import pekko.http.impl.engine.http2.Http2
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.DateTime
 import pekko.http.scaladsl.model.HttpMethods._
@@ -88,12 +89,46 @@ trait CacheConditionDirectives {
    *
    * @group cachecondition
    */
-  def conditional(eTag: Option[EntityTag], lastModified: Option[DateTime]): Directive0 = {
+  def conditional(eTag: Option[EntityTag], lastModified: Option[DateTime]): Directive0 =
+    conditionalImpl(eTag, lastModified, None)
+
+  /**
+   * Like [[conditional]], but on a 304 produced for a conditional GET received directly as HTTP/2, advertise the
+   * known content length of the selected representation. The octet count must match the 200 response the same
+   * request would otherwise receive, after any content coding. Use [[conditional]] if the size is unknown.
+   * The 304 has no content, and HTTP/1.x behavior, including for the initial h2c upgrade request, is unchanged.
+   *
+   * @group cachecondition
+   * @since 2.1.0
+   */
+  def conditionalWithRepresentationLength(
+      eTag: Option[EntityTag],
+      lastModified: Option[DateTime],
+      representationLength: Long): Directive0 = {
+    require(representationLength >= 0L, "representationLength must be non-negative")
+    conditionalImpl(eTag, lastModified, Some(representationLength))
+  }
+
+  private def conditionalImpl(
+      eTag: Option[EntityTag],
+      lastModified: Option[DateTime],
+      representationLength: Option[Long]): Directive0 = {
     def addResponseHeaders: Directive0 =
       mapResponse(_.withDefaultHeaders(eTag.map(ETag(_)).toList ++ lastModified.map(`Last-Modified`(_)).toList))
 
     // TODO: also handle Cache-Control and Vary
-    def complete304(): Route = addResponseHeaders(complete(HttpResponse(NotModified)))
+    def complete304(request: HttpRequest): Route = {
+      val response = HttpResponse(NotModified)
+      val withLength = representationLength match {
+        case Some(length)
+            if request.method == GET && request.protocol == HttpProtocols.`HTTP/2.0` &&
+            request.attribute(Http2.streamId).isDefined =>
+          // The HTTP/2 stream stage still has to verify the original method.
+          response.addAttribute(Http2.notModifiedRepresentationLength, length)
+        case _ => response
+      }
+      addResponseHeaders(complete(withLength))
+    }
     def complete412(): Route = _.complete(PreconditionFailed)
 
     extractRequest.flatMap { request =>
@@ -122,14 +157,14 @@ trait CacheConditionDirectives {
           header[`If-None-Match`] match {
             case Some(`If-None-Match`(inm)) if eTag.isDefined =>
               if (!matchesRange(eTag.get, inm, weakComparison = true)) step5()
-              else if (isGetOrHead) complete304()
+              else if (isGetOrHead) complete304(request)
               else complete412()
             case _ => step4()
           }
         def step4(): Route =
           if (isGetOrHead) {
             header[`If-Modified-Since`] match {
-              case Some(`If-Modified-Since`(ims)) if lastModified.isDefined && unmodified(ims) => complete304()
+              case Some(`If-Modified-Since`(ims)) if lastModified.isDefined && unmodified(ims) => complete304(request)
               case _                                                                           => step5()
             }
           } else step5()

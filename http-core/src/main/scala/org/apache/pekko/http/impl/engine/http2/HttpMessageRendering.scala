@@ -48,14 +48,26 @@ private[http2] class ResponseRendering(settings: ServerSettings, val log: Loggin
     //   HTTP/2 does not define a way to carry the version or reason phrase
     //   that is included in an HTTP/1.1 status line.
     headerPairs += ":status" -> response.status.intValue.toString
+    headerPairs
+  }
+
+  override def apply(response: HttpResponse): Http2SubStream = {
+    val stream = super.apply(response)
+    if (response.status == StatusCodes.NotModified && response.entity.isKnownEmpty) {
+      // Carry intent to the connection stage that knows the native request method. Do not render it here.
+      val marker = Http2.notModifiedRepresentationLength
+      response.attribute(marker) match {
+        case Some(length) => stream.withCorrelationAttributes(stream.correlationAttributes.updated(marker, length))
+        case None         => stream
+      }
+    } else stream
   }
 
   override lazy val peerIdHeader: Option[(String, String)] = settings.serverHeader.map(h => h.lowercaseName -> h.value)
 
-  // Mirrors the status based part of the rules the HTTP/1.1 renderer applies through
-  // HttpMethod.contentLengthAllowed: no content-length for 1xx, 204 or 304 (RFC 9110 sections 8.6 and 15.4.5, where a
-  // 304 is supposed to carry the content-length a 200 would have had rather than a made up zero). GET is used here
-  // only because it carries the rules that are common to all methods; the request method is not known on this path.
+  // Like the HTTP/1.1 renderer, do not synthesize an entity content length for 1xx, 204 or 304. A 304 may instead
+  // advertise the selected representation's known length (RFC 9110 sections 8.6 and 15.4.5). GET supplies the status
+  // rules common to all methods; the actual request method is not known on this path.
   protected override def contentLengthAllowed(response: HttpResponse): Boolean =
     HttpMethods.GET.contentLengthAllowed(response.status)
 
