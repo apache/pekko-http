@@ -320,6 +320,56 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
           response = HPackSpecExamples.ThirdResponse,
           expectedResponseHeaderBlock = HPackSpecExamples.C63ThirdResponseWithHuffman)
       })
+      "keep HPACK decoder state local to each materialization" in StreamTestKit.assertAllStagesStopped {
+        import pekko.http.impl.engine.http2.hpack.HeaderDecompression
+        import pekko.http.impl.engine.parsing.HttpHeaderParser
+        import pekko.stream.testkit.scaladsl.TestSink
+
+        val settings = ServerSettings(system)
+        val parserSettings = settings.parserSettings
+        val decoder = new HeaderDecompression(HttpHeaderParser(parserSettings, system.log), parserSettings,
+          settings.http2Settings.maxHeaderListSize)
+
+        def block(streamId: Int, fragment: ByteString): FrameEvent =
+          HeadersFrame(streamId, endStream = true, endHeaders = true, fragment, None)
+
+        def fields(event: FrameEvent): Seq[(String, AnyRef)] = event match {
+          case ParsedHeadersFrame(_, _, values, _, None) => values
+          case other                                     => fail(s"Expected decoded headers, got $other")
+        }
+
+        val authority = ":authority" -> Uri("http://www.example.com/").authority
+        val input = TestPublisher.probe[FrameEvent]()
+        val requests = Source.fromPublisher(input).via(decoder).runWith(TestSink[FrameEvent]())
+        try {
+          requests.request(1)
+          input.sendNext(block(1, HPackSpecExamples.C41FirstRequestWithHuffman))
+          fields(requests.expectNext()) should contain(authority)
+
+          // Keep the request materialization open while the same decoder graph handles a separate response.
+          val responses = Source.single(block(1, HPackSpecExamples.C61FirstResponseWithHuffman))
+            .via(decoder)
+            .runWith(TestSink[FrameEvent]())
+          try {
+            responses.request(1)
+            val firstResponse = HPackSpecExamples.FirstResponse
+            val status = ":status" -> firstResponse.status.intValue.toString
+            val responseHeaders = firstResponse.headers.map(header => header.lowercaseName -> header)
+            fields(responses.expectNext()) shouldBe (status +: responseHeaders)
+            responses.expectComplete()
+          } finally responses.cancel()
+
+          requests.request(1)
+          input.sendNext(block(3, HPackSpecExamples.C42SecondRequestWithHuffman))
+          val secondRequest = fields(requests.expectNext())
+          secondRequest should contain(authority)
+          secondRequest should contain("cache-control" -> headers.`Cache-Control`(CacheDirectives.`no-cache`))
+
+          input.sendComplete()
+          requests.expectComplete()
+        } finally requests.cancel()
+      }
+
       "GET request in one HEADERS and one CONTINUATION frame".inAssertAllStagesStopped(
         new TestSetup with RequestResponseProbes {
           val headerBlock = HPackSpecExamples.C41FirstRequestWithHuffman
