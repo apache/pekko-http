@@ -473,6 +473,35 @@ class WebSocketClientSpec extends PekkoSpecWithMaterializer("pekko.http.client.w
       expectMaskedFrameOnNetwork(Protocol.Opcode.Text, ByteString("Message 1"), fin = true)
     }
 
+    "read both offered extensions from combined and split response fields" in {
+      val names = Vector("x-test-one", "x-test-two")
+      def extensionHeader(value: String): `Sec-WebSocket-Extensions` =
+        HttpHeader.parse("Sec-WebSocket-Extensions", value) match {
+          case HttpHeader.ParsingResult.Ok(header: `Sec-WebSocket-Extensions`, Nil) => header
+          case other                                                                => fail(s"Expected a modeled WebSocket extensions header, got $other")
+        }
+
+      val combined = extensionHeader(names.mkString(", "))
+      val (request, key) = Handshake.Client.buildRequest(target, Seq(combined), Nil, new Random(0))
+      val offeredNames = Handshake.Client.extensionNames(request.headers)
+      val expectedNames = names.toSet
+      offeredNames shouldBe expectedNames
+
+      val accept = pekko.http.scaladsl.model.headers.`Sec-WebSocket-Accept`.forKey(key)
+      val baseHeaders = Seq(Handshake.UpgradeHeader, Handshake.ConnectionUpgradeHeader, accept)
+      val layouts = Seq("combined" -> Seq(combined), "split" -> names.map(extensionHeader))
+      for ((layout, extensionHeaders) <- layouts) {
+        withClue(s"$layout response extension fields: ") {
+          val response = pekko.http.scaladsl.model.HttpResponse(
+            status = pekko.http.scaladsl.model.StatusCodes.SwitchingProtocols,
+            headers = baseHeaders ++ extensionHeaders)
+          Handshake.Client.extensionNames(response.headers) shouldBe expectedNames
+          Handshake.Client.validateResponse(response, Nil, key, offeredNames) shouldBe
+          Right(Handshake.Client.NegotiatedWebSocketSettings(None))
+        }
+      }
+    }
+
     for ((extensionValue, label) <- Seq("" -> "empty", " \t " -> "whitespace-only")) {
       s"establish a connection when the extension response value is $label" in new TestSetup with ClientEchoes {
         expectWireData(UpgradeRequestBytes)
