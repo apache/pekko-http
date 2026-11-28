@@ -73,6 +73,7 @@ private[http2] class Http2ClientDemux(http2Settings: Http2ClientSettings, master
   }
 
   override def completionTimeout: FiniteDuration = http2Settings.completionTimeout
+  override protected def sendGoAwayOnGracefulClose: Boolean = http2Settings.sendGoAwayOnGracefulClose
 
   // the client side limits the age of managed persistent connections in PersistentConnection instead,
   // see `persistent-connection-max-age`
@@ -277,6 +278,7 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
 
   def wrapTrailingHeaders(headers: ParsedHeadersFrame): Option[HttpEntity.ChunkStreamPart]
   def completionTimeout: FiniteDuration
+  protected def sendGoAwayOnGracefulClose: Boolean = false
   def maxConnectionAge: Duration
   def maxConnectionAgeGrace: Duration
   def maxConnectionAgeJitter: Double
@@ -310,6 +312,7 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
 
       private val terminationPromise = Promise[Http.HttpTerminated]()
       private var terminating: Boolean = false
+      private var clientGracefulGoAwaySent = false
       private var lastIdBeforeTermination: Int = 0
       // when the forced close of a terminating connection is due, unset while no forced close is scheduled
       private var forcedCloseDeadline: OptionVal[Deadline] = OptionVal.None
@@ -400,9 +403,16 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
         }
       }
 
+      // A later error GOAWAY must not increase the last stream ID advertised during graceful close.
+      // The locally allocated request IDs are not part of the peer-initiated stream ID space.
+      private def goAwayLastStreamId(): Int =
+        if (clientGracefulGoAwaySent) Http2Protocol.NoStreamId else lastStreamId()
+
+      private def pushGoAwayFrame(errorCode: ErrorCode, debug: ByteString): Unit =
+        multiplexer.pushControlFrame(GoAwayFrame(goAwayLastStreamId(), errorCode, debug))
+
       override def pushGOAWAY(errorCode: ErrorCode, debug: String): Unit = {
-        val frame = GoAwayFrame(lastStreamId(), errorCode, ByteString(debug))
-        multiplexer.pushControlFrame(frame)
+        pushGoAwayFrame(errorCode, ByteString(debug))
         // FIXME: handle the connection closing according to the specification
       }
       private var allowReadingIncomingFrames: Boolean = true
@@ -559,7 +569,13 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
             if (isServer) // on the server side conservatively shut everything down if user handler completes prematurely
               super.onUpstreamFinish()
             else { // on the client side allow ongoing responses to be delivered for a while even if requests are done
-              completeIfDone()
+              // The FIFO control queue preserves any initial request HEADERS already accepted by the demux.
+              // Push is disabled, so there are no peer-initiated streams to acknowledge, regardless of our own IDs.
+              if (stage.sendGoAwayOnGracefulClose && !isClosed(frameOut)) {
+                clientGracefulGoAwaySent = true
+                // The multiplexer calls completeIfDone when GOAWAY is flushed, possibly during this call.
+                pushGoAwayFrame(ErrorCode.NO_ERROR, ByteString.empty)
+              } else completeIfDone()
               scheduleOnce(CompletionTimeout, completionTimeout)
             }
         })
@@ -586,7 +602,8 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
                   // Fail the stage, rather than only pushing a GOAWAY, so that all active streams are shut down and the
                   // connection is closed. `Http2Blueprint.errorHandling` renders the GOAWAY; pass on the last stream id,
                   // so the peer knows which streams were processed and does not retry them.
-                  failStage(new Http2Compliance.Http2ProtocolException(ex.errorCode, ex.getMessage, lastStreamId()))
+                  failStage(new Http2Compliance.Http2ProtocolException(ex.errorCode, ex.getMessage,
+                    goAwayLastStreamId()))
                   settingsAppliedOk = false
               }
             } else {

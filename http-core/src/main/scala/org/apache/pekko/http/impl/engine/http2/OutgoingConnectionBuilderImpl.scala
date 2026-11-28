@@ -97,7 +97,7 @@ private[pekko] object OutgoingConnectionBuilderImpl {
 
     override def managedPersistentHttp2(): Flow[HttpRequest, HttpResponse, NotUsed] =
       PersistentConnection.managedConnection(
-        http2(),
+        withoutClientGoAway.http2(),
         clientConnectionSettings.http2Settings)
 
     override def http2WithPriorKnowledge(): Flow[HttpRequest, HttpResponse, Future[OutgoingConnection]] = {
@@ -108,8 +108,15 @@ private[pekko] object OutgoingConnectionBuilderImpl {
 
     override def managedPersistentHttp2WithPriorKnowledge(): Flow[HttpRequest, HttpResponse, NotUsed] =
       PersistentConnection.managedConnection(
-        http2WithPriorKnowledge(),
+        withoutClientGoAway.http2WithPriorKnowledge(),
         clientConnectionSettings.http2Settings)
+
+    // The wrapper completes its inner request source on both retirement and downstream cancellation.
+    private def withoutClientGoAway: Impl =
+      if (clientConnectionSettings.http2Settings.sendGoAwayOnGracefulClose)
+        copy(
+          clientConnectionSettings = clientConnectionSettings.mapHttp2Settings(_.withSendGoAwayOnGracefulClose(false)))
+      else this
 
     override private[pekko] def toJava: JOutgoingConnectionBuilder = new JavaAdapter(this)
   }

@@ -33,6 +33,7 @@ import pekko.http.scaladsl.model.{
   HttpHeader,
   HttpMethod,
   HttpMethods,
+  HttpProtocols,
   HttpRequest,
   HttpResponse,
   RequestResponseAssociation,
@@ -600,6 +601,65 @@ class Http2PersistentInterimSpec extends PekkoSpecWithMaterializer with ScalaFut
         output.cancel()
         network.fromNet.sendComplete()
         network.frameProbeDelegate.plainDataProbe.cancel()
+      }
+    }
+  }
+}
+
+class Http2PersistentGoAwaySpec extends PekkoSpecWithMaterializer with ScalaFutures {
+  "A managed HTTP/2 connection" should {
+    "not send client GOAWAY when the application cancels the response stream" in StreamTestKit.assertAllStagesStopped {
+      class Network extends Http2FrameHpackSupport {
+        val fromNet = TestPublisher.probe[ByteString]()
+        val frameProbeDelegate = Http2FrameProbe()
+        def sendBytes(bytes: ByteString): Unit = fromNet.sendNext(bytes)
+      }
+      val network = new Network
+      val effectiveGoAway = Promise[Boolean]()
+      val address = new InetSocketAddress("127.0.0.1", 12345)
+      val transport = new ClientTransport {
+        override def connectTo(host: String, port: Int, settings: ClientConnectionSettings)(
+            implicit system: ActorSystem): Flow[ByteString, ByteString, Future[Http.OutgoingConnection]] =
+          Flow.fromSinkAndSource(network.sink, Source.fromPublisher(network.fromNet))
+            .mapMaterializedValue { _ =>
+              effectiveGoAway.success(settings.http2Settings.sendGoAwayOnGracefulClose)
+              Future.successful(Http.OutgoingConnection(address, address))
+            }
+      }
+      val settings = ClientConnectionSettings(system)
+        .mapHttp2Settings(_.withSendGoAwayOnGracefulClose(true))
+        .withTransport(transport)
+      val input = TestPublisher.probe[HttpRequest]()
+      val output = TestSubscriber.probe[HttpResponse]()
+      Source.fromPublisher(input)
+        .via(Http().connectionTo("example.com").withClientConnectionSettings(
+          settings).managedPersistentHttp2WithPriorKnowledge())
+        .runWith(Sink.fromSubscriber(output))
+
+      try {
+        output.request(1)
+        input.sendNext(HttpRequest(uri = "http://example.com/summary"))
+        network.expectBytes(Http2Protocol.ClientConnectionPreface)
+        network.expectSETTINGS()
+        network.expectDecodedResponseHEADERSPairs(1)
+        network.sendFrame(FrameEvent.SettingsFrame(Nil))
+        network.expectSettingsAck()
+        network.sendHEADERS(1, endStream = true, Seq(headers.RawHeader(":status", "204")))
+        val response = output.expectNext()
+        response.status shouldBe StatusCodes.NoContent
+        response.protocol shouldBe HttpProtocols.`HTTP/2.0`
+
+        network.plainDataProbe.request(1)
+        output.cancel()
+        input.expectCancellation()
+        network.expectComplete()
+        // The cancellation can race with graceful source completion; verify the managed connection
+        // also disables the direct-connection setting rather than relying on that ordering.
+        effectiveGoAway.future.futureValue shouldBe false
+      } finally {
+        output.cancel()
+        network.fromNet.sendComplete()
+        network.plainDataProbe.cancel()
       }
     }
   }

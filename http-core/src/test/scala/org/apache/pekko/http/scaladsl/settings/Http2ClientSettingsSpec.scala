@@ -27,6 +27,50 @@ import scala.concurrent.duration._
 
 class Http2ClientSettingsSpec extends PekkoSpec {
 
+  "Http2ClientSettings send-goaway-on-graceful-close" should {
+    "default to false and accept an explicit opt-in" in {
+      Http2ClientSettings(system).sendGoAwayOnGracefulClose shouldBe false
+      Http2ClientSettings("pekko.http.client.http2.send-goaway-on-graceful-close = on")
+        .sendGoAwayOnGracefulClose shouldBe true
+    }
+
+    "set and read the option through the Java API" in {
+      val settings: javadsl.settings.Http2ClientSettings = Http2ClientSettings(system)
+      val enabled = settings.withSendGoAwayOnGracefulClose(true)
+      enabled.getSendGoAwayOnGracefulClose shouldBe true
+      enabled.withSendGoAwayOnGracefulClose(false).getSendGoAwayOnGracefulClose shouldBe false
+    }
+
+    "preserve the setting and its value semantics across ordinary copies" in {
+      val defaults = Http2ClientSettings(system)
+      val enabled = defaults.withSendGoAwayOnGracefulClose(true)
+      val copied = enabled.withMaxConcurrentStreams(17)
+      copied.sendGoAwayOnGracefulClose shouldBe true
+      copied.maxConcurrentStreams shouldBe 17
+      enabled shouldBe defaults.withSendGoAwayOnGracefulClose(true)
+      enabled.hashCode shouldBe defaults.withSendGoAwayOnGracefulClose(true).hashCode
+      enabled.withSendGoAwayOnGracefulClose(false) shouldBe defaults
+    }
+
+    "retain internal settings when opting in or out" in {
+      val first = new Http2InternalClientSettings {}
+      val second = new Http2InternalClientSettings {}
+      val defaults = Http2ClientSettings(system).withInternalSettings(first)
+      val enabled = defaults.withSendGoAwayOnGracefulClose(true)
+      enabled.internalSettings shouldBe Some(first)
+      enabled.withSendGoAwayOnGracefulClose(false).internalSettings shouldBe Some(first)
+      val replaced = enabled.withInternalSettings(second)
+      replaced.sendGoAwayOnGracefulClose shouldBe true
+      replaced.internalSettings shouldBe Some(second)
+      replaced.withSendGoAwayOnGracefulClose(false).internalSettings shouldBe Some(second)
+
+      val copied = enabled.asInstanceOf[Http2ClientSettings.Http2ClientSettingsImpl]
+        .copy(internalSettings = Some(second))
+      copied.sendGoAwayOnGracefulClose shouldBe true
+      copied.internalSettings shouldBe Some(second)
+    }
+  }
+
   "Http2ClientSettings persistent-connection-max-age" should {
 
     "be disabled by default" in {
