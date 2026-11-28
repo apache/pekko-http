@@ -502,6 +502,21 @@ abstract class HttpHeaderParserSpec(mode: String, newLine: String) extends Pekko
   }
 }
 
-class HttpHeaderParserCRLFSpec extends HttpHeaderParserSpec("CRLF", "\r\n")
+class HttpHeaderParserCRLFSpec extends HttpHeaderParserSpec("CRLF", "\r\n") {
+  "HTTP/1 field-section size accounting" should {
+    "debit every complete field by its width independently of offsets and limits" in {
+      def debit(remaining: Long, start: Int, end: Int): Long =
+        HttpMessageParser.remainingBytesAfterField(remaining, start, end)
+
+      val first = debit(11L, 13, 18)
+      first shouldBe 6L
+      debit(first, 18, 24) shouldBe 0L
+      debit(first, 0, 6) shouldBe 0L
+      debit(first - 1L, 0, 6) shouldBe -1L
+      debit(Long.MaxValue, 13, 18) shouldBe Long.MaxValue
+      debit(11L, 0, 6) shouldBe 5L // a distinct field section starts with its full budget again
+    }
+  }
+}
 
 class HttpHeaderParserLFSpec extends HttpHeaderParserSpec("LF", "\n")

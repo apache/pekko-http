@@ -19,15 +19,35 @@ import java.util.concurrent.atomic.AtomicInteger
 import org.apache.pekko
 import pekko.Done
 import pekko.actor.ActorSystem
+import pekko.event.NoLogging
 import pekko.http.impl.util._
 import pekko.http.impl.engine.client.PoolFlow.{ RequestContext, ResponseContext }
 import pekko.http.impl.engine.client.pool.NewHostConnectionPool
+import pekko.http.impl.engine.rendering.{
+  DateHeaderRendering,
+  HttpResponseRendererFactory,
+  ResponseRenderingContext,
+  ResponseRenderingOutput
+}
 import pekko.http.impl.engine.ws.ByteStringSinkProbe
 import pekko.http.scaladsl.{ ClientTransport, ConnectionContext, Http }
 import pekko.http.scaladsl.Http.ServerBinding
 import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.model.headers.Host
-import pekko.http.scaladsl.settings.{ ClientConnectionSettings, ConnectionPoolSettings }
+import pekko.http.scaladsl.model.headers.{
+  `Cache-Control`,
+  `Content-Length`,
+  `Transfer-Encoding`,
+  CacheDirectives,
+  Date,
+  ETag,
+  Host,
+  Link,
+  LinkParams,
+  LinkValue,
+  RawHeader,
+  Trailer
+}
+import pekko.http.scaladsl.settings.{ ClientConnectionSettings, ConnectionPoolSettings, ServerSettings }
 import pekko.stream._
 import pekko.stream.scaladsl.{ BidiFlow, Flow, GraphDSL, Keep, Sink, Source, TLSPlacebo }
 import pekko.stream.stage.{ GraphStage, GraphStageLogic, InHandler, OutHandler }
@@ -64,6 +84,182 @@ class HostConnectionPoolSpec extends PekkoSpecWithMaterializer(
   val defaultSettings =
     ConnectionPoolSettings(system)
       .withMaxConnections(1)
+
+  "The HTTP/1 parser field-section size limit without a network transport" should {
+    val host = Host("example.org")
+    val cache = `Cache-Control`(CacheDirectives.`max-age`(5))
+    val date = Date(DateTime(2024, 1, 2, 3, 4, 5))
+
+    // These modeled values are all ASCII. Count the name, ": ", value and CRLF.
+    def fieldBytes(header: HttpHeader): Long = header.name.length.toLong + header.value.length + 4L
+
+    def http1(serverBudget: Long, clientBudget: Long)(handler: Flow[HttpRequest, HttpResponse, ?])
+        : Flow[HttpRequest, HttpResponse, ?] = {
+      val server = ServerSettings(system).withServerHeader(None)
+      val client = ClientConnectionSettings(system).withUserAgentHeader(None)
+      // Only fragment bytes emitted by the standard renderer. No HTTP text or socket is injected.
+      val fragment = Flow[ByteString].mapConcat(_.grouped(7).toList)
+      Http().serverLayer(
+        server.withParserSettings(server.parserSettings.withMaxHttp1FieldSectionSize(serverBudget)), log = NoLogging)
+        .atop(TLSPlacebo())
+        .atop(BidiFlow.fromFlows(fragment, fragment))
+        .atop(TLSPlacebo().reversed)
+        .atop(Http().clientLayer(
+          host,
+          client.withParserSettings(client.parserSettings.withMaxHttp1FieldSectionSize(clientBudget)),
+          log = NoLogging).reversed)
+        .reversed
+        .join(handler)
+    }
+
+    val request = HttpRequest(uri = "/ordinary", headers = List(cache))
+    val response = HttpResponse(headers = List(cache, date))
+
+    def roundTrip(ordinaryRequests: List[HttpRequest], serverBudget: Long, clientBudget: Long)(
+        respond: HttpRequest => HttpResponse): Seq[HttpResponse] =
+      Await.result(
+        Source(ordinaryRequests)
+          .via(http1(serverBudget, clientBudget)(Flow[HttpRequest].map(respond)))
+          .mapAsync(1)(r => r.discardEntityBytes().future.map(_ => r)(system.dispatcher))
+          .runWith(Sink.seq),
+        5.seconds.dilated)
+
+    "enforce the HTTP/1 request field-section size before invoking the handler" in {
+      val exact = fieldBytes(host) + fieldBytes(cache)
+      val calls = new AtomicInteger
+      def respond(req: HttpRequest): HttpResponse = {
+        req.header[`Cache-Control`] shouldBe Some(cache)
+        calls.incrementAndGet()
+        response
+      }
+
+      for (budget <- List(Long.MaxValue, exact)) {
+        val accepted =
+          roundTrip(List(request, request.withUri("/another")), budget, Long.MaxValue)(respond)
+        accepted.map(_.status) shouldBe Seq(StatusCodes.OK, StatusCodes.OK)
+      }
+      val rejected = roundTrip(List(request), exact - 1L, Long.MaxValue)(respond)
+      rejected.map(_.status) shouldBe Seq(StatusCodes.RequestHeaderFieldsTooLarge)
+      calls.get shouldBe 4
+    }
+
+    "enforce the HTTP/1 response field-section size as a local client failure" in {
+      val exact = fieldBytes(cache) + fieldBytes(date) + fieldBytes(`Content-Length`(0L))
+      for (budget <- List(Long.MaxValue, exact)) {
+        val accepted = roundTrip(List(request, request.withUri("/another")), Long.MaxValue, budget)(_ => response)
+        accepted.map(_.status) shouldBe Seq(StatusCodes.OK, StatusCodes.OK)
+        accepted.map(_.header[`Cache-Control`]) shouldBe Seq(Some(cache), Some(cache))
+      }
+      val failure = intercept[IllegalResponseException] {
+        roundTrip(List(request), Long.MaxValue, exact - 1L)(_ => response)
+      }
+      failure.info.summary should include(s"configured limit of ${exact - 1L} bytes")
+    }
+
+    "use a fresh HTTP/1 field-section size budget after an informational response" in {
+      val preload = Link(LinkValue(Uri("/assets/application-preload.js"), LinkParams.rel("preload")))
+      val interim = HttpResponse(StatusCodes.EarlyHints, headers = List(date, preload))
+      val finalResponse = HttpResponse(StatusCodes.NoContent, headers = List(date, cache))
+      val interimBytes = fieldBytes(date) + fieldBytes(preload)
+      interimBytes should be > (fieldBytes(date) + fieldBytes(cache))
+
+      def receive(budget: Long): Seq[HttpResponse] = {
+        val client = ClientConnectionSettings(system).withUserAgentHeader(None)
+        val settings = client.withParserSettings(client.parserSettings.withMaxHttp1FieldSectionSize(budget))
+        val renderer =
+          new HttpResponseRendererFactory(None, 512, NoLogging, DateHeaderRendering()).renderer
+        val peer = Flow[ByteString].take(1).flatMapConcat { _ =>
+          Source(List(interim, finalResponse))
+            .map(ResponseRenderingContext(_))
+            .via(renderer)
+            .map {
+              case ResponseRenderingOutput.HttpData(bytes) => bytes
+              case other                                   => fail(s"Expected ordinary HTTP response data, got ${other.getClass}")
+            }
+            .mapConcat(_.grouped(7).toList)
+        }
+        val clientFlow = Http().clientLayer(host, settings, log = NoLogging).atop(TLSPlacebo()).join(peer)
+        Await.result(Source.single(request).via(clientFlow).runWith(Sink.seq), 5.seconds.dilated)
+      }
+
+      receive(Long.MaxValue).map(_.status) shouldBe Seq(StatusCodes.NoContent)
+      val accepted = receive(interimBytes)
+      accepted.map(_.status) shouldBe Seq(StatusCodes.NoContent)
+      accepted.map(_.header[`Cache-Control`]) shouldBe Seq(Some(cache))
+      val failure = intercept[IllegalResponseException](receive(interimBytes - 1L))
+      failure.info.summary should include(s"configured limit of ${interimBytes - 1L} bytes")
+    }
+
+    "use a fresh HTTP/1 field-section size budget for response trailers" in {
+      import HttpEntity.{ Chunk, Chunked, LastChunk }
+
+      val trailer = ETag("sha256-0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef")
+      val declared = Trailer(Seq(trailer.name))
+      val headBytes = fieldBytes(date) + fieldBytes(declared) +
+        fieldBytes(`Transfer-Encoding`(TransferEncodings.chunked))
+      val trailerBytes = fieldBytes(trailer)
+      trailerBytes shouldBe headBytes + 1L
+      val expected = List(Chunk("ok"), LastChunk(trailer = List(trailer)))
+      val streamed = HttpResponse(headers = List(date, declared),
+        entity = Chunked(ContentTypes.NoContentType, Source(expected)))
+
+      def receive(budget: Long): Seq[HttpEntity.ChunkStreamPart] =
+        Await.result(
+          Source.single(request)
+            .via(http1(Long.MaxValue, budget)(Flow[HttpRequest].map(_ => streamed)))
+            .mapAsync(1) { r =>
+              r.status shouldBe StatusCodes.OK
+              r.entity match {
+                case chunks: Chunked => chunks.chunks.runWith(Sink.seq)
+                case other           => fail(s"Expected a chunked response, got ${other.getClass.getSimpleName}")
+              }
+            }
+            .runWith(Sink.head),
+          5.seconds.dilated)
+
+      receive(Long.MaxValue) shouldBe expected
+      receive(trailerBytes) shouldBe expected
+      val failure = intercept[EntityStreamException](receive(headBytes))
+      failure.info.summary should include(s"configured limit of $headBytes bytes")
+    }
+
+    "use a fresh HTTP/1 field-section size budget for request trailers" in {
+      import HttpEntity.{ Chunk, Chunked, LastChunk }
+      import system.dispatcher
+
+      val trailer =
+        RawHeader("X-Upload-Checksum", "sha256-2689367b205c16ce32ed4200942b8b8b1e262dfc70d9bc9fbc77c49699a4f1df")
+      val declared = Trailer(Seq(trailer.name))
+      val headBytes = fieldBytes(host) + fieldBytes(declared) +
+        fieldBytes(`Transfer-Encoding`(TransferEncodings.chunked))
+      val trailerBytes = fieldBytes(trailer)
+      trailerBytes should be > headBytes
+      val expected = List(Chunk("ok"), LastChunk(trailer = List(trailer)))
+      val upload = HttpRequest(HttpMethods.POST, uri = "/upload", headers = List(declared),
+        entity = Chunked(ContentTypes.NoContentType, Source(expected)))
+
+      def receive(budget: Long): Seq[HttpEntity.ChunkStreamPart] = {
+        val observed = Promise[Seq[HttpEntity.ChunkStreamPart]]()
+        val handler = Flow[HttpRequest].mapAsync(1) { req =>
+          val collected = req.entity match {
+            case chunks: Chunked => chunks.chunks.runWith(Sink.seq)
+            case other           => Future.failed(new AssertionError(s"Expected a chunked request, got ${other.getClass}"))
+          }
+          observed.completeWith(collected)
+          collected.map(_ => HttpResponse())
+        }
+        val exchange = Source.single(upload).via(http1(budget, Long.MaxValue)(handler)).runWith(Sink.head)
+        val seen = Await.result(observed.future, 5.seconds.dilated)
+        Await.result(exchange, 5.seconds.dilated).status shouldBe StatusCodes.OK
+        seen
+      }
+
+      receive(Long.MaxValue) shouldBe expected
+      receive(trailerBytes) shouldBe expected
+      val failure = intercept[EntityStreamException](receive(trailerBytes - 1L))
+      failure.info.summary should include(s"configured limit of ${trailerBytes - 1L} bytes")
+    }
+  }
 
   trait ClientServerImplementation {
 

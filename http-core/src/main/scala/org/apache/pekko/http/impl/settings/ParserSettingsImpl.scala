@@ -62,8 +62,131 @@ private[pekko] final case class ParserSettingsImpl(
     modeledHeaderParsing: Boolean,
     customMethods: String => Option[HttpMethod],
     customStatusCodes: Int => Option[StatusCode],
-    customMediaTypes: MediaTypes.FindCustom)
+    customMediaTypes: MediaTypes.FindCustom,
+    http1FieldSectionSize: Long)
     extends pekko.http.scaladsl.settings.ParserSettings {
+
+  // Keep the pre-existing JVM constructor, copy and apply descriptors: the internal settings type leaks
+  // through fromSubConfig, and existing bytecode can still link those methods.
+  def this(
+      maxUriLength: Int,
+      maxMethodLength: Int,
+      maxResponseReasonLength: Int,
+      maxHeaderNameLength: Int,
+      maxHeaderValueLength: Int,
+      maxHeaderCount: Int,
+      maxContentLengthSetting: Option[Long],
+      maxToStrictBytes: Long,
+      maxChunkExtLength: Int,
+      maxChunkSize: Int,
+      maxChunkCount: Int,
+      maxPartCount: Int,
+      maxCommentParsingDepth: Int,
+      uriParsingMode: Uri.ParsingMode,
+      cookieParsingMode: CookieParsingMode,
+      illegalHeaderWarnings: Boolean,
+      ignoreIllegalHeaderFor: Set[String],
+      errorLoggingVerbosity: ErrorLoggingVerbosity,
+      illegalResponseHeaderNameProcessingMode: IllegalResponseHeaderNameProcessingMode,
+      illegalResponseHeaderValueProcessingMode: IllegalResponseHeaderValueProcessingMode,
+      conflictingContentTypeHeaderProcessingMode: ConflictingContentTypeHeaderProcessingMode,
+      headerValueCacheLimits: Map[String, Int],
+      includeTlsSessionInfoHeader: Boolean,
+      includeSslSessionAttribute: Boolean,
+      modeledHeaderParsing: Boolean,
+      customMethods: String => Option[HttpMethod],
+      customStatusCodes: Int => Option[StatusCode],
+      customMediaTypes: MediaTypes.FindCustom) =
+    this(
+      maxUriLength, maxMethodLength, maxResponseReasonLength, maxHeaderNameLength, maxHeaderValueLength,
+      maxHeaderCount, maxContentLengthSetting, maxToStrictBytes, maxChunkExtLength, maxChunkSize, maxChunkCount,
+      maxPartCount, maxCommentParsingDepth, uriParsingMode, cookieParsingMode, illegalHeaderWarnings,
+      ignoreIllegalHeaderFor, errorLoggingVerbosity, illegalResponseHeaderNameProcessingMode,
+      illegalResponseHeaderValueProcessingMode, conflictingContentTypeHeaderProcessingMode, headerValueCacheLimits,
+      includeTlsSessionInfoHeader, includeSslSessionAttribute, modeledHeaderParsing, customMethods,
+      customStatusCodes, customMediaTypes, Long.MaxValue)
+
+  def copy(
+      maxUriLength: Int,
+      maxMethodLength: Int,
+      maxResponseReasonLength: Int,
+      maxHeaderNameLength: Int,
+      maxHeaderValueLength: Int,
+      maxHeaderCount: Int,
+      maxContentLengthSetting: Option[Long],
+      maxToStrictBytes: Long,
+      maxChunkExtLength: Int,
+      maxChunkSize: Int,
+      maxChunkCount: Int,
+      maxPartCount: Int,
+      maxCommentParsingDepth: Int,
+      uriParsingMode: Uri.ParsingMode,
+      cookieParsingMode: CookieParsingMode,
+      illegalHeaderWarnings: Boolean,
+      ignoreIllegalHeaderFor: Set[String],
+      errorLoggingVerbosity: ErrorLoggingVerbosity,
+      illegalResponseHeaderNameProcessingMode: IllegalResponseHeaderNameProcessingMode,
+      illegalResponseHeaderValueProcessingMode: IllegalResponseHeaderValueProcessingMode,
+      conflictingContentTypeHeaderProcessingMode: ConflictingContentTypeHeaderProcessingMode,
+      headerValueCacheLimits: Map[String, Int],
+      includeTlsSessionInfoHeader: Boolean,
+      includeSslSessionAttribute: Boolean,
+      modeledHeaderParsing: Boolean,
+      customMethods: String => Option[HttpMethod],
+      customStatusCodes: Int => Option[StatusCode],
+      customMediaTypes: MediaTypes.FindCustom): ParserSettingsImpl =
+    new ParserSettingsImpl(
+      maxUriLength, maxMethodLength, maxResponseReasonLength, maxHeaderNameLength, maxHeaderValueLength,
+      maxHeaderCount, maxContentLengthSetting, maxToStrictBytes, maxChunkExtLength, maxChunkSize, maxChunkCount,
+      maxPartCount, maxCommentParsingDepth, uriParsingMode, cookieParsingMode, illegalHeaderWarnings,
+      ignoreIllegalHeaderFor, errorLoggingVerbosity, illegalResponseHeaderNameProcessingMode,
+      illegalResponseHeaderValueProcessingMode, conflictingContentTypeHeaderProcessingMode, headerValueCacheLimits,
+      includeTlsSessionInfoHeader, includeSslSessionAttribute, modeledHeaderParsing, customMethods,
+      customStatusCodes, customMediaTypes, http1FieldSectionSize)
+
+  // Defining a copy overload suppresses the compiler-generated defaulted copy. Retain its old defaults
+  // and the new field so that unrelated fluent setters cannot accidentally reset the limit.
+  def copy(
+      maxUriLength: Int = this.maxUriLength,
+      maxMethodLength: Int = this.maxMethodLength,
+      maxResponseReasonLength: Int = this.maxResponseReasonLength,
+      maxHeaderNameLength: Int = this.maxHeaderNameLength,
+      maxHeaderValueLength: Int = this.maxHeaderValueLength,
+      maxHeaderCount: Int = this.maxHeaderCount,
+      maxContentLengthSetting: Option[Long] = this.maxContentLengthSetting,
+      maxToStrictBytes: Long = this.maxToStrictBytes,
+      maxChunkExtLength: Int = this.maxChunkExtLength,
+      maxChunkSize: Int = this.maxChunkSize,
+      maxChunkCount: Int = this.maxChunkCount,
+      maxPartCount: Int = this.maxPartCount,
+      maxCommentParsingDepth: Int = this.maxCommentParsingDepth,
+      uriParsingMode: Uri.ParsingMode = this.uriParsingMode,
+      cookieParsingMode: CookieParsingMode = this.cookieParsingMode,
+      illegalHeaderWarnings: Boolean = this.illegalHeaderWarnings,
+      ignoreIllegalHeaderFor: Set[String] = this.ignoreIllegalHeaderFor,
+      errorLoggingVerbosity: ErrorLoggingVerbosity = this.errorLoggingVerbosity,
+      illegalResponseHeaderNameProcessingMode: IllegalResponseHeaderNameProcessingMode =
+        this.illegalResponseHeaderNameProcessingMode,
+      illegalResponseHeaderValueProcessingMode: IllegalResponseHeaderValueProcessingMode =
+        this.illegalResponseHeaderValueProcessingMode,
+      conflictingContentTypeHeaderProcessingMode: ConflictingContentTypeHeaderProcessingMode =
+        this.conflictingContentTypeHeaderProcessingMode,
+      headerValueCacheLimits: Map[String, Int] = this.headerValueCacheLimits,
+      includeTlsSessionInfoHeader: Boolean = this.includeTlsSessionInfoHeader,
+      includeSslSessionAttribute: Boolean = this.includeSslSessionAttribute,
+      modeledHeaderParsing: Boolean = this.modeledHeaderParsing,
+      customMethods: String => Option[HttpMethod] = this.customMethods,
+      customStatusCodes: Int => Option[StatusCode] = this.customStatusCodes,
+      customMediaTypes: MediaTypes.FindCustom = this.customMediaTypes,
+      http1FieldSectionSize: Long = this.http1FieldSectionSize): ParserSettingsImpl =
+    new ParserSettingsImpl(
+      maxUriLength, maxMethodLength, maxResponseReasonLength, maxHeaderNameLength, maxHeaderValueLength,
+      maxHeaderCount, maxContentLengthSetting, maxToStrictBytes, maxChunkExtLength, maxChunkSize, maxChunkCount,
+      maxPartCount, maxCommentParsingDepth, uriParsingMode, cookieParsingMode, illegalHeaderWarnings,
+      ignoreIllegalHeaderFor, errorLoggingVerbosity, illegalResponseHeaderNameProcessingMode,
+      illegalResponseHeaderValueProcessingMode, conflictingContentTypeHeaderProcessingMode, headerValueCacheLimits,
+      includeTlsSessionInfoHeader, includeSslSessionAttribute, modeledHeaderParsing, customMethods,
+      customStatusCodes, customMediaTypes, http1FieldSectionSize)
 
   require(maxUriLength > 0, "max-uri-length must be > 0")
   require(maxMethodLength > 0, "max-method-length must be > 0")
@@ -71,6 +194,7 @@ private[pekko] final case class ParserSettingsImpl(
   require(maxHeaderNameLength > 0, "max-header-name-length must be > 0")
   require(maxHeaderValueLength > 0, "max-header-value-length must be > 0")
   require(maxHeaderCount > 0, "max-header-count must be > 0")
+  require(http1FieldSectionSize > 0, "max-http1-field-section-size must be > 0")
   require(maxContentLengthSetting.forall(_ >= 0), "if set max-content-length must be >= 0")
   require(maxChunkExtLength > 0, "max-chunk-ext-length must be > 0")
   require(maxChunkSize > 0, "max-chunk-size must be > 0")
@@ -93,6 +217,45 @@ private[pekko] final case class ParserSettingsImpl(
 }
 
 object ParserSettingsImpl extends SettingsCompanionImpl[ParserSettingsImpl]("pekko.http.parsing") {
+
+  // Compatibility overload for the previous case-class factory.
+  def apply(
+      maxUriLength: Int,
+      maxMethodLength: Int,
+      maxResponseReasonLength: Int,
+      maxHeaderNameLength: Int,
+      maxHeaderValueLength: Int,
+      maxHeaderCount: Int,
+      maxContentLengthSetting: Option[Long],
+      maxToStrictBytes: Long,
+      maxChunkExtLength: Int,
+      maxChunkSize: Int,
+      maxChunkCount: Int,
+      maxPartCount: Int,
+      maxCommentParsingDepth: Int,
+      uriParsingMode: Uri.ParsingMode,
+      cookieParsingMode: CookieParsingMode,
+      illegalHeaderWarnings: Boolean,
+      ignoreIllegalHeaderFor: Set[String],
+      errorLoggingVerbosity: ErrorLoggingVerbosity,
+      illegalResponseHeaderNameProcessingMode: IllegalResponseHeaderNameProcessingMode,
+      illegalResponseHeaderValueProcessingMode: IllegalResponseHeaderValueProcessingMode,
+      conflictingContentTypeHeaderProcessingMode: ConflictingContentTypeHeaderProcessingMode,
+      headerValueCacheLimits: Map[String, Int],
+      includeTlsSessionInfoHeader: Boolean,
+      includeSslSessionAttribute: Boolean,
+      modeledHeaderParsing: Boolean,
+      customMethods: String => Option[HttpMethod],
+      customStatusCodes: Int => Option[StatusCode],
+      customMediaTypes: MediaTypes.FindCustom): ParserSettingsImpl =
+    new ParserSettingsImpl(
+      maxUriLength, maxMethodLength, maxResponseReasonLength, maxHeaderNameLength, maxHeaderValueLength,
+      maxHeaderCount, maxContentLengthSetting, maxToStrictBytes, maxChunkExtLength, maxChunkSize, maxChunkCount,
+      maxPartCount, maxCommentParsingDepth, uriParsingMode, cookieParsingMode, illegalHeaderWarnings,
+      ignoreIllegalHeaderFor, errorLoggingVerbosity, illegalResponseHeaderNameProcessingMode,
+      illegalResponseHeaderValueProcessingMode, conflictingContentTypeHeaderProcessingMode, headerValueCacheLimits,
+      includeTlsSessionInfoHeader, includeSslSessionAttribute, modeledHeaderParsing, customMethods,
+      customStatusCodes, customMediaTypes, Long.MaxValue)
 
   private val noCustomMethods: String => Option[HttpMethod] = ConstantFun.scalaAnyToNone
   private val noCustomStatusCodes: Int => Option[StatusCode] = ConstantFun.scalaAnyToNone
@@ -134,7 +297,8 @@ object ParserSettingsImpl extends SettingsCompanionImpl[ParserSettingsImpl]("pek
       c.getBoolean("modeled-header-parsing"),
       noCustomMethods,
       noCustomStatusCodes,
-      noCustomMediaTypes)
+      noCustomMediaTypes,
+      c.getPossiblyInfiniteBytes("max-http1-field-section-size"))
   }
 
 }

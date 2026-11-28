@@ -41,6 +41,13 @@ abstract class ParserSettings private[pekko] () extends BodyPartParser.Settings 
   def getMaxHeaderCount: Int
 
   /**
+   * The size limit, in bytes, for each incoming HTTP/1 field section. Long.MAX_VALUE disables this limit.
+   *
+   * @since 2.1.0
+   */
+  def getMaxHttp1FieldSectionSize: Long = self.http1FieldSectionSize
+
+  /**
    * The maximum number of body parts a multipart entity may consist of.
    *
    * @since 2.0.0
@@ -77,6 +84,13 @@ abstract class ParserSettings private[pekko] () extends BodyPartParser.Settings 
   def withMaxHeaderNameLength(newValue: Int): ParserSettings = self.copy(maxHeaderNameLength = newValue)
   def withMaxHeaderValueLength(newValue: Int): ParserSettings = self.copy(maxHeaderValueLength = newValue)
   def withMaxHeaderCount(newValue: Int): ParserSettings = self.copy(maxHeaderCount = newValue)
+
+  /**
+   * Returns settings with the given incoming HTTP/1 field-section limit, in bytes. Use Long.MAX_VALUE to disable it.
+   *
+   * @since 2.1.0
+   */
+  def withMaxHttp1FieldSectionSize(newValue: Long): ParserSettings = self.copy(http1FieldSectionSize = newValue)
   def withMaxContentLength(newValue: Long): ParserSettings = self.copy(maxContentLengthSetting = Some(newValue))
   def withMaxToStrictBytes(newValue: Long): ParserSettings = self.copy(maxToStrictBytes = newValue)
   def withMaxChunkExtLength(newValue: Int): ParserSettings = self.copy(maxChunkExtLength = newValue)
