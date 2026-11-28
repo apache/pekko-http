@@ -313,27 +313,31 @@ private[http] trait HttpMessageParser[Output >: MessageOutput <: ParserOutput] {
             s"HTTP chunk count exceeds the configured limit of ${settings.maxChunkCount} chunks")
         else {
           val chunkBodyEnd = cursor + chunkSize
-          def result(terminatorLen: Int) = {
+          def result() = {
             emit(EntityChunk(HttpEntity.Chunk(input.slice(cursor, chunkBodyEnd).compact, extension)))
             Trampoline(_ =>
-              parseChunk(input, chunkBodyEnd + terminatorLen, isLastMessage, totalBytesRead + chunkSize,
+              parseChunk(input, chunkBodyEnd + 2, isLastMessage, totalBytesRead + chunkSize,
                 chunkCount + 1))
           }
-          byteAt(input, chunkBodyEnd) match {
-            case CR_BYTE if byteAt(input, chunkBodyEnd + 1) == LF_BYTE => result(2)
-            case LF_BYTE                                               => result(1)
-            case x                                                     => failEntityStream("Illegal chunk termination")
-          }
+          // RFC 9112, section 7.1: chunk data is followed by CRLF. A bare LF is not accepted here (the leniency of
+          // section 2.2 covers the start-line and fields only): a fronting proxy that skips two bytes after the chunk
+          // data, or that only knows CRLF, would otherwise disagree on where the next chunk starts.
+          if (byteAt(input, chunkBodyEnd) == CR_BYTE && byteAt(input, chunkBodyEnd + 1) == LF_BYTE) result()
+          else failEntityStream("Illegal chunk termination")
         }
       } else parseTrailer(extension, cursor)
 
     @tailrec def parseChunkExtensions(chunkSize: Int, cursor: Int)(startIx: Int = cursor): StateResult =
       if (cursor - startIx <= settings.maxChunkExtLength) {
         def extension = asciiString(input, startIx, cursor)
-        byteAt(input, cursor) match {
-          case CR_BYTE if byteAt(input, cursor + 1) == LF_BYTE => parseChunkBody(chunkSize, extension, cursor + 2)
-          case LF_BYTE                                         => parseChunkBody(chunkSize, extension, cursor + 1)
-          case _                                               => parseChunkExtensions(chunkSize, cursor + 1)(startIx)
+        // The chunk line ends with CRLF only. Control characters, a bare CR or LF in particular, are rejected rather
+        // than taken as extension content or as a line end, so that this parser and a fronting proxy cannot disagree
+        // on where the chunk data starts.
+        byteChar(input, cursor) match {
+          case '\r' if byteAt(input, cursor + 1) == LF_BYTE => parseChunkBody(chunkSize, extension, cursor + 2)
+          case c if (c < ' ' && c != '\t') || c == '\u007f' =>
+            failEntityStream(s"Illegal character '${escape(c)}' in chunk extension")
+          case _ => parseChunkExtensions(chunkSize, cursor + 1)(startIx)
         }
       } else failEntityStream(
         s"HTTP chunk extension length exceeds configured limit of ${settings.maxChunkExtLength} characters")
@@ -351,10 +355,10 @@ private[http] trait HttpMessageParser[Output >: MessageOutput <: ParserOutput] {
           case c if size > settings.maxChunkSize =>
             failEntityStream(
               s"HTTP chunk of $size bytes exceeds the configured limit of ${settings.maxChunkSize} bytes")
-          case ';' if cursor > offset                                          => parseChunkExtensions(size.toInt, cursor + 1)()
+          case ';' if cursor > offset => parseChunkExtensions(size.toInt, cursor + 1)()
+          // only CRLF ends the chunk-size line, a bare LF falls through to the illegal-character case
           case '\r' if cursor > offset && byteAt(input, cursor + 1) == LF_BYTE =>
             parseChunkBody(size.toInt, "", cursor + 2)
-          case '\n' if cursor > offset                         => parseChunkBody(size.toInt, "", cursor + 1)
           case c if CharacterClasses.WSP(c) && cursor > offset => parseSize(cursor + 1, size, sawWhitespace = true)
           case c                                               => failEntityStream(s"Illegal character '${escape(c)}' in chunk start")
         }

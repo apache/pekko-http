@@ -307,21 +307,20 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
 
       "message chunk with and without extension" in new Test {
         Seq(
-          start +
-          """3
+          prep(start) + crlf("""3
             |abc
             |10;some=stuff;bla
             |0123456789ABCDEF
-            |""",
+            |"""),
           "10;foo=",
-          """bar
+          crlf("""bar
             |0123456789ABCDEF
             |A
-            |0123456789""",
-          """
+            |0123456789"""),
+          crlf("""
             |0
             |
-            |""") should generalMultiParseTo(
+            |""")) should generalRawMultiParseTo(
           Right(baseRequest.withEntity(Chunked(`application/pdf`,
             source(
               Chunk(ByteString("abc")),
@@ -334,33 +333,33 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
 
       "message end" in new Test {
         Seq(
-          start,
-          """0
+          prep(start),
+          crlf("""0
             |
-            |""") should generalMultiParseTo(
+            |""")) should generalRawMultiParseTo(
           Right(baseRequest.withEntity(Chunked(`application/pdf`, source(LastChunk)))))
         closeAfterResponseCompletion shouldEqual Seq(false)
       }
 
       "with incorrect but harmless whitespace after chunk size" in new Test {
         Seq(
-          start,
-          s"""|0${"  " /* explicit trailing spaces */}
+          prep(start),
+          crlf(s"""|0${"  " /* explicit trailing spaces */}
               |
-              |""") should generalMultiParseTo(
+              |""")) should generalRawMultiParseTo(
           Right(baseRequest.withEntity(Chunked(`application/pdf`, source(LastChunk)))))
         closeAfterResponseCompletion shouldEqual Seq(false)
       }
 
       "message end with extension and trailer" in new Test {
         Seq(
-          start,
-          """000;nice=true
-            |Foo: pip
+          prep(start),
+          crlf("""000;nice=true
+            |""") + prep("""Foo: pip
             | apo
             |Bar: xyz
             |
-            |""") should generalMultiParseTo(
+            |""")) should generalRawMultiParseTo(
           Right(baseRequest.withEntity(Chunked(
             `application/pdf`,
             source(LastChunk("nice=true", List(RawHeader("Foo", "pip apo"), RawHeader("Bar", "xyz"))))))))
@@ -370,8 +369,8 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
       "stop parsing a request that has more chunks than the configured limit" in new Test {
         override protected def parserSettings: ParserSettings = super.parserSettings.withMaxChunkCount(2)
 
-        val input = prep(start +
-          """1
+        val input = prep(start) +
+          crlf("""1
             |a
             |1
             |b
@@ -394,10 +393,10 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
         override val awaitAtMost = 10000.millis.dilated
 
         val numChunks = 12000 // failed starting from 4000 with sbt started with `-Xss2m`
-        val oneChunk = s"1${newLine}z\n"
-        val manyChunks = (oneChunk * numChunks) + s"0${newLine}"
+        val oneChunk = "1\r\nz\r\n"
+        val manyChunks = (oneChunk * numChunks) + "0\r\n"
 
-        val result = multiParse(newParser)(Seq(prep(start + manyChunks)))
+        val result = multiParse(newParser)(Seq(prep(start) + manyChunks))
         val HttpEntity.Chunked(_, chunks) = result.head.toOption.get.req.entity
         val strictChunks = chunks.limit(100000).runWith(Sink.seq).awaitResult(awaitAtMost)
         strictChunks.size shouldEqual numChunks
@@ -405,14 +404,14 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
     }
 
     "properly parse a chunked transfer encoding request" in new Test {
-      """PATCH /data HTTP/1.1
+      Seq(prep("""PATCH /data HTTP/1.1
         |Transfer-Encoding: chunked
         |Content-Type: application/pdf
         |Host: ping
         |
-        |0
+        |""") + crlf("""0
         |
-        |""" should parseTo(HttpRequest(PATCH, "/data", List(Host("ping")),
+        |""")) should rawMultiParseTo(HttpRequest(PATCH, "/data", List(Host("ping")),
         HttpEntity.Chunked(`application/pdf`, source(LastChunk))))
       closeAfterResponseCompletion shouldEqual Seq(false)
     }
@@ -635,27 +634,71 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
         override def parserSettings: ParserSettings =
           super.parserSettings.withMaxChunkCount(5)
 
-        val chunks = (1 to 10).map(i => s"1\na\n").mkString + "0\n"
-        val result = multiParse(newParser)(Seq(prep(start + chunks)))
+        val chunks = (1 to 10).map(i => "1\r\na\r\n").mkString + "0\r\n\r\n"
+        val result = multiParse(newParser)(Seq(prep(start) + chunks))
         val errors = result.collect { case Left(EntityStreamError(info)) => info.summary }
         errors should contain("HTTP chunk count exceeds the configured limit of 5 chunks")
       }
 
       "an illegal chunk termination" in new Test {
         Seq(
-          start,
-          """3
-            |abcde""") should generalMultiParseTo(
+          prep(start),
+          crlf("""3
+            |abcde""")) should generalRawMultiParseTo(
           Right(baseRequest),
           Left(EntityStreamError(ErrorInfo("Illegal chunk termination"))))
         closeAfterResponseCompletion shouldEqual Seq(false)
       }
 
+      // RFC 9112, section 7.1: the lines of the chunked coding end with CRLF. Accepting a bare LF (or taking a bare CR
+      // as extension content) would let this parser and a fronting proxy disagree on the chunk framing.
+      "a chunk-size line ending in a bare LF" in new Test {
+        Seq(prep(start), "3\nabc\r\n0\r\n\r\n") should generalRawMultiParseTo(
+          Right(baseRequest),
+          Left(EntityStreamError(ErrorInfo("Illegal character '\\n' in chunk start"))))
+        closeAfterResponseCompletion shouldEqual Seq(false)
+      }
+
+      "a last-chunk line ending in a bare LF" in new Test {
+        Seq(prep(start), "0\n\r\n") should generalRawMultiParseTo(
+          Right(baseRequest),
+          Left(EntityStreamError(ErrorInfo("Illegal character '\\n' in chunk start"))))
+        closeAfterResponseCompletion shouldEqual Seq(false)
+      }
+
+      "chunk data followed by a bare LF" in new Test {
+        Seq(prep(start), "3\r\nabc\n0\r\n\r\n") should generalRawMultiParseTo(
+          Right(baseRequest),
+          Left(EntityStreamError(ErrorInfo("Illegal chunk termination"))))
+        closeAfterResponseCompletion shouldEqual Seq(false)
+      }
+
+      "a chunk extension ending in a bare LF" in new Test {
+        Seq(prep(start), "3;a=b\nabc\r\n0\r\n\r\n") should generalRawMultiParseTo(
+          Right(baseRequest),
+          Left(EntityStreamError(ErrorInfo("Illegal character '\\n' in chunk extension"))))
+        closeAfterResponseCompletion shouldEqual Seq(false)
+      }
+
+      "a bare CR in a chunk extension" in new Test {
+        Seq(prep(start), "3;a\rb\r\nabc\r\n0\r\n\r\n") should generalRawMultiParseTo(
+          Right(baseRequest),
+          Left(EntityStreamError(ErrorInfo("Illegal character '\\r' in chunk extension"))))
+        closeAfterResponseCompletion shouldEqual Seq(false)
+      }
+
+      "a control character in a chunk extension" in new Test {
+        Seq(prep(start), "3;a=\u0000\r\nabc\r\n0\r\n\r\n") should generalRawMultiParseTo(
+          Right(baseRequest),
+          Left(EntityStreamError(ErrorInfo("Illegal character '\\u0000' in chunk extension"))))
+        closeAfterResponseCompletion shouldEqual Seq(false)
+      }
+
       "an illegal header in the trailer" in new Test {
         Seq(
-          start,
-          """0
-            |F@oo: pip""") should generalMultiParseTo(
+          prep(start),
+          crlf("""0
+            |""") + prep("F@oo: pip")) should generalRawMultiParseTo(
           Right(baseRequest),
           Left(EntityStreamError(ErrorInfo("Illegal character '@' in header name"))))
         closeAfterResponseCompletion shouldEqual Seq(false)
@@ -1070,6 +1113,9 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
         .fast.recover { case _: NoSuchElementException => Nil }
 
     def prep(response: String) = response.stripMarginWithNewline(newLine)
+
+    /** The chunked coding requires CRLF line ends whatever the line ends of the start-line and header fields */
+    def crlf(chunks: String) = chunks.stripMarginWithNewline("\r\n")
   }
 
   def source[T](elems: T*): Source[T, NotUsed] = Source(elems.toList)
