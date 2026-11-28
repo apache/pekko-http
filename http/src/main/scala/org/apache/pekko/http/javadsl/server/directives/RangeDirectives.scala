@@ -16,9 +16,19 @@ package directives
 
 import java.util.function.Supplier
 
+import org.apache.pekko.http.javadsl.server.RangeResource
 import org.apache.pekko.http.scaladsl.server.{ Directives => D }
 
 abstract class RangeDirectives extends PathDirectives {
+
+  /**
+   * Serves a known-length representation through its position-based reader. Pekko HTTP selects the ranges and
+   * supplies the response headers and multipart format. The reader is acquired only on response-body demand.
+   * To apply Range only to GET, keep `pekko.http.server.transparent-head-requests` off (the default); otherwise
+   * the server can present HEAD to this route as GET.
+   */
+  def getFromRangeResource(resource: RangeResource): Route =
+    RouteAdapter(D.getFromRangeResource(resource.delegate))
 
   /**
    * Answers GET requests with an `Accept-Ranges: bytes` header and converts HttpResponses coming back from its inner

@@ -75,8 +75,19 @@ trait FileAndResourceDirectives {
       if (file.isFile && file.canRead)
         conditionalFor(file.length, file.lastModified) {
           if (file.length > 0) {
-            withRangeSupportAndPrecompressedMediaTypeSupport {
-              complete(HttpEntity.Default(contentType, file.length, FileIO.fromPath(file.toPath)))
+            extractSettings { settings =>
+              if (settings.preserveRangeRequestOrder) {
+                val path = file.toPath
+                val entity = HttpEntity.Default(contentType, file.length, FileIO.fromPath(path))
+                (RangeDirectives.withFileRangeSupport(entity, path) &
+                CodingDirectives.withPrecompressedMediaTypeSupport) {
+                  complete(entity)
+                }
+              } else {
+                withRangeSupportAndPrecompressedMediaTypeSupport {
+                  complete(HttpEntity.Default(contentType, file.length, FileIO.fromPath(file.toPath)))
+                }
+              }
             }
           } else complete(HttpEntity.Empty)
         }
