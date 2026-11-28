@@ -46,3 +46,29 @@ Scala
 
 Java
 :  @@snip [FileAndResourceDirectivesExamplesTest.java](/docs/src/test/java/docs/http/javadsl/server/directives/FileAndResourceDirectivesExamplesTest.java) { #getFromFile }
+
+## Serving a precompressed gzip variant
+
+`getFromFileWithPrecompressedGzip` is an opt-in for a file that has an application-provided gzip variant. Pass the
+same underlying content type for both files and two distinct strong entity tags that describe the actual bytes of
+each version. Keep the declared files immutable for the lifetime of the route. For example, use paths and validators
+from a versioned asset manifest. Do not derive the gzip tag by just appending a suffix to an unverified identity tag.
+
+The directive selects the file using `Accept-Encoding` before testing the request's conditions (RFC 9110,
+[section 8.8.3.3](https://www.rfc-editor.org/rfc/rfc9110.html#section-8.8.3.3) and
+[section 13.2.2](https://www.rfc-editor.org/rfc/rfc9110.html#section-13.2.2)). If revalidation finds the selected
+representation unchanged, the directive returns an empty `304 Not Modified` with its tag and `Vary: Accept-Encoding`,
+without preparing or opening a file body. This still checks file availability and modification time. The identity
+file must be readable; an unreadable gzip variant is not offered. The route rejects if none of the available
+encodings is acceptable. Earlier origin preconditions remain handled by @ref[conditional](../cache-condition-directives/conditional.md)
+using the same selected file's validators.
+
+This directive serves whole representations, does not apply byte ranges, and does not compress files on demand.
+It is separate from `getFromFile` and its settings. Do not wrap it in `encodeResponse` or transform the response's
+representation after selection: the supplied strong ETag describes the bytes of the selected file.
+
+Scala
+:  ``getFromFileWithPrecompressedGzip(file, identityTag, gzipFile, gzipTag, ContentTypes.`text/plain(UTF-8)`)``
+
+Java
+:  @@snip [FileAndResourceDirectivesExamplesTest.java](/docs/src/test/java/docs/http/javadsl/server/directives/FileAndResourceDirectivesExamplesTest.java) { #getFromFileWithPrecompressedGzip }

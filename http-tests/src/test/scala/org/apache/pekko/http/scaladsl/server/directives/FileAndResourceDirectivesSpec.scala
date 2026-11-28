@@ -253,6 +253,73 @@ class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Ins
     }
   }
 
+  "getFromFileWithPrecompressedGzip" should {
+    "choose the file before evaluating preconditions" in {
+      val file = Files.createTempFile("pekko-http-identity", ".txt")
+      val gzipFile = Files.createTempFile("pekko-http-gzip", ".txt.gz")
+      val identityTag = EntityTag("identity-v1")
+      val gzipTag = EntityTag("gzip-v1")
+      val body = "asset content"
+      val gzipAccepted = `Accept-Encoding`(HttpEncodings.gzip)
+      val vary = RawHeader("Vary", "Accept-Encoding")
+      try {
+        val bytes = body.getBytes(StandardCharsets.UTF_8)
+        Files.write(file, bytes)
+        val gzipOut = new java.util.zip.GZIPOutputStream(Files.newOutputStream(gzipFile))
+        try gzipOut.write(bytes)
+        finally gzipOut.close()
+
+        val route = getFromFileWithPrecompressedGzip(
+          file.toFile, identityTag, gzipFile.toFile, gzipTag, ContentTypes.`text/plain(UTF-8)`)
+        Get() ~> route ~> check {
+          status shouldEqual StatusCodes.OK
+          headers.filter(_.is("vary")) shouldEqual List(vary)
+          header[ETag] shouldEqual Some(ETag(identityTag))
+          header[`Content-Encoding`] shouldEqual None
+          responseAs[String] shouldEqual body
+        }
+        val gzipRequest = Get().withHeaders(
+          gzipAccepted, `If-None-Match`(EntityTagRange(identityTag)), Range(ByteRange(0, 3)))
+        gzipRequest ~> route ~> check {
+          status shouldEqual StatusCodes.OK
+          headers.filter(_.is("vary")) shouldEqual List(vary)
+          header[ETag] shouldEqual Some(ETag(gzipTag))
+          header[`Content-Encoding`] shouldEqual Some(`Content-Encoding`(HttpEncodings.gzip))
+          header[`Content-Range`] shouldEqual None
+          header[`Accept-Ranges`] shouldEqual None
+          responseAs[Array[Byte]].toSeq shouldEqual Files.readAllBytes(gzipFile).toSeq
+        }
+        val revalidation = `If-None-Match`(EntityTagRange(gzipTag))
+        val notModifiedRequests = List(
+          Get().withHeaders(gzipAccepted, revalidation),
+          Get().withHeaders(gzipAccepted, `If-Match`(EntityTagRange(gzipTag)), revalidation))
+        for (req <- notModifiedRequests) {
+          req ~> route ~> check {
+            status shouldEqual StatusCodes.NotModified
+            headers.filter(_.is("vary")) shouldEqual List(vary)
+            header[ETag] shouldEqual Some(ETag(gzipTag))
+            header[`Content-Encoding`] shouldEqual None
+            response.entity shouldEqual HttpEntity.Empty
+          }
+        }
+        val earlierPrecondition = Get().withHeaders(
+          gzipAccepted, `If-Match`(EntityTagRange(identityTag)), revalidation)
+        earlierPrecondition ~> route ~> check {
+          status shouldEqual StatusCodes.PreconditionFailed
+        }
+        val missing = file.resolveSibling(s"${file.getFileName}.missing")
+        val missingRoute = getFromFileWithPrecompressedGzip(
+          missing.toFile, identityTag, gzipFile.toFile, gzipTag, ContentTypes.`text/plain(UTF-8)`)
+        Get().withHeaders(gzipAccepted, revalidation) ~> missingRoute ~> check {
+          handled shouldEqual false
+        }
+      } finally {
+        Files.deleteIfExists(gzipFile)
+        Files.deleteIfExists(file)
+      }
+    }
+  }
+
   "getFromDirectory" should {
     def _getFromDirectory(directory: String) = getFromDirectory(new File(testRoot, directory).getCanonicalPath)
 
