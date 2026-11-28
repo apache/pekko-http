@@ -150,6 +150,19 @@ class HttpMessageRenderingSpec extends AnyWordSpec with Matchers {
       value1.exists(_._1 == "date") shouldBe false
     }
 
+    "render only the host and port of a modeled HTTP/2 request authority" in {
+      val host = Uri.Host("example.test")
+      val ipv6 = Uri.Host("[2001:db8::7]")
+      val syntheticUserInfo = "synthetic-component"
+      val cases = Seq(
+        Uri.Authority(host) -> "example.test",
+        Uri.Authority(host, userinfo = syntheticUserInfo) -> "example.test",
+        Uri.Authority(host, 8443, syntheticUserInfo) -> "example.test:8443",
+        Uri.Authority(ipv6, 8443, syntheticUserInfo) -> "[2001:db8::7]:8443")
+      for ((authority, expected) <- cases)
+        HttpMessageRendering.renderRequestAuthority(authority) shouldBe expected
+    }
+
     "take ':scheme' and ':authority' of a relative URI from the connection" in {
       // RFC 9113 8.3.1: ':scheme' is mandatory and ':authority' must not be empty
       pseudoHeaders(HttpRequest(uri = "/foo"), "https", Uri.Authority(Uri.Host("example.com"))) shouldEqual

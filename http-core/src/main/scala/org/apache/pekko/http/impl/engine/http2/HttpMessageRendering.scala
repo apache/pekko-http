@@ -87,14 +87,18 @@ private[http2] class RequestRendering(
     headerPairs
   }
 
-  // a `Host` header names the authority of a relative URI, as it does in HTTP/1.1, ahead of the connection's
-  private def authority(request: HttpRequest): String =
-    if (!request.uri.authority.isEmpty) request.uri.authority.toString
-    else
-      request.header[Host] match {
-        case Some(host) if !host.isEmpty => Uri.Authority(host.host, host.port).toString
-        case _                           => connectionAuthority.toString
-      }
+  private def authority(request: HttpRequest): String = {
+    val uriAuthority = request.uri.authority
+    val effectiveAuthority =
+      if (uriAuthority.nonEmpty) uriAuthority
+      else
+        // A Host header names the authority of a relative URI ahead of the connection's authority.
+        request.header[Host] match {
+          case Some(host) if !host.isEmpty => Uri.Authority(host.host, host.port)
+          case _                           => connectionAuthority
+        }
+    HttpMessageRendering.renderRequestAuthority(effectiveAuthority)
+  }
 
   // `Raw-Request-URI` is a SyntheticHeader, so it is already excluded from the rendered header block by the
   // `renderInRequests` filter and is only consumed here. As in HTTP/1.1, the value is taken as given; the header
@@ -156,6 +160,11 @@ private[http2] sealed abstract class MessageRendering[R <: HttpMessage] extends 
 /** INTERNAL API */
 @InternalApi
 private[http2] object HttpMessageRendering {
+
+  // RFC 9113 Section 8.3.1 excludes userinfo from the HTTP(S) :authority field.
+  def renderRequestAuthority(authority: Uri.Authority): String =
+    if (authority.userinfo.isEmpty) authority.toString
+    else authority.copy(userinfo = "").toString
 
   // One policy for initial fields and both streamed and attribute-supplied trailers.
   def allowsHeader(header: HttpHeader, isServer: Boolean, isTrailer: Boolean,
