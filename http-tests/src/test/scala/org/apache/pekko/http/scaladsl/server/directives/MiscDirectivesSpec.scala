@@ -24,7 +24,9 @@ import org.apache.pekko
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers._
 import pekko.http.scaladsl.server.util.VarArgsFunction1
+import pekko.stream.scaladsl.Source
 import pekko.testkit._
+import pekko.util.ByteString
 
 class MiscDirectivesSpec extends RoutingSpec {
 
@@ -137,6 +139,28 @@ class MiscDirectivesSpec extends RoutingSpec {
       Post("/abc", entityOfSize(501)) ~> Route.seal(route) ~> check {
         status shouldEqual StatusCodes.ContentTooLarge
         entityAs[String] should include("exceeded size limit")
+      }
+    }
+
+    "accept and consume each request entity shape at the exact byte limit" in {
+      val contentType = ContentTypes.`text/plain(UTF-8)`
+      val parts = List(ByteString("th"), ByteString("\u00e9"))
+      val body = parts.reduce(_ ++ _)
+      val route = withSizeLimit(body.length.toLong) {
+        entity(as[String]) { text =>
+          complete(text)
+        }
+      }
+      val entities: List[(String, RequestEntity)] = List(
+        "strict" -> HttpEntity.Strict(contentType, body),
+        "known-length streamed" -> HttpEntity.Default(contentType, body.length.toLong, Source(parts)),
+        "chunked" -> HttpEntity.Chunked.fromData(contentType, Source(parts)))
+
+      for ((shape, requestEntity) <- entities) withClue(s"$shape: ") {
+        Post("/abc", requestEntity) ~> route ~> check {
+          status shouldEqual StatusCodes.OK
+          responseAs[String] shouldEqual body.utf8String
+        }
       }
     }
 
