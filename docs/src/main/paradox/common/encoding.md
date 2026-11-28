@@ -37,6 +37,10 @@ a hint whether content of a given media type would benefit from compression.
 
 Responses are not decoded automatically on the client-side.
 
+A response with a single `x-gzip` coding can also be decoded with a supplied `gzip` decoder
+([RFC 9110 §8.4.1.3](https://www.rfc-editor.org/rfc/rfc9110.html#section-8.4.1.3)).
+If you supply a decoder named `x-gzip` explicitly, that decoder takes precedence.
+
 @scala[`Coders.decodeMessage`]@java[`Coder.decodeResponse`] decodes a response with the coder that matches its `Content-Encoding`
 header. Coding names are matched case-insensitively. A response whose encoding is not supported by any of the given coders is returned unchanged, with its
 `Content-Encoding` header kept:

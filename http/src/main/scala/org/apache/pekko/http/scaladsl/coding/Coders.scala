@@ -18,7 +18,7 @@ import scala.annotation.nowarn
 import org.apache.pekko
 import pekko.http.impl.model.parser.CharacterClasses
 import pekko.http.scaladsl.model.{ HttpHeader, HttpMessage }
-import pekko.http.scaladsl.model.headers.{ `Content-Encoding`, HttpEncoding }
+import pekko.http.scaladsl.model.headers.{ `Content-Encoding`, HttpEncoding, HttpEncodings }
 import pekko.stream.scaladsl.Flow
 import pekko.util.ByteString
 
@@ -104,17 +104,31 @@ object Coders {
    *
    * The message is returned unchanged if it has no `Content-Encoding` header, if none of `decoders` matches its
    * encoding, or if more than one field or coding is present. In those cases the headers and entity are preserved.
-   * Only flow-based coders also recognize a single application-supplied raw `Content-Encoding` header.
+   * For a response with one modeled `x-gzip` coding, a supplied `gzip` decoder is used as a fallback
+   * if no supplied decoder matches `x-gzip` directly. Only flow-based coders also recognize a single
+   * application-supplied raw `Content-Encoding` header.
    *
    * @param decoders the decoders to choose from, [[Zstd]] is not one of the [[DefaultCoders]]
    * @since 2.0.0
    */
   def decodeMessage(message: HttpMessage, decoders: Seq[Decoder] = DefaultCoders): message.Self =
     singleContentEncodingHeader(message) match {
-      case Some(`Content-Encoding`(Seq(encoding))) =>
+      case Some(header @ `Content-Encoding`(Seq(encoding))) =>
         decoders.find(_.encoding.value.equalsIgnoreCase(encoding.value)) match {
-          case Some(decoder) => decoder.decodeMessage(message)
-          case None          => message.self
+          case Some(decoder)                                                           => decoder.decodeMessage(message)
+          case None if message.isResponse && encoding.value.equalsIgnoreCase("x-gzip") =>
+            decoders.find(_.encoding.value.equalsIgnoreCase(HttpEncodings.gzip.value)) match {
+              case Some(decoder) =>
+                // RFC 9110 §8.4.1.3: x-gzip identifies the same coding as gzip.
+                val canonical = message.mapHeaders(_.map {
+                  case `header` => `Content-Encoding`(HttpEncodings.gzip)
+                  case other    => other
+                })
+                val decoded = decoder.decodeMessage(canonical)
+                if (decoded eq canonical) message.self else decoded
+              case None => message.self
+            }
+          case None => message.self
         }
       case Some(_: `Content-Encoding`) => message.self
       case Some(_)                     =>

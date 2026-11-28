@@ -81,7 +81,8 @@ public enum Coder {
    * Decodes the response with the one of {@code coders} whose encoding matches the response's
    * {@code Content-Encoding} header, without having to check its encoding first. If no coders are
    * given, {@link #Gzip}, {@link #Deflate} and {@link #NoCoding} are used; {@link #Zstd} has to be
-   * given explicitly.
+   * given explicitly. When a response has one modeled {@code x-gzip} coding and no decoder matches
+   * it directly, a supplied {@code gzip} decoder is used as a fallback.
    *
    * <p>The response is returned unchanged if it has no {@code Content-Encoding} header, if none of
    * {@code coders} matches its encoding, or if the header lists more than one encoding. In the last
