@@ -21,6 +21,7 @@ import com.typesafe.config.ConfigFactory
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.actor.ActorSystem
+import pekko.http.impl.engine.rendering.{ HttpRequestRendererFactory, RequestRenderingContext }
 import pekko.http.scaladsl.model.ws.{ InvalidUpgradeResponse, WebSocketUpgradeResponse }
 import pekko.stream.{ ClosedShape, SystemMaterializer }
 import pekko.stream.TLSProtocol._
@@ -35,6 +36,7 @@ import pekko.http.scaladsl.model.headers.{
   `Sec-WebSocket-Protocol`,
   `Sec-WebSocket-Version`,
   `User-Agent`,
+  Host,
   HttpOrigin,
   Origin,
   ProductVersion,
@@ -194,6 +196,20 @@ class WebSocketClientSpec extends PekkoSpecWithMaterializer("pekko.http.client.w
             }
           }
         }
+      }
+    }
+
+    Seq(
+      "ws://example.org/ws?" -> "/ws",
+      "ws://example.org?" -> "/",
+      "ws://example.org/ws?q=" -> "/ws?q=",
+      "ws://example.org?q=two%20words" -> "/?q=two%20words").foreach { case (uriString, expectedTarget) =>
+      s"render the generated WebSocket request target for $uriString" in {
+        val uri = Uri(uriString)
+        val (request, _) = Handshake.Client.buildRequest(uri, Nil, Nil, new Random(0))
+        val context = RequestRenderingContext(request, Host(uri.authority.normalizedFor(uri.scheme)))
+        val rendered = HttpRequestRendererFactory.renderStrict(context, ClientConnectionSettings(system), system.log)
+        rendered.utf8String.linesIterator.next() shouldBe s"GET $expectedTarget HTTP/1.1"
       }
     }
 
