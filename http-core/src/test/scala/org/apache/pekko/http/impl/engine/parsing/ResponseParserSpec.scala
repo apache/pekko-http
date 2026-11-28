@@ -156,6 +156,18 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends PekkoSp
         closeAfterResponseCompletion shouldEqual Seq(false)
       }
 
+      "an HTTP/1.1 response with separate Set-Cookie fields in received order" in new Test {
+        """HTTP/1.1 200 OK
+          |Set-Cookie: layout=compact; Expires=Thu, 01 Jan 2037 12:00:00 GMT
+          |Set-Cookie: timezone=utc
+          |Content-Length: 0
+          |
+          |""" should parseTo(
+          HttpResponse(headers = List(
+            `Set-Cookie`(HttpCookie("layout", "compact", expires = Some(DateTime(2037, 1, 1, 12)))),
+            `Set-Cookie`(HttpCookie("timezone", "utc")))))
+      }
+
       "a response with a registered custom status code" in new Test {
         override def parserSettings: ParserSettings =
           super.parserSettings.withCustomStatusCodes(ServerOnTheMove)
