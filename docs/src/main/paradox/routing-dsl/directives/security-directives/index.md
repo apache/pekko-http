@@ -52,7 +52,7 @@ for authorization (e.g. a database lookup for retrieving user access rights).
 
 HTTP provides a general framework for access control and authentication, via an extensible set of challenge-response
 authentication schemes, which can be used by a server to challenge a client request and by a client to provide
-authentication information. The general mechanism is defined in [RFC 7235](https://tools.ietf.org/html/rfc7235).
+authentication information. The general mechanism is defined in [RFC 9110, Section 11](https://www.rfc-editor.org/rfc/rfc9110.html#section-11).
 
 The "HTTP Authentication Scheme Registry" defines the namespace for the authentication schemes in challenges and
 credentials. You can see the currently registered schemes at [IANA HTTP Authentication Scheme Registry](https://www.iana.org/assignments/http-authschemes/http-authschemes.xhtml).

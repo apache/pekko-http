@@ -25,14 +25,13 @@ Apache Pekko HTTP's HTTP/2 client disables [server push](https://www.rfc-editor.
 
 ## Create the client 
 
-There are three mechanisms for a client to establish an HTTP/2 connection. Apache Pekko HTTP supports:
+Apache Pekko HTTP clients support two ways to start an HTTP/2 connection:
 
- - HTTP/2 over TLS 
- - HTTP/2 over a plain TCP connection ("h2c with Prior Knowledge")
+ - HTTP/2 over TLS
+ - Cleartext HTTP/2 with prior knowledge
 
-Apache Pekko HTTP doesn't support:
-
- - HTTP `Upgrade` mechanism
+The client does not implement the legacy HTTP/1.1 `h2c` Upgrade mechanism, which
+[RFC 9113, Section 3.1](https://www.rfc-editor.org/rfc/rfc9113.html#section-3.1) deprecates.
 
 ### HTTP/2 over TLS
 
@@ -50,9 +49,9 @@ to negotiate whether both client and server support HTTP/2.
 Apache Pekko HTTP does not currently support protocol negotiation to fall back to HTTP/1.1 for this API. When the server does not support HTTP/2, the stream will fail.
 ### h2c with Prior Knowledge
 
-The other option is to connect and start communicating in HTTP/2 immediately. You must know beforehand the target server
-supports HTTP/2 over a plain TCP connection. For this reason this approach is known as h2c with
-[Prior Knowledge](https://httpwg.org/specs/rfc7540.html#known-http) of HTTP/2 support.
+With [prior knowledge](https://www.rfc-editor.org/rfc/rfc9113.html#section-3.3), the client starts speaking HTTP/2
+immediately. It must already know that the target server supports HTTP/2 over a plain TCP connection. No HTTP/1.1
+Upgrade request is sent.
 
 To create a client, use the `Http()` fluent API to connect and use the `http2WithPriorKnowledge()` creator:
 

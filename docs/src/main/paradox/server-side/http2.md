@@ -55,7 +55,8 @@ clients use HTTP/2 over TLS.
 
 Apache Pekko HTTP supports starting a cleartext HTTP/2 connection with
 [Prior Knowledge](https://www.rfc-editor.org/rfc/rfc9113.html#section-3.3). For compatibility with older clients, it
-also supports the HTTP/1.1 Upgrade mechanism from the obsolete RFC 7540 specification.
+also supports the legacy HTTP/1.1 `h2c` Upgrade mechanism defined in the obsolete
+[RFC 7540, Section 3.2](https://www.rfc-editor.org/rfc/rfc7540.html#section-3.2).
 
 Both approaches are supported transparently on the same port and are automatically enabled when HTTP/2 is enabled:
 
@@ -141,10 +142,12 @@ all closed at the same time.
 
 ## Trailing headers
 
-Like in the [HTTP/1.1 'Chunked' transfer encoding](https://datatracker.ietf.org/doc/html/rfc7230#section-4.1.2),
-HTTP/2 supports a [trailer part](https://httpwg.org/specs/rfc7540.html#rfc.section.8.1) containing headers
-after the body. Apache Pekko HTTP currently doesn't expose the trailing headers of the request. For the response, you
-can either model the trailing headers as the @scala[@scaladoc[HttpEntity.LastChunk](org.apache.pekko.http.scaladsl.model.HttpEntity.LastChunk)]@java[last chunk]
+Like [HTTP/1.1 chunked transfer coding](https://www.rfc-editor.org/rfc/rfc9112.html#section-7.1.2),
+[HTTP/2](https://www.rfc-editor.org/rfc/rfc9113.html#section-8.1) can carry trailing fields after the message content.
+HTTP/2 sends trailers in a separate field block, not with `Transfer-Encoding: chunked`.
+
+Apache Pekko HTTP currently doesn't expose the trailing headers of the request. For the response, you can either
+model the trailing headers as the @scala[@scaladoc[HttpEntity.LastChunk](org.apache.pekko.http.scaladsl.model.HttpEntity.LastChunk)]@java[last chunk]
 of a @scala[@scaladoc[HttpEntity.Chunked](org.apache.pekko.http.scaladsl.model.HttpEntity.Chunked)]@java[chunked] response entity, or use the
 @apidoc[trailer](AttributeKeys$) attribute:
 

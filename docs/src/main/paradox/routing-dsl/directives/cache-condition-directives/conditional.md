@@ -19,18 +19,17 @@
 
 ## Description
 
-Wraps its inner route with support for Conditional Requests as defined
-by [https://tools.ietf.org/html/draft-ietf-httpbis-p4-conditional-26](https://tools.ietf.org/html/draft-ietf-httpbis-p4-conditional-26).
+Wraps its inner route with support for [HTTP conditional requests](https://www.rfc-editor.org/rfc/rfc9110.html#section-13).
 
 Depending on the given `eTag` and `lastModified` values this directive immediately responds with
 `304 Not Modified` or `412 Precondition Failed` (without calling its inner route) if the request comes with the
 respective conditional headers. Otherwise the request is simply passed on to its inner route.
 
-The algorithm implemented by this directive closely follows what is defined in [this section](https://tools.ietf.org/html/draft-ietf-httpbis-p4-conditional-26#section-6) of the
-[HTTPbis spec](https://datatracker.ietf.org/wg/httpbis/documents/).
+Evaluation order is based on [RFC 9110, Section 13.2.2](https://www.rfc-editor.org/rfc/rfc9110.html#section-13.2.2).
+Preconditions that need an unavailable validator are skipped.
 
-All responses (the ones produces by this directive itself as well as the ones coming back from the inner route) are
-augmented with respective @apidoc[ETag] and `Last-Modified` response headers.
+The directive adds the supplied @apidoc[ETag] and `Last-Modified` as default headers on a `304 Not Modified` response
+it produces and on responses from the inner route.
 
 Since this directive requires the @apidoc[EntityTag] and `lastModified` time stamp for the resource as concrete arguments
 it is usually used quite deep down in the route structure (i.e. close to the leaf-level), where the exact resource

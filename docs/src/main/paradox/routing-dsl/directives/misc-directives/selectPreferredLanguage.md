@@ -19,12 +19,11 @@
 
 ## Description
 
-Inspects the request's `Accept-Language` header and determines,
-which of a given set of language alternatives is preferred by the client according to content negotiation rules
-defined by [RFC 7231 in section 5.3.5](https://tools.ietf.org/html/rfc7231#section-5.3.5).
+Uses the request's [`Accept-Language` header](https://www.rfc-editor.org/rfc/rfc9110.html#section-12.5.4) to choose
+among the given language alternatives.
 
-If there are several best language alternatives that the client has equal preference for
-(even if this preference is zero!) the order of the arguments is used as a tie breaker (first one wins).
+When preferred alternatives tie, the directive chooses the first of them in argument order. If no alternative is
+acceptable, it falls back to the first argument.
 
 ## Example
 
