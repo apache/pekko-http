@@ -24,11 +24,14 @@ import pekko.http.impl.util._
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.StatusCodes._
 import pekko.http.scaladsl.model.headers._
+import pekko.http.scaladsl.settings.RoutingSettings
 import pekko.stream.scaladsl.{ Sink, Source }
 import pekko.testkit._
 import pekko.util.ByteString
 
 import org.scalatest.{ Inside, Inspectors }
+
+import com.typesafe.config.ConfigFactory
 
 class RangeDirectivesSpec extends RoutingSpec with Inspectors with Inside {
   lazy val wrs =
@@ -41,6 +44,24 @@ class RangeDirectivesSpec extends RoutingSpec with Inspectors with Inside {
     def completeWithRangedBytes(length: Byte) =
       wrs(complete(HttpEntity.Default(ContentTypes.`application/octet-stream`, length,
         Source(bytes(length).map(ByteString(_)).toVector))))
+
+    lazy val requestOrder =
+      mapSettings(_ =>
+        RoutingSettings(
+          ConfigFactory.parseString("pekko.http.routing.preserve-range-request-order = on")
+            .withFallback(system.settings.config))) & wrs
+
+    def checkMultipartRanges(ranged: Directive0, requested: Range, entity: UniversalEntity)(
+        expected: (ContentRange, String)*): Unit =
+      Get() ~> addHeader(requested) ~> ranged(complete(entity)) ~> check {
+        status shouldEqual PartialContent
+        header[`Content-Range`] shouldBe None
+        val parts = Await.result(responseAs[Multipart.ByteRanges].toStrict(1.second.dilated), 1.second.dilated)
+        parts.strictParts.map { part =>
+          part.rangeUnit shouldEqual RangeUnits.Bytes
+          part.contentRange -> part.entity.data.utf8String
+        } shouldEqual expected
+      }
 
     "return an Accept-Ranges(bytes) header for GET requests" in {
       Get() ~> { wrs { complete("any") } } ~> check {
@@ -150,6 +171,39 @@ class RangeDirectivesSpec extends RoutingSpec with Inspectors with Inside {
         val parts = Await.result(responseAs[Multipart.ByteRanges].parts.limit(1000).runWith(Sink.seq), 1.second.dilated)
         parts.size shouldEqual 2
       }
+    }
+
+    "preserve multipart request order for disjoint strict ranges only when configured" in {
+      val requested = Range(ByteRange(12, 13), ByteRange(2, 4))
+      val entity = HttpEntity("0123456789abcdef")
+      val low = ContentRange(2, 4, 16) -> "234"
+      val high = ContentRange(12, 13, 16) -> "cd"
+
+      checkMultipartRanges(wrs, requested, entity)(low, high)
+      checkMultipartRanges(requestOrder, requested, entity)(high, low)
+    }
+
+    "preserve the relative request order of surviving strict ranges after coalescing" in {
+      val requested = Range(ByteRange(12, 13), ByteRange(2, 3), ByteRange(3, 4))
+      val entity = HttpEntity("0123456789abcdef")
+
+      checkMultipartRanges(requestOrder, requested, entity)(
+        ContentRange(12, 13, 16) -> "cd",
+        ContentRange(2, 4, 16) -> "234")
+    }
+
+    "keep streamed multipart ranges in byte-offset order and materialize the entity once even when configured" in {
+      val materializations = new AtomicInteger()
+      val data = Source(List(ByteString("01234567"), ByteString("89abcdef"))).mapMaterializedValue { _ =>
+        materializations.incrementAndGet()
+      }
+      val requested = Range(ByteRange(12, 13), ByteRange(2, 4))
+      val entity = HttpEntity.Default(ContentTypes.`text/plain(UTF-8)`, 16, data)
+
+      checkMultipartRanges(requestOrder, requested, entity)(
+        ContentRange(2, 4, 16) -> "234",
+        ContentRange(12, 13, 16) -> "cd")
+      materializations.get() shouldEqual 1
     }
 
     "reject a request with too many requested ranges" in {

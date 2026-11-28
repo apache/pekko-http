@@ -32,6 +32,36 @@ class RoutingSettingsEqualitySpec extends AnyWordSpec with Matchers {
       s1.toString should startWith("RoutingSettings(")
     }
 
+    "treat a missing request-order setting like an explicit opt-out" in {
+      val key = "pekko.http.routing.preserve-range-request-order"
+      val missing = RoutingSettings(config.withoutPath(key))
+      val disabled = RoutingSettings(ConfigFactory.parseString(s"$key = off").withFallback(config))
+
+      missing.preserveRangeRequestOrder shouldBe false
+      disabled.preserveRangeRequestOrder shouldBe false
+      missing shouldBe disabled
+      missing.hashCode() shouldBe disabled.hashCode()
+    }
+
+    "retain request ordering in Scala and Java settings copies" in {
+      val enabledConfig =
+        ConfigFactory.parseString("pekko.http.routing.preserve-range-request-order = on").withFallback(config)
+      val scalaSettings = RoutingSettings(enabledConfig).withRangeCountLimit(8).withRangeCoalescingThreshold(64L)
+      val javaSettings = org.apache.pekko.http.javadsl.settings.RoutingSettings
+        .create(enabledConfig)
+        .withRangeCountLimit(8)
+        .withRangeCoalescingThreshold(64L)
+      val disabled = RoutingSettings(config.withoutPath("pekko.http.routing.preserve-range-request-order"))
+        .withRangeCountLimit(8)
+        .withRangeCoalescingThreshold(64L)
+
+      scalaSettings.preserveRangeRequestOrder shouldBe true
+      javaSettings shouldBe scalaSettings
+      javaSettings.hashCode() shouldBe scalaSettings.hashCode()
+      scalaSettings shouldNot be(disabled)
+      scalaSettings.hashCode() shouldNot be(disabled.hashCode())
+    }
+
   }
 
 }

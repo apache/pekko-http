@@ -14,7 +14,7 @@
 package org.apache.pekko.http.scaladsl.settings
 
 import org.apache.pekko
-import pekko.annotation.DoNotInherit
+import pekko.annotation.{ DoNotInherit, InternalApi }
 import pekko.http.impl.settings.RoutingSettingsImpl
 
 import com.typesafe.config.Config
@@ -48,6 +48,10 @@ abstract class RoutingSettings private[pekko] () extends pekko.http.javadsl.sett
    * @since 2.0.0
    */
   def rejectUnsafeResourceNames: Boolean
+
+  /** INTERNAL API */
+  @InternalApi
+  private[pekko] final def preserveRangeRequestOrder: Boolean = self.rangeRequestOrderEnabled
 
   /* Java APIs */
   def getVerboseErrorMessages: Boolean = this.verboseErrorMessages
