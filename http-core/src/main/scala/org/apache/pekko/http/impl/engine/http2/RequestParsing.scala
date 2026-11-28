@@ -172,9 +172,10 @@ private[http2] object RequestParsing {
 
             case "content-length" =>
               if (contentLength == -1) {
-                val contentLengthValue = ContentLength.get(value).toLong
+                val contentLengthValue = parseContentLength(ContentLength.get(value))
                 if (contentLengthValue < 0)
-                  parseError("HTTP message must not contain a negative content-length header", "content-length")
+                  parseError(
+                    s"content-length must be a non-negative number of at most ${Long.MaxValue}", "content-length")
                 rec(incomingHeaders, offset + 1, method, scheme, authority, pathAndRawQuery, contentType,
                   contentLengthValue, cookies, true, headers)
               } else parseError("HTTP message must not contain more than one content-length header", "content-length")
@@ -233,6 +234,22 @@ private[http2] object RequestParsing {
       // it as the model exception `HeaderDecompression` turns into a 400 for the one stream.
       case e: pekko.http.impl.engine.parsing.ParsingException => throw new ParsingException(e.info)
     }
+  }
+
+  /**
+   * Parses a `content-length` value, which is `1*DIGIT` (RFC 9110 section 8.6), and returns -1 if it is anything else
+   * or does not fit a `Long`. Both the request parser and the stream handling, which accounts the received DATA
+   * against the declared length, use it, so that every length the parser accepts is also accounted for.
+   */
+  private[http2] def parseContentLength(value: String): Long = {
+    @tailrec def rec(ix: Int, result: Long): Long =
+      if (ix == value.length) result
+      else {
+        val digit = value.charAt(ix) - '0'
+        if (digit < 0 || digit > 9 || result > (Long.MaxValue - digit) / 10) -1L
+        else rec(ix + 1, result * 10 + digit)
+      }
+    if (value.isEmpty) -1L else rec(0, 0L)
   }
 
   private[http2] def checkRequiredPseudoHeader(name: String, value: AnyRef): Unit =
