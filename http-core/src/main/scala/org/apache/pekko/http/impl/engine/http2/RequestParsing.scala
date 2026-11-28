@@ -13,7 +13,6 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
-import java.nio.charset.StandardCharsets
 import javax.net.ssl.SSLSession
 
 import scala.annotation.tailrec
@@ -29,7 +28,6 @@ import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers.`Tls-Session-Info`
 import pekko.http.scaladsl.settings.ServerSettings
 import pekko.stream.Attributes
-import pekko.util.ByteString
 import pekko.util.OptionVal
 
 /**
@@ -216,19 +214,11 @@ private[http2] object RequestParsing {
   }
 
   private[http2] def parseHeaderPair(httpHeaderParser: HttpHeaderParser, name: String, value: String): HttpHeader = {
-    // FIXME: later modify by adding HttpHeaderParser.parseHttp2Header that would use (name, value) pair directly
-    //        or use a separate, simpler, parser for Http2
-    // The odd-looking 'x' below is a by-product of how current parser and HTTP/1.1 work.
-    // Without '\r\n\x' (x being any additional byte) parsing will fail. See HttpHeaderParserSpec for examples.
-    // HPACK decodes string literals as ISO-8859-1, one char per octet, so encoding the line as ISO-8859-1 again hands
-    // the parser the octets that were on the wire. It then decodes UTF-8 in a value exactly as it does for HTTP/1.1.
-    // Encoding as UTF-8 here would encode each octet above 0x7F as a char of its own, so a UTF-8 value such as "café"
-    // came out as "cafÃ©".
-    val concHeaderLine = name + ": " + value + "\r\nx"
-    try {
-      httpHeaderParser.parseHeaderLine(ByteString(concHeaderLine, StandardCharsets.ISO_8859_1))()
-      httpHeaderParser.resultHeader
-    } catch {
+    // `parseHeaderPair` writes the pair as an HTTP/1.1 header line into a reused buffer, one byte per char, so that
+    // the parser sees the octets that were on the wire (HPACK decodes string literals as ISO-8859-1) and decodes UTF-8
+    // in a value exactly as it does for HTTP/1.1.
+    try httpHeaderParser.parseHeaderPair(name, value)
+    catch {
       // the HTTP/1.1 parser reports a malformed field with its own, internal exception type, which nothing on the
       // HTTP/2 side catches: left alone it fails the decompression stage and with it the whole connection. Rethrow
       // it as the model exception `HeaderDecompression` turns into a 400 for the one stream.

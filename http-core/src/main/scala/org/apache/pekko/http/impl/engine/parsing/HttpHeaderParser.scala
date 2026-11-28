@@ -114,6 +114,45 @@ private[engine] final class HttpHeaderParser private (
     new HttpHeaderParser(settings, log, onIllegalHeader, nodes, nodeCount, branchData, branchDataCount, values,
       valueCount)
 
+  // scratch space for `parseHeaderPair`, owned by this instance: shallow copies start without one
+  private var headerPairBuffer: Array[Byte] = null
+
+  /**
+   * Parses a header that is given as a separate name and value, as HTTP/2 delivers them, and returns the parsed
+   * header (which is also written to the `resultHeader` member).
+   *
+   * The pair is written as the header line `name: value\r\nx` into a scratch buffer owned by this instance and fed
+   * to `parseHeaderLine`. The trailing `x` is there because `parseHeaderLine` needs a byte after the CRLF to tell a
+   * line ending from a line fold. Each char is written as one byte, as ISO-8859-1 encoding would: HPACK decodes
+   * string literals as ISO-8859-1, so this hands the parser the octets that were on the wire, and it decodes UTF-8
+   * in a value exactly as it does for HTTP/1.1. A char above U+00FF, which HPACK never produces, becomes `?`.
+   * Writing only its low byte instead could turn it into a CR or LF.
+   *
+   * This is the same as parsing `ByteString(name + ": " + value + "\r\nx", ISO_8859_1)`, without building the
+   * intermediate String, byte array and ByteString. Nothing keeps a reference to the input past the call (the trie
+   * copies the chars it caches, and header values are decoded into new Strings), which is what makes reusing the
+   * buffer safe.
+   */
+  def parseHeaderPair(name: String, value: String): HttpHeader = {
+    val size = name.length + value.length + 5
+    val buf =
+      if (size > MaxRetainedHeaderPairBufferSize) new Array[Byte](size)
+      else {
+        if ((headerPairBuffer eq null) || headerPairBuffer.length < size)
+          headerPairBuffer = new Array[Byte](math.max(size, InitialHeaderPairBufferSize))
+        headerPairBuffer
+      }
+    var ix = putLatin1(name, buf, 0)
+    buf(ix) = ':'
+    buf(ix + 1) = ' '
+    ix = putLatin1(value, buf, ix + 2)
+    buf(ix) = '\r'
+    buf(ix + 1) = '\n'
+    buf(ix + 2) = 'x'
+    parseHeaderLine(ByteString.fromArrayUnsafe(buf, 0, ix + 3))()
+    resultHeader
+  }
+
   /**
    * Parses a header line and returns the line start index of the subsequent line.
    * The parsed header instance is written to the `resultHeader` member.
@@ -473,6 +512,26 @@ private[engine] final class HttpHeaderParser private (
 @InternalApi
 private[http] object HttpHeaderParser {
   import SpecializedHeaderValueParsers._
+
+  private val InitialHeaderPairBufferSize = 256
+  // A header line needing more than this gets a one-off buffer, so that one large header does not pin a large array
+  // for the lifetime of the parser. It is above the default limits for header name plus value length.
+  private val MaxRetainedHeaderPairBufferSize = 16 * 1024
+
+  /**
+   * Writes the chars of `s` to `buf` from `offset` on, one byte per char, and returns the index after the last byte
+   * written. A char above U+00FF is written as `?`.
+   */
+  private def putLatin1(s: String, buf: Array[Byte], offset: Int): Int = {
+    val len = s.length
+    var i = 0
+    while (i < len) {
+      val c = s.charAt(i)
+      buf(offset + i) = if (c <= 0xFF) c.toByte else '?'
+      i += 1
+    }
+    offset + len
+  }
 
   abstract class Settings extends HeaderParser.Settings {
     def maxHeaderNameLength: Int
