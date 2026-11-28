@@ -13,8 +13,6 @@
 
 package org.apache.pekko.http.impl.model.parser
 
-import scala.annotation.tailrec
-
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.http.impl.util._
@@ -73,17 +71,6 @@ private[parser] trait CommonActions {
   /**
    * Returns true if both strings only contain ASCII characters and each character matches case insensitively.
    */
-  def equalsAsciiCaseInsensitive(str1: String, str2: String): Boolean = {
-    @tailrec def stringEquals(at: Int, length: Int): Boolean =
-      if (at < length) {
-        val char1 = str1.charAt(at)
-        val char2 = str2.charAt(at)
-
-        (char1 | char2) < 0x80 &&
-        CharUtils.toLowerCase(char1) == CharUtils.toLowerCase(char2) &&
-        stringEquals(at + 1, length)
-      } else true
-
-    str1.length == str2.length && stringEquals(0, str1.length)
-  }
+  def equalsAsciiCaseInsensitive(str1: String, str2: String): Boolean =
+    CharUtils.equalsAsciiCaseInsensitive(str1, str2)
 }

@@ -39,12 +39,12 @@ final class MediaTypeNegotiator(requestHeaders: Seq[HttpHeader]) {
 
   /**
    * Returns the q-value that the client (implicitly or explicitly) attaches to the given media-type.
-   * See http://tools.ietf.org/html/rfc7231#section-5.3.1 for details.
+   * See RFC 9110 sections 5.6.6 and 12.5.1.
    */
   def qValueFor(mediaType: MediaType): Float =
     acceptedMediaRanges match {
       case Nil => 1.0f
-      case x   => x.collectFirst { case r if r.matches(mediaType) => r.qValue }.getOrElse(0f)
+      case x   => x.collectFirst { case r if MediaRange.Negotiation.matches(r, mediaType) => r.qValue }.getOrElse(0f)
     }
 
   /**

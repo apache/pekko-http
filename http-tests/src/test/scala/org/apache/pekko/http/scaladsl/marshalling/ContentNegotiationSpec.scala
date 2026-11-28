@@ -200,6 +200,40 @@ class ContentNegotiationSpec extends AnyFreeSpec with Matchers {
       negotiator.qValueFor(`text/html`.withParams(Map("level" -> "2"))) should be(0.4f)
       negotiator.qValueFor(`text/html`.withParams(Map("level" -> "3"))) should be(0.7f)
     }
+
+    "match Accept parameter names across case during response negotiation" in {
+      val flowed = `text/plain`.withParams(Map("format" -> "flowed"))
+      val fixed = `text/plain`.withParams(Map("format" -> "fixed"))
+      for (range <- Seq("text/plain", "text/*", "*/*")) {
+        val negotiator = new MediaTypeNegotiator(parseHeaders(s"Accept: $range;Format=flowed;q=0.8, $range;q=0.5"))
+        val preferred = negotiator.acceptedMediaRanges.head
+        preferred.params shouldBe Map("Format" -> "flowed")
+        preferred.matches(flowed) shouldBe false // the public generic matcher used by unmarshalling is unchanged
+        preferred.matches(`text/plain`.withParams(Map("Format" -> "flowed"))) shouldBe true
+        negotiator.qValueFor(flowed) shouldBe 0.8f
+        negotiator.qValueFor(fixed) shouldBe 0.5f
+      }
+    }
+
+    "prefer exact Accept parameter names and handle ambiguous case aliases consistently" in {
+      val negotiator = new MediaTypeNegotiator(parseHeaders("Accept: text/plain;Format=flowed;q=0.8, text/plain;q=0.5"))
+      negotiator.qValueFor(`text/plain`.withParams(Map("Format" -> "flowed", "format" -> "fixed"))) shouldBe 0.8f
+      negotiator.qValueFor(`text/plain`.withParams(Map("Format" -> "fixed", "format" -> "flowed"))) shouldBe 0.5f
+      negotiator.qValueFor(`text/plain`.withParams(Map("format" -> "flowed", "FORMAT" -> "flowed"))) shouldBe 0.8f
+      negotiator.qValueFor(`text/plain`.withParams(Map("format" -> "flowed", "FORMAT" -> "fixed"))) shouldBe 0.5f
+      negotiator.qValueFor(`text/plain`.withParams(Map("FORMAT" -> "fixed", "format" -> "flowed"))) shouldBe 0.5f
+    }
+
+    "apply the existing charset exception to Accept parameter names regardless of case" in {
+      for (key <- Seq("charset", "Charset")) {
+        val exact = new MediaTypeNegotiator(parseHeaders(s"Accept: text/plain;$key=UTF-8;q=0.8, text/plain;q=0.5"))
+        val wildcard = new MediaTypeNegotiator(parseHeaders(s"Accept: text/*;$key=UTF-8;q=0.8, text/*;q=0.5"))
+        exact.acceptedMediaRanges.head.params shouldBe Map(key -> "UTF-8")
+        exact.acceptedMediaRanges.head.matches(`text/plain`) shouldBe (key == "charset")
+        exact.qValueFor(`text/plain`) shouldBe 0.8f
+        wildcard.qValueFor(`text/plain`) shouldBe 0.5f
+      }
+    }
   }
 
   def testHeaders[U](headers: HttpHeader*)(body: VarArgsFunction1[Alternative, Option[ContentType]] => U): U = {
