@@ -134,6 +134,43 @@ class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.w
           expectNetworkClose()
         }
       }
+      "with mixed-case and reordered opening header names" in Utils.assertAllStagesStopped {
+        new TestSetup {
+          try {
+            send(
+              """GET /chat HTTP/1.1
+                |sEc-WeBsOcKeT-vErSiOn: 13
+                |cOnNeCtIoN: Upgrade
+                |sEc-WeBsOcKeT-kEy: dGhlIHNhbXBsZSBub25jZQ==
+                |hOsT: server.example.com
+                |oRiGiN: http://example.com
+                |uPgRaDe: websocket
+                |
+                |""")
+            val upgrade = expectRequest().attribute(webSocketUpgrade).get
+            responses.sendNext(upgrade.handleMessages(Flow[Message]))
+            expectResponseWithWipedDate(
+              """HTTP/1.1 101 Switching Protocols
+                |Upgrade: websocket
+                |Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
+                |Server: pekko-http/test
+                |Date: XXXX
+                |Connection: upgrade
+                |
+                |""")
+
+            val message = ByteString("hello")
+            sendWSFrame(Protocol.Opcode.Text, message, fin = true, mask = true)
+            expectWSFrame(Protocol.Opcode.Text, message, fin = true)
+            sendWSCloseFrame(Protocol.CloseCodes.Regular, mask = true)
+            expectWSCloseFrame(Protocol.CloseCodes.Regular)
+          } finally {
+            closeNetworkInput()
+            responses.sendComplete()
+            netOut.cancel()
+          }
+        }
+      }
       "for echoing user handler" in Utils.assertAllStagesStopped {
         new TestSetup {
 
