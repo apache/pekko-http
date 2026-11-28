@@ -345,6 +345,7 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
       }
 
       def frameOutFinished(): Unit = {
+        if (earlyHints ne null) earlyHints.shutdown()
         // Fail the client response outlet before cleanup: closing the last stream can otherwise
         // complete it normally when the request input has already completed.
         if (!isServer && !isClosed(substreamOut))
@@ -354,9 +355,15 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
         shutdownStreamHandling()
       }
 
+      private var earlyHints: ServerEarlyHints = null
+
+      override protected def beforeStreamClosed(streamId: Int): Unit =
+        if (earlyHints ne null) earlyHints.close(streamId)
+
       override def pushFrameOut(event: FrameEvent): Unit = {
         pingState.onDataFrameSeen()
         push(frameOut, event)
+        if (earlyHints ne null) earlyHints.onFrameOutput(event)
       }
 
       val multiplexer: Http2Multiplexer with OutHandler = createMultiplexer(StreamPrioritizer.First)
@@ -373,6 +380,9 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
         Seq(Setting(SettingIdentifier.SETTINGS_ENABLE_PUSH, 0)).filter(_ => !isServer) // only on client
 
       override def preStart(): Unit = {
+        if (isServer && materializer.system.settings.config.getBoolean("pekko.http.server.http2.early-hints-enabled"))
+          earlyHints = new ServerEarlyHints(f => getAsyncCallback(f), () => multiplexer, log)
+
         if (initialRemoteSettings.nonEmpty) {
           debug(s"Applying ${initialRemoteSettings.length} initial settings!")
           applyRemoteSettings(initialRemoteSettings)
@@ -514,8 +524,12 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
       //        after a while or buffer only a limited amount?
       val bufferedSubStreamOutput = new BufferedOutlet[Http2SubStream](fromOutlet(substreamOut))
       override def dispatchSubstream(initialHeaders: ParsedHeadersFrame, data: Either[ByteString, Source[Any, Any]],
-          correlationAttributes: Map[AttributeKey[?], ?]): Unit =
-        bufferedSubStreamOutput.push(Http2SubStream(initialHeaders, OptionVal.None, data, correlationAttributes))
+          correlationAttributes: Map[AttributeKey[?], ?]): Unit = {
+        val attributes =
+          if (earlyHints eq null) correlationAttributes
+          else earlyHints.attributesFor(initialHeaders.streamId, correlationAttributes)
+        bufferedSubStreamOutput.push(Http2SubStream(initialHeaders, OptionVal.None, data, attributes))
+      }
 
       // -----------------------------------------------------------------
       override def onAllStreamsClosed(): Unit = completeIfDone()
@@ -550,6 +564,7 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
         new InHandler {
           def onPush(): Unit = {
             val sub = grab(substreamIn)
+            if (earlyHints ne null) earlyHints.close(sub.streamId)
             handleOutgoingCreated(sub)
             // Once the incoming stream is handled, we decide if we need to pull more.
             tryPullSubStreams()
@@ -637,11 +652,13 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
             info(
               "Timeout: Peer didn't finish in-flight requests. Closing pending HTTP/2 streams. Increase this timeout via the 'completion-timeout' setting.")
 
+          if (earlyHints ne null) earlyHints.shutdown()
           shutdownStreamHandling()
           completeStage()
       }
 
       override def postStop(): Unit = {
+        if (earlyHints ne null) earlyHints.shutdown()
         shutdownStreamHandling()
         terminationPromise.success(Http.HttpConnectionTerminated)
       }

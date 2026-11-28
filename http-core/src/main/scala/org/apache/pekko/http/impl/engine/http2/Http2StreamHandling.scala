@@ -248,11 +248,15 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
   } else
     multiplexer.enqueueOutStream(streamId)
 
+  /** Lets the server close any application interim response capabilities before removing the stream. */
+  protected def beforeStreamClosed(streamId: Int): Unit = ()
+
   /**
    * Removes a closed stream, then reports when the last stream has closed and pulls more substreams if the freed
    * capacity allows. Shared by the state machine and the incoming-entity cancellation path, which bypasses it.
    */
   private def streamClosed(streamId: Int): Unit = {
+    beforeStreamClosed(streamId)
     streamStates.remove(streamId)
     headRequestStreamIds -= streamId
     remainingContentLength -= streamId

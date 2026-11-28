@@ -27,6 +27,76 @@ This lets a client start sending the body even when the server is configured to 
 entity before dispatching the request. Unlike HTTP/1.1, the application can send its final response
 without reading the entity and the client may already have received the interim response.
 
+## Sending 103 Early Hints
+
+An HTTP/2 server can send header-only [103 Early Hints](https://www.rfc-editor.org/rfc/rfc8297.html#section-2)
+while it prepares a final response. The feature is disabled by default. Enable it in the ActorSystem
+configuration used by the server materializer:
+
+```hocon
+pekko.http.server.http2.early-hints-enabled = on
+```
+
+This setting applies to HTTP/2 connections on that ActorSystem; it does not enable the HTTP/2 protocol
+itself. The server does not send hints automatically. An asynchronous route or request handler must
+obtain the request's `EarlyHintsSender` and send the fields explicitly.
+
+@@@ div { .group-scala }
+
+```scala
+import org.apache.pekko.http.scaladsl.Http
+import org.apache.pekko.http.scaladsl.model.EarlyHintsSender
+import org.apache.pekko.http.scaladsl.model.headers.RawHeader
+
+Http().newServerAt("localhost", 8080)
+  .bind { request =>
+    EarlyHintsSender.from(request) match {
+      case Some(sender) =>
+        sender.send(List(RawHeader("Link", "</main.css>; rel=preload; as=style")))
+          .flatMap(_ => renderPage(request))
+      case None =>
+        renderPage(request)
+    }
+  }
+```
+
+@@@
+
+@@@ div { .group-java }
+
+```java
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+
+import org.apache.pekko.http.javadsl.Http;
+import org.apache.pekko.http.javadsl.model.EarlyHintsSender;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.HttpResponse;
+import org.apache.pekko.http.javadsl.model.headers.RawHeader;
+import org.apache.pekko.japi.function.Function;
+
+Function<HttpRequest, CompletionStage<HttpResponse>> handler =
+    request -> EarlyHintsSender.get(request)
+        .map(sender -> sender.send(List.of(
+            RawHeader.create("Link", "</main.css>; rel=preload; as=style")))
+            .thenCompose(done -> renderPage(request)))
+        .orElseGet(() -> renderPage(request));
+
+Http.get(system).newServerAt("localhost", 8080)
+    .bind(handler);
+```
+
+@@@
+
+Here `renderPage` represents the handler's asynchronous final response. A handler can send another hint
+as information becomes available. Await each send before sending the next hint or returning the final
+response. Send completion means hand-off to the connection's frame output, not receipt by the peer.
+If the output queue cannot accept the hint, the send fails; an application can handle that failure and
+still render its final response. Sending after the final response has been submitted fails. Hints do
+not change the final response, and no hint sender is available on HTTP/1.1 or when the feature is disabled.
+The request that performs a legacy HTTP/1.1 `h2c` upgrade is also not eligible; subsequent HTTP/2 requests
+on the upgraded connection can send hints. Automatic `100 Continue` is independent of this setting.
+
 ## Use `newServerAt(...).bind()` and HTTPS
 
 HTTP/2 is primarily used over a secure HTTPS connection which takes care of protocol negotiation and falling back to HTTP/1.1 over TLS when the client does not support HTTP/2.

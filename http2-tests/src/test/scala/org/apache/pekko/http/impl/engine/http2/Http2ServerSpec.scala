@@ -28,6 +28,7 @@ import pekko.http.impl.engine.ws.ByteStringSinkProbe
 import pekko.http.scaladsl.client.RequestBuilding.Get
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers.{ CacheDirectives, ETag, RawHeader }
+import pekko.http.scaladsl.model.EarlyHintsSender
 import pekko.http.scaladsl.settings.ServerSettings
 import pekko.stream.OverflowStrategy
 import pekko.stream.scaladsl.{ BidiFlow, Flow, Source, SourceQueueWithComplete }
@@ -56,6 +57,15 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
   override def failOnSevereMessages: Boolean = true
 
   "The Http/2 server implementation" should {
+    "leave the Early Hints sender absent by default".inAssertAllStagesStopped(
+      new TestSetup with RequestResponseProbes {
+        network.sendRequest(1, HttpRequest(uri = "https://www.example.com/index"))
+        EarlyHintsSender.from(user.expectRequest()) shouldBe None
+        user.emitResponse(1, HttpResponse(entity = "ok"))
+        network.expectDecodedResponseHEADERSPairs(1, endStream = false).head shouldBe (":status" -> "200")
+        network.expectDATA(1, endStream = true, ByteString("ok"))
+      })
+
     "answer a malformed header field with a 400 on its stream and keep the connection" should {
       abstract class MalformedHeaderSetup extends TestSetup with RequestResponseProbes {
         def badRequestThenStillUsable(streamId: Int, headerPairs: Seq[(String, String)]): Unit = {
