@@ -95,6 +95,34 @@ class Http2ClientServerSpec extends PekkoSpecWithMaterializer(
       Unmarshal(response.entity).to[String].futureValue shouldBe "pong"
       response.attribute(requestIdAttr).get.id shouldBe "request-1"
     }
+    "preserve a complete streamed response after the server closes a TLS connection" in new TestSetup {
+      override def clientSettings: ClientConnectionSettings =
+        super.clientSettings.withStreamCancellationDelay(100.millis)
+
+      val first = ByteString("first part ")
+      val last = ByteString("last part")
+
+      try {
+        sendClientRequest(HttpRequest(uri = "/drain"))
+        val serverRequest = expectServerRequest()
+        serverRequest.request.protocol shouldBe HttpProtocols.`HTTP/2.0`
+        serverRequest.sendResponse(HttpResponse(
+          entity = HttpEntity.Chunked.fromData(ContentTypes.`application/octet-stream`, Source(List(first, last)))))
+
+        val response = expectClientResponse()
+        response.protocol shouldBe HttpProtocols.`HTTP/2.0`
+        response.status shouldBe StatusCodes.OK
+        response.entity.isChunked shouldBe true
+
+        binding.terminate(3.seconds).futureValue(timeout(5.seconds))
+        clientResponsesIn.expectComplete()
+        // No entity subscription until the server has terminated and the client's response stream has closed.
+        response.entity.toStrict(3.seconds).futureValue(timeout(5.seconds)).data shouldBe (first ++ last)
+      } finally {
+        if (!binding.whenTerminated.isCompleted)
+          binding.terminate(1.second).futureValue(timeout(5.seconds))
+      }
+    }
     "preserve repeated Set-Cookie field order across an HTTP/2 response" in new TestSetup {
       try {
         val theme = headers.`Set-Cookie`(headers.HttpCookie("theme", "dark"))
