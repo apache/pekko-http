@@ -276,9 +276,8 @@ private[http] object Http2Blueprint {
    * Not a real `frameTypeName`, so it never matches one directly: [[frameCost]] recognises it and charges every DATA
    * frame that carries no payload.
    *
-   * Such a frame consumes no flow-control window, so unlike a data-carrying one its number is not bounded by flow
-   * control at all and a peer can send them continuously. Data-carrying frames are deliberately not covered, because
-   * throttling those would throttle legitimate throughput along with them.
+   * DATA without either content or padding consumes no flow-control window. Data-carrying frames are deliberately not
+   * covered, because throttling those would throttle legitimate throughput along with them.
    */
   private[http2] val EmptyDataFrameThrottleName = "EmptyDataFrame"
 
@@ -294,11 +293,11 @@ private[http] object Http2Blueprint {
   private[http2] def frameCost(frameTypesForThrottle: Set[String], event: FrameEvent): Int =
     if (frameTypesForThrottle.contains(event.frameTypeName)) 1
     else event match {
-      case d: DataFrame if d.payload.isEmpty && isThrottledEmptyDataFrame(frameTypesForThrottle, d) => 1
-      case _                                                                                        => 0
+      case d: DataFrameEvent if d.payload.isEmpty && isThrottledEmptyDataFrame(frameTypesForThrottle, d) => 1
+      case _                                                                                             => 0
     }
 
-  private def isThrottledEmptyDataFrame(frameTypesForThrottle: Set[String], frame: DataFrame): Boolean =
+  private def isThrottledEmptyDataFrame(frameTypesForThrottle: Set[String], frame: DataFrameEvent): Boolean =
     frameTypesForThrottle.contains(EmptyDataFrameThrottleName) ||
     (!frame.endStream && frameTypesForThrottle.contains(EmptyDataFrameNoEndStreamThrottleName))
 

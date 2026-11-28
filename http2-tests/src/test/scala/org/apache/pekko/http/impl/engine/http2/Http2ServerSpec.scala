@@ -795,6 +795,82 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
       })
     }
 
+    for (strictSize <- Seq(0, 8)) {
+      s"restore flow credit for discarded DATA padding before consuming an entity (strict limit $strictSize)"
+        .inAssertAllStagesStopped(new TestSetup with RequestResponseProbes {
+          // Set a target just above twice the initial window so the existing batch policy runs on the first frame.
+          private val initialWindow = Http2Protocol.InitialWindowSize
+          private val targetWindow = 2 * initialWindow + 32
+          override def settings: ServerSettings =
+            super.settings.mapHttp2Settings(_.withMinCollectStrictEntitySize(strictSize)
+              .withIncomingConnectionLevelBufferSize(2 * Http2Protocol.InitialWindowSize + 32)
+              .withIncomingStreamLevelBufferSize(2 * Http2Protocol.InitialWindowSize + 32))
+
+          val body = ByteString("data")
+          val headers = Seq(
+            ":method" -> "POST", ":scheme" -> "https", ":authority" -> "example.com", ":path" -> "/upload")
+          network.sendHEADERS(1, endStream = false, endHeaders = true, network.encodeHeaderPairs(headers))
+          if (strictSize == 0) user.expectRequest().entity.isStrict shouldBe false
+
+          // One legal, small padded frame; its four body bytes are still retained in either receive path.
+          network.sendFrame(FrameType.DATA, Flags.PADDED, 1, ByteString(2) ++ body ++ ByteString(0, 0))
+
+          val updates = Seq(network.expect[WindowUpdateFrame](), network.expect[WindowUpdateFrame]())
+          val returnedCredit = targetWindow - initialWindow + 3 // Pad Length field and the two padding bytes.
+          updates should contain theSameElementsAs Seq(WindowUpdateFrame(0, returnedCredit),
+            WindowUpdateFrame(1, returnedCredit))
+        })
+
+      s"deliver only entity bytes from final padded DATA with Content-Length (strict limit $strictSize)"
+        .inAssertAllStagesStopped(new TestSetup with RequestResponseProbes {
+          override def settings: ServerSettings =
+            super.settings.mapHttp2Settings(_.withMinCollectStrictEntitySize(strictSize))
+
+          val body = ByteString("data")
+          val headers = Seq(
+            ":method" -> "POST", ":scheme" -> "https", ":authority" -> "example.com", ":path" -> "/upload",
+            "content-length" -> body.length.toString)
+          network.sendHEADERS(1, endStream = false, endHeaders = true, network.encodeHeaderPairs(headers))
+          network.sendFrame(FrameType.DATA, Flags.PADDED | Flags.END_STREAM, 1,
+            ByteString(2) ++ body ++ ByteString(0, 0))
+
+          val received = user.expectRequest()
+          received.entity.isStrict shouldBe (strictSize > 0)
+          Await.result(received.entity.toStrict(3.seconds.dilated), 3.seconds.dilated).data shouldBe body
+        })
+    }
+
+    "preserve received DATA credit across the strict-to-streamed entity handoff".inAssertAllStagesStopped(
+      new TestSetup with RequestResponseProbes {
+        private def initialWindow = Http2Protocol.InitialWindowSize
+        // Buffered content keeps both windows above the batching threshold. Consuming it crosses the threshold.
+        private def targetWindow = 2 * (initialWindow - 4)
+        override def settings: ServerSettings =
+          super.settings.mapHttp2Settings(_.withMinCollectStrictEntitySize(4)
+            .withIncomingConnectionLevelBufferSize(targetWindow)
+            .withIncomingStreamLevelBufferSize(targetWindow))
+
+        val headers = Seq(
+          ":method" -> "POST", ":scheme" -> "https", ":authority" -> "example.com", ":path" -> "/upload",
+          "content-length" -> "4")
+        network.sendHEADERS(1, endStream = false, endHeaders = true, network.encodeHeaderPairs(headers))
+        network.sendFrame(FrameType.DATA, Flags.PADDED, 1, ByteString(2) ++ ByteString("ab") ++ ByteString(0, 0))
+        network.sendDATA(1, endStream = false, ByteString("cd"))
+
+        val request = user.expectRequest()
+        request.entity.isStrict shouldBe false
+        val entity = ByteStringSinkProbe()
+        request.entity.dataBytes.runWith(entity.sink)
+        entity.expectBytes(ByteString("abcd"))
+
+        val restored = targetWindow - initialWindow + 7 // Four content bytes, plus three bytes of padding overhead.
+        val updates = Seq(network.expect[WindowUpdateFrame](), network.expect[WindowUpdateFrame]())
+        updates should contain theSameElementsAs Seq(WindowUpdateFrame(0, restored), WindowUpdateFrame(1, restored))
+
+        network.sendDATA(1, endStream = true, ByteString.empty)
+        entity.expectComplete()
+      })
+
     "complete an empty request entity after consecutive empty DATA frames".inAssertAllStagesStopped(
       new TestSetup with RequestResponseProbes {
         val streamId = 1
@@ -988,14 +1064,17 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
             val data1 = ByteString("abcdef")
             network.sendDATA(TheStreamId, endStream = false, data1)
             entityDataIn.expectBytes(data1)
-            network.pollForWindowUpdates(10.millis)
+            // Consume the initial connection and stream credit before checking the cancellation frames.
+            network.expectWindowUpdate()
+            network.expectWindowUpdate()
+            network.remainingWindowForIncomingData(TheStreamId) should be > Http2Protocol.InitialWindowSize
 
             // cancel stream
             entityDataIn.cancel()
             network.expectRST_STREAM(TheStreamId)
 
             network.sendDATA(TheStreamId, endStream = false, ByteString("test"))
-            // should just be ignored, especially no GOAWAY frame should be sent in response
+            // The earlier window update left enough connection credit, so no control frame is needed here.
             network.expectNoBytes(100.millis)
           })
         "send RST_STREAM if entity stream is canceled".inAssertAllStagesStopped(new WaitingForRequestData {

@@ -56,7 +56,7 @@ class Http2FramingSpec extends PekkoSpecWithMaterializer {
       "with padding" in {
         b"""xxxxxxxx
             xxxxxxxx
-            xxxxxxxx=c   # length = 11 = 1 byte padding size + 5 bytes padding + 6 bytes data
+            xxxxxxxx=c   # length = 12 = 1 byte padding size + 5 bytes padding + 6 bytes data
             00000000     # type = 0x0 = DATA
             00001000     # flags = PADDED
             xxxxxxxx
@@ -75,7 +75,19 @@ class Http2FramingSpec extends PekkoSpecWithMaterializer {
             00000000
             00000000
             00000000
-         """ should parseTo(DataFrame(0x234223AB, endStream = false, ByteString("bcdefg")), checkRendering = false)
+         """ should parseTo(
+          PaddedDataFrame(0x234223AB, endStream = false, ByteString("bcdefg"), paddingSize = 6),
+          checkRendering = false)
+      }
+
+      "count the Pad Length field even when the length is zero" in {
+        val body = ByteString("ok")
+        val frame = FrameRenderer.renderFrame(
+          Http2Protocol.FrameType.DATA,
+          Http2Protocol.Flags.PADDED | Http2Protocol.Flags.END_STREAM,
+          1,
+          ByteString(0) ++ body)
+        frame should parseTo(PaddedDataFrame(1, endStream = true, body, paddingSize = 1), checkRendering = false)
       }
     }
     "HEADER frames" should {
