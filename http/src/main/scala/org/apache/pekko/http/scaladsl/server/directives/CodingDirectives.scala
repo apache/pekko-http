@@ -76,6 +76,36 @@ trait CodingDirectives {
   def encodeResponseWith(first: Encoder, more: Encoder*): Directive0 =
     _encodeResponse(Seq(first +: more: _*))
 
+  /**
+   * Encodes the response with the 'dcz' encoding of RFC 9842 if the client accepts it and `lookup` finds the
+   * dictionary with the hash in the request's `Available-Dictionary` header. Otherwise the response is encoded like
+   * in [[encodeResponse]].
+   *
+   * All responses get a `Vary: Accept-Encoding, Available-Dictionary` header, as caches must not reuse them for other
+   * dictionaries. Following RFC 9842, section 9.3.3, the dictionary is not used for a cross-origin request whose
+   * response cannot be read by the client. This looks at `Access-Control-Allow-Origin`, so a directive that adds this
+   * header has to be inside this one.
+   *
+   * @param lookup finds the coder of the dictionary with the given SHA-256 hash, see [[Coders.Dcz]]. It should not
+   *               create the coder on every call, as that hashes the dictionary
+   * @group coding
+   * @since 2.1.0
+   */
+  def encodeResponseWithDictionary(lookup: ByteString => Option[DictionaryCoder]): Directive0 =
+    _encodeResponseWithDictionary(lookup, DefaultEncodeResponseEncoders)
+
+  /**
+   * Encodes the response with the 'dcz' encoding of RFC 9842 if possible, see
+   * [[encodeResponseWithDictionary(lookup:* encodeResponseWithDictionary]]. Otherwise the response is encoded like in
+   * [[encodeResponseWith]].
+   *
+   * @group coding
+   * @since 2.1.0
+   */
+  def encodeResponseWithDictionary(
+      lookup: ByteString => Option[DictionaryCoder], first: Encoder, more: Encoder*): Directive0 =
+    _encodeResponseWithDictionary(lookup, Seq(first +: more: _*))
+
   // decoding
 
   /**
@@ -172,16 +202,115 @@ object CodingDirectives extends CodingDirectives {
   import BasicDirectives._
   import RouteDirectives._
 
+  /** The encoder that ordinary negotiation picks, if any, or the rejection if the client accepts none of them. */
+  private def negotiate(
+      request: HttpRequest, encoders: Seq[Encoder]): Either[UnacceptedResponseEncodingRejection, Option[Encoder]] = {
+    val negotiator = EncodingNegotiator(request.headers)
+    val encodings: List[HttpEncoding] = encoders.map(_.encoding).toList
+    negotiator.pickEncoding(encodings).flatMap(be => encoders.find(_.encoding == be)) match {
+      case None if !(encoders.contains(Coders.NoCoding) && !negotiator.hasMatchingFor(HttpEncodings.identity)) =>
+        Left(UnacceptedResponseEncodingRejection(encodings.toSet))
+      case bestEncoder => Right(bestEncoder)
+    }
+  }
+
   private def _encodeResponse(encoders: Seq[Encoder]): Directive0 =
     BasicDirectives.extractRequest.flatMap { request =>
-      val negotiator = EncodingNegotiator(request.headers)
-      val encodings: List[HttpEncoding] = encoders.map(_.encoding).toList
-      val bestEncoder = negotiator.pickEncoding(encodings).flatMap(be => encoders.find(_.encoding == be))
-      bestEncoder match {
-        case Some(encoder) => mapResponse(encoder.encodeMessage(_))
-        case _             =>
-          if (encoders.contains(Coders.NoCoding) && !negotiator.hasMatchingFor(HttpEncodings.identity)) pass
-          else reject(UnacceptedResponseEncodingRejection(encodings.toSet))
+      negotiate(request, encoders) match {
+        case Right(Some(encoder)) => mapResponse(encoder.encodeMessage(_))
+        case Right(None)          => pass
+        case Left(rejection)      => reject(rejection)
       }
+    }
+
+  private val DictionaryVaryHeader = headers.RawHeader("Vary", "Accept-Encoding, Available-Dictionary")
+
+  private def _encodeResponseWithDictionary(
+      lookup: ByteString => Option[DictionaryCoder], encoders: Seq[Encoder]): Directive0 =
+    BasicDirectives.extractRequest.flatMap { request =>
+      def addVary(response: HttpResponse): HttpResponse = response.addHeader(DictionaryVaryHeader)
+
+      val dictionaryCoder =
+        if (acceptsDcz(request))
+          request.header[headers.`Available-Dictionary`].flatMap { available =>
+            lookup(available.hash).filter(_.dictionaryHash == available.hash)
+          }
+        else None
+
+      // without a usable dictionary this is ordinary negotiation, including its rejection
+      def withoutDictionary: Directive0 = mapResponse(addVary) & _encodeResponse(encoders)
+
+      dictionaryCoder match {
+        case Some(coder) =>
+          dictionaryUse(request) match {
+            case DictionaryUse.Denied => withoutDictionary
+            case use                  =>
+              def allowedFor(response: HttpResponse) = (use eq DictionaryUse.Allowed) || corsAllows(request, response)
+
+              negotiate(request, encoders) match {
+                case Right(fallback) =>
+                  mapResponse { response =>
+                    val encoded = if (allowedFor(response)) coder.encodeMessage(response) else response
+                    // does nothing if the dictionary was used, as there is a Content-Encoding header then
+                    addVary(fallback.fold(encoded)(_.encodeMessage(encoded)))
+                  }
+                case Left(rejection) =>
+                  // only the dictionary makes the response acceptable, and for a CORS request the response decides
+                  // whether it may be used, so the rejection of ordinary negotiation can only happen afterwards
+                  BasicDirectives.extractMaterializer.flatMap { implicit materializer =>
+                    mapRouteResult {
+                      case RouteResult.Complete(response) if !allowedFor(response) =>
+                        response.discardEntityBytes()
+                        RouteResult.Rejected(rejection :: Nil)
+                      case RouteResult.Complete(response) =>
+                        RouteResult.Complete(addVary(coder.encodeMessage(response)))
+                      case rejected => rejected
+                    }
+                  }
+              }
+          }
+        case None => withoutDictionary
+      }
+    }
+
+  // Only an explicit 'dcz' counts: a client sends it only if it has the dictionary, which a wildcard says nothing about
+  private def acceptsDcz(request: HttpRequest): Boolean =
+    request.headers.exists {
+      case headers.`Accept-Encoding`(encodings) =>
+        encodings.exists {
+          case headers.HttpEncodingRange.One(encoding, qValue) => encoding == HttpEncodings.dcz && qValue > 0f
+          case _                                               => false
+        }
+      case _ => false
+    }
+
+  private sealed trait DictionaryUse
+  private object DictionaryUse {
+    case object Allowed extends DictionaryUse
+    case object Denied extends DictionaryUse
+
+    /** Depends on the `Access-Control-Allow-Origin` header of the response */
+    case object Cors extends DictionaryUse
+  }
+
+  // https://www.rfc-editor.org/rfc/rfc9842#section-9.3.3
+  private def dictionaryUse(request: HttpRequest): DictionaryUse = {
+    def headerValue(lowercaseName: String) = request.headers.find(_.is(lowercaseName)).map(_.value)
+
+    headerValue("sec-fetch-site") match {
+      case None | Some("same-origin") => DictionaryUse.Allowed
+      case _                          =>
+        headerValue("sec-fetch-mode") match {
+          case None | Some("navigate") | Some("same-origin")            => DictionaryUse.Allowed
+          case Some("cors") if request.header[headers.Origin].isDefined => DictionaryUse.Cors
+          case _                                                        => DictionaryUse.Denied
+        }
+    }
+  }
+
+  private def corsAllows(request: HttpRequest, response: HttpResponse): Boolean =
+    (response.header[headers.`Access-Control-Allow-Origin`], request.header[headers.Origin]) match {
+      case (Some(allowed), Some(origin)) => allowed.value == "*" || allowed.value == origin.value
+      case _                             => false
     }
 }

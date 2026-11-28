@@ -16,7 +16,13 @@ package docs.http.scaladsl.server.directives
 import org.apache.pekko
 import pekko.http.scaladsl.coding.{ Coder, Coders, Gzip }
 import pekko.http.scaladsl.model.{ HttpEntity, HttpResponse }
-import pekko.http.scaladsl.model.headers.{ `Accept-Encoding`, `Content-Encoding`, HttpEncoding, HttpEncodings }
+import pekko.http.scaladsl.model.headers.{
+  `Accept-Encoding`,
+  `Available-Dictionary`,
+  `Content-Encoding`,
+  HttpEncoding,
+  HttpEncodings
+}
 import pekko.http.scaladsl.model.headers.HttpEncodings._
 import pekko.http.scaladsl.model.MediaTypes._
 import pekko.http.scaladsl.server._
@@ -83,6 +89,24 @@ class CodingDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
       response should haveContentEncoding(gzip)
     }
     // #encodeResponseWith
+  }
+
+  "encodeResponseWithDictionary" in {
+    // #encodeResponseWithDictionary
+    val coder = Coders.Dcz(ByteString("a dictionary that the client got earlier"))
+    val coders = Map(coder.dictionaryHash -> coder)
+
+    val route = encodeResponseWithDictionary(coders.get(_)) { complete("content") }
+
+    // tests:
+    Get("/") ~> `Accept-Encoding`(dcz, gzip) ~> `Available-Dictionary`(coder.dictionaryHash) ~> route ~> check {
+      response should haveContentEncoding(dcz)
+    }
+    // the client has no dictionary
+    Get("/") ~> `Accept-Encoding`(gzip) ~> route ~> check {
+      response should haveContentEncoding(gzip)
+    }
+    // #encodeResponseWithDictionary
   }
 
   val helloGzipped = compress("Hello", Coders.Gzip)

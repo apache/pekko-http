@@ -96,6 +96,24 @@ object Coders {
     new FlowCoder(encoding, messageFilter, encoderFlow, decoderFlowForMaxBytesPerChunk, Decoder.MaxBytesPerChunkDefault)
   }
 
+  /**
+   * A coder for the 'dcz' encoding of RFC 9842, which compresses with a dictionary that both sides have. It is not one
+   * of the [[DefaultCoders]], as it needs a dictionary and the optional `com.github.luben:zstd-jni` dependency on the
+   * classpath, version 1.5.7-26 or later.
+   *
+   * Creating one hashes the dictionary, so create one per dictionary and reuse it.
+   *
+   * @param dictionary       the dictionary, which is always used as raw content. It must not be empty
+   * @param compressionLevel must be between `Compression.ZstdMinCompressionLevel` and
+   *                         `Compression.ZstdMaxCompressionLevel` of pekko-stream
+   * @since 2.1.0
+   */
+  def Dcz(
+      dictionary: ByteString,
+      messageFilter: HttpMessage => Boolean = Encoder.DefaultFilter,
+      compressionLevel: Int = pekko.http.scaladsl.coding.Zstd.DefaultCompressionLevel): DictionaryCoder =
+    pekko.http.scaladsl.coding.Dcz(dictionary, messageFilter, compressionLevel)
+
   val DefaultCoders: Seq[Coder] = Seq(Gzip, Deflate, NoCoding)
 
   /**
