@@ -20,7 +20,22 @@ import pekko.http.impl.util.{ Renderer, Rendering, ValueRenderable }
 import pekko.http.javadsl.{ model => jm }
 
 final case class EntityTag(tag: String, weak: Boolean = false) extends jm.headers.EntityTag with ValueRenderable {
-  def render[R <: Rendering](r: R): r.type = if (weak) r ~~ "W/" ~~#! tag else r ~~#! tag
+  def render[R <: Rendering](r: R): r.type = {
+    if (weak) r ~~ "W/"
+    // An RFC 9110 opaque-tag does not use quoted-string escapes. Preserve the previous rendering of other values.
+    if (tag != null && tag.indexOf('\\') >= 0 && isOpaqueTag(tag)) r ~~ '"' ~~ tag ~~ '"'
+    else r ~~#! tag
+  }
+
+  private def isOpaqueTag(value: String): Boolean = {
+    var i = 0
+    while (i < value.length) {
+      val c = value.charAt(i)
+      if (!(c == '!' || c >= '#' && c <= '~' || c >= 0x80 && c <= 0xFF)) return false
+      i += 1
+    }
+    true
+  }
 }
 
 object EntityTag {

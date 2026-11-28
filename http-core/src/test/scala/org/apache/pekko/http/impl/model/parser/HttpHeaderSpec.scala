@@ -685,6 +685,37 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
       }
     }
 
+    "opaque entity-tag rendering" - {
+      val tag = EntityTag("revision\\East")
+      val weakTag = tag.copy(weak = true)
+      val otherTag = EntityTag("West")
+      for ((name, value, expected) <- Seq(
+          ("ETag", """W/"revision\East"""", ETag(weakTag)),
+          ("If-Match", """"revision\East", "West"""", `If-Match`(tag, otherTag)),
+          ("If-None-Match", """W/"revision\East", "West"""", `If-None-Match`(weakTag, otherTag)),
+          ("If-Range", """"revision\East"""", `If-Range`(tag)))) {
+        s"$name preserves a literal backslash" in {
+          val header = HttpHeader.parse(name, value) match {
+            case HttpHeader.ParsingResult.Ok(header, Nil) => header
+            case other                                    => fail(s"Expected a modeled $name without errors, got $other")
+          }
+          header shouldBe expected
+          header.value shouldBe value
+          HttpHeader.parse(name, header.value) shouldBe HttpHeader.ParsingResult.Ok(expected, Nil)
+          org.apache.pekko.http.javadsl.model.HttpHeader.parse(name, value).value() shouldBe value
+
+          val rendered = new ByteArrayRendering(64) ~~ header
+          new String(rendered.get, java.nio.charset.StandardCharsets.ISO_8859_1) shouldBe s"$name: $value\r\n"
+        }
+      }
+
+      "keeps empty and case-distinct tags unchanged" in {
+        "ETag: \"\"" =!= ETag("")
+        """ETag: "EaSt"""" =!= ETag("EaSt")
+        EntityTag.matches(EntityTag("EaSt"), EntityTag("east"), weakComparison = true) shouldBe false
+      }
+    }
+
     "ETag" in {
       """ETag: "938fz3f83z3z38z"""" =!= ETag("938fz3f83z3z38z", weak = false)
       """ETag: W/"938fz3f83z3z38z"""" =!= ETag("938fz3f83z3z38z", weak = true)
