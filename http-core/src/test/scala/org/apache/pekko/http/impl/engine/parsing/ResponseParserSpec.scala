@@ -144,6 +144,20 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends PekkoSp
           `Cache-Control`(CacheDirectives.`max-age`(60)))
       }
 
+      "preserve split WebSocket version response fields" in new Test {
+        def versions(fieldValues: String*): Seq[Seq[Int]] = {
+          val fields = fieldValues.map(value => s"Sec-WebSocket-Version: $value")
+          val input = (Seq("HTTP/1.1 400 Bad Request") ++ fields ++ Seq("Content-Length: 0", "", "")).mkString(newLine)
+          val responses = collectBlocking(rawParse(GET, input))
+          responses.size shouldBe 1
+          responses.head.toOption.get.headers.collect { case header: `Sec-WebSocket-Version` => header.versions }
+        }
+
+        val split = versions("13", "8, 7")
+        split shouldBe Seq(Seq(13), Seq(8, 7))
+        versions("13, 8, 7").flatten shouldBe split.flatten
+      }
+
       "a response with a simple body" in new Test {
         collectBlocking(rawParse(
           GET,
