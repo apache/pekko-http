@@ -29,6 +29,48 @@ and upgrade directly to the latest 2.0.x release.
 
 @@@
 
+## 2.0.2
+
+Release notes for Apache Pekko HTTP 2.0.2. See [GitHub Milestone for 2.0.2](https://github.com/apache/pekko-http/milestone/22?closed=1) for a fuller list of changes.
+
+This is a bug fix release. It is binary compatible with Pekko HTTP 2.0.0 and 2.0.1. It includes further hardening
+changes to the HTTP/1 and HTTP/2 message handling. Several of the changes reject input that 2.0.1 accepted; see
+the Behavior Changes below.
+
+### Behavior Changes
+* HTTP/1.1: the chunked transfer coding now requires CRLF line ends, as specified in
+  [RFC 9112 section 7.1](https://www.rfc-editor.org/rfc/rfc9112#section-7.1). A bare LF at the end of a
+  chunk-size line, at the end of a chunk extension or after the chunk data is no longer accepted, and nor is a
+  control character other than HTAB in a chunk extension. This applies to requests and to responses; a peer
+  that sends such a message now gets an entity stream error. A bare LF is still accepted in the start line, in
+  header fields and in trailer fields ([PR1531](https://github.com/apache/pekko-http/pull/1531))
+* HTTP/1.0: a message with a `Transfer-Encoding` header is now rejected, whether or not it also has a
+  `Content-Length` header. HTTP/1.0 has no transfer codings, and such a message was previously framed as
+  chunked. The server answers such a request with `400 Bad Request` and closes the connection, and the client
+  fails such a response ([PR1532](https://github.com/apache/pekko-http/pull/1532))
+* HTTP/2 server: the `content-length` declared by a request is now checked against the DATA frames received.
+  If they do not match, the stream is reset with `RST_STREAM(PROTOCOL_ERROR)` and a request entity that has
+  already been dispatched fails with an `EntityStreamException`. Other streams on the connection are not
+  affected. Previously such a request was delivered with whatever data had arrived
+  ([PR1534](https://github.com/apache/pekko-http/pull/1534))
+* Client: the target host name of an HTTP(S) proxy `CONNECT` must be non-empty and contain only visible ASCII
+  characters. A host name with whitespace, control characters or non-ASCII characters is now rejected with an
+  `IllegalArgumentException`, as it would otherwise change the request sent to the proxy. This affects host
+  names passed as a `String`, for instance to `ClientTransport.connectTo`; an internationalized domain name
+  has to be given in its ASCII (Punycode) form. Host names taken from a parsed `Uri` are not affected
+  ([PR1539](https://github.com/apache/pekko-http/pull/1539))
+
+### Bug Fixes
+* Read a folded header line the same way whether or not its first line is cached. A folded header whose first
+  line had been sent earlier on the connection, or matched a predefined value such as `Accept: */*`, was
+  rejected with `400 Bad Request` ([PR1536](https://github.com/apache/pekko-http/pull/1536))
+* HTTP/2: do not add a header field with a character above `U+00FF` in its name or value to the HPACK
+  encoder's dynamic table. Such a field is sent as a literal without indexing, which keeps the encoder's table
+  the same as the peer's ([PR1552](https://github.com/apache/pekko-http/pull/1552))
+* Generate the default multipart boundary with a `SecureRandom`. The boundary format and length are unchanged,
+  and an explicitly supplied boundary or `Random` is still used as given
+  ([PR1689](https://github.com/apache/pekko-http/pull/1689))
+
 ## 2.0.1
 
 Release notes for Apache Pekko HTTP 2.0.1. See [GitHub Milestone for 2.0.1](https://github.com/apache/pekko-http/milestone/21?closed=1) for a fuller list of changes.
