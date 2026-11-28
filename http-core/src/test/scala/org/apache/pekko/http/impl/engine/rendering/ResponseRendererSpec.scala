@@ -168,13 +168,15 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
 
       "status 304 and a few headers (does not add content-length)" in new TestSetup() {
         val cacheControl = `Cache-Control`(CacheDirectives.`max-age`(120))
-        HttpResponse(304, List(RawHeader("X-Fancy", "of course"), Age(0), ETag("document"), cacheControl)) should
-        renderTo {
+        val expires = Expires(DateTime(2011, 8, 25, 9, 12, 29))
+        val headers = List(RawHeader("X-Fancy", "of course"), Age(0), ETag("document"), cacheControl, expires)
+        HttpResponse(304, headers) should renderTo {
           """HTTP/1.1 304 Not Modified
             |X-Fancy: of course
             |Age: 0
             |ETag: "document"
             |Cache-Control: max-age=120
+            |Expires: Thu, 25 Aug 2011 09:12:29 GMT
             |Server: pekko-http/1.0.0
             |Date: Thu, 25 Aug 2011 09:10:29 GMT
             |
