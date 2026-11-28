@@ -1126,30 +1126,41 @@ class LowLevelOutgoingConnectionSpec extends PekkoSpecWithMaterializer with Insi
       responses.expectComplete()
     }
 
-    "receive Content-Length for HEAD requests" in new TestSetup {
-      requestsSub.sendNext(HttpRequest(method = HttpMethods.HEAD))
-      expectWireData(
-        """HEAD / HTTP/1.1
-          |Host: example.com
-          |User-Agent: pekko-http/test
-          |
-          |""")
-      sendWireData(
-        """HTTP/1.1 200 OK
-          |Content-Length: 6
-          |
-          |""")
+    List(
+      ("without Content-Length", Option.empty[Long]),
+      ("with zero Content-Length", Some(0L)),
+      ("with positive Content-Length", Some(6L))).foreach {
+      case (description, declaredLength) =>
+        s"receive an HTTP/1.1 HEAD 200 response $description" in new TestSetup {
+          requestsSub.sendNext(HttpRequest(method = HttpMethods.HEAD))
+          expectWireData(
+            """HEAD / HTTP/1.1
+              |Host: example.com
+              |User-Agent: pekko-http/test
+              |
+              |""")
 
-      val HttpResponse(StatusCodes.OK, _, HttpEntity.Default(_, contentLength, data), _) = expectResponse()
-      contentLength shouldEqual 6
+          val header = declaredLength.fold("")(length => s"Content-Length: $length\r\n")
+          sendWireData(ByteString(s"HTTP/1.1 200 OK\r\n$header\r\n"))
 
-      val chunks = data.runWith(Sink.seq).awaitResult(3.seconds.dilated)
-      chunks.length shouldEqual 0
+          val response = expectResponse()
+          response.status shouldEqual StatusCodes.OK
+          response.protocol shouldEqual HttpProtocols.`HTTP/1.1`
+          response.entity.contentLengthOption shouldEqual Some(declaredLength.getOrElse(0L))
+          val chunks = response.entity.dataBytes.runWith(Sink.seq).awaitResult(3.seconds.dilated)
+          if (declaredLength.exists(_ > 0L)) {
+            response.entity shouldBe a[HttpEntity.Default]
+            chunks shouldBe empty
+          } else {
+            response.entity shouldEqual HttpEntity.Empty
+            chunks.forall(_.isEmpty) shouldBe true
+          }
 
-      requestsSub.sendComplete()
-      netOut.expectComplete()
-      netInSub.sendComplete()
-      responses.expectComplete()
+          requestsSub.sendComplete()
+          netOut.expectComplete()
+          netInSub.sendComplete()
+          responses.expectComplete()
+        }
     }
   }
 

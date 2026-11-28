@@ -289,6 +289,11 @@ A HEAD response can still carry [`Content-Length`](https://www.rfc-editor.org/rf
 response. In Pekko HTTP, @scala[*HttpEntity.Default*]@java[*HttpEntityDefault*] and
 @scala[*HttpEntity.Chunked*]@java[*HttpEntityChunked*] can represent these headers without sending a body.
 
+For an incoming HTTP/1.1 `200 OK` response to HEAD, a positive `Content-Length` is available through
+@scala[`entity.contentLengthOption`]@java[`entity.getContentLengthOption()`] without any body bytes.
+If that header is absent or explicitly zero, both cases produce an empty entity with length zero.
+An entity length of zero does not distinguish these two cases.
+
 An @scala[*HttpEntity.CloseDelimited*]@java[*HttpEntityCloseDelimited*] entity does not, by itself, cause the connection
 to close after a HEAD response. This allows a HEAD response without `Content-Length` on a persistent HTTP/1.1 connection.
 
