@@ -669,13 +669,31 @@ class WebSocketClientSpec extends PekkoSpecWithMaterializer("pekko.http.client.w
       closeNetworkInput()
       expectNetworkClose()
     }
-    "receive first frame in same chunk as HTTP upgrade response" in new TestSetup with ClientProbes {
-      expectWireData(UpgradeRequestBytes)
+    val firstBinaryPayload = ByteString(1, 0, 2, 3)
+    Seq[(String, Protocol.Opcode, ByteString, Message)](
+      ("text", Protocol.Opcode.Text, ByteString("fast"), TextMessage("fast")),
+      ("binary", Protocol.Opcode.Binary, firstBinaryPayload, BinaryMessage(firstBinaryPayload))).foreach {
+      case (kind, opcode, payload, expected) =>
+        s"receive first frame in same chunk as HTTP upgrade response ($kind)" in {
+          Utils.assertAllStagesStopped {
+            new TestSetup with ClientProbes {
+              try {
+                expectWireData(UpgradeRequestBytes)
 
-      val firstFrame = WSTestUtils.frame(Protocol.Opcode.Text, ByteString("fast"), fin = true, mask = false)
-      sendWireData(UpgradeResponseBytes ++ firstFrame)
+                val firstFrame = WSTestUtils.frame(opcode, payload, fin = true, mask = false)
+                sendWireData(UpgradeResponseBytes ++ firstFrame)
 
-      messagesIn.requestNext(TextMessage("fast"))
+                messagesIn.requestNext(expected)
+                response.awaitResult(1.second.dilated) shouldBe a[ValidUpgrade]
+              } finally {
+                messagesOut.sendComplete()
+                messagesIn.cancel()
+                netOut.cancel()
+                closeNetworkInput()
+              }
+            }
+          }
+        }
     }
 
     "manual scenario client sends first" in new EstablishedConnectionSetup with ClientProbes {
