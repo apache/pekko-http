@@ -134,40 +134,54 @@ class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.w
           expectNetworkClose()
         }
       }
-      "with mixed-case and reordered opening header names" in Utils.assertAllStagesStopped {
-        new TestSetup {
-          try {
-            send(
-              """GET /chat HTTP/1.1
-                |sEc-WeBsOcKeT-vErSiOn: 13
-                |cOnNeCtIoN: Upgrade
-                |sEc-WeBsOcKeT-kEy: dGhlIHNhbXBsZSBub25jZQ==
-                |hOsT: server.example.com
-                |oRiGiN: http://example.com
-                |uPgRaDe: websocket
-                |
-                |""")
-            val upgrade = expectRequest().attribute(webSocketUpgrade).get
-            responses.sendNext(upgrade.handleMessages(Flow[Message]))
-            expectResponseWithWipedDate(
-              """HTTP/1.1 101 Switching Protocols
-                |Upgrade: websocket
-                |Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
-                |Server: pekko-http/test
-                |Date: XXXX
-                |Connection: upgrade
-                |
-                |""")
+      val openingHeaderCases = List(
+        "with mixed-case and reordered opening header names" ->
+        """GET /chat HTTP/1.1
+          |sEc-WeBsOcKeT-vErSiOn: 13
+          |cOnNeCtIoN: Upgrade
+          |sEc-WeBsOcKeT-kEy: dGhlIHNhbXBsZSBub25jZQ==
+          |hOsT: server.example.com
+          |oRiGiN: http://example.com
+          |uPgRaDe: websocket
+          |
+          |""",
+        "with a mixed-case websocket protocol name in Upgrade" ->
+        """GET /chat HTTP/1.1
+          |Host: server.example.com
+          |Upgrade: wEbSoCkEt
+          |Connection: Upgrade
+          |Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==
+          |Origin: http://example.com
+          |Sec-WebSocket-Version: 13
+          |
+          |""")
+      for ((description, openingRequest) <- openingHeaderCases) {
+        description in Utils.assertAllStagesStopped {
+          new TestSetup {
+            try {
+              send(openingRequest)
+              val upgrade = expectRequest().attribute(webSocketUpgrade).get
+              responses.sendNext(upgrade.handleMessages(Flow[Message]))
+              expectResponseWithWipedDate(
+                """HTTP/1.1 101 Switching Protocols
+                  |Upgrade: websocket
+                  |Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
+                  |Server: pekko-http/test
+                  |Date: XXXX
+                  |Connection: upgrade
+                  |
+                  |""")
 
-            val message = ByteString("hello")
-            sendWSFrame(Protocol.Opcode.Text, message, fin = true, mask = true)
-            expectWSFrame(Protocol.Opcode.Text, message, fin = true)
-            sendWSCloseFrame(Protocol.CloseCodes.Regular, mask = true)
-            expectWSCloseFrame(Protocol.CloseCodes.Regular)
-          } finally {
-            closeNetworkInput()
-            responses.sendComplete()
-            netOut.cancel()
+              val message = ByteString("hello")
+              sendWSFrame(Protocol.Opcode.Text, message, fin = true, mask = true)
+              expectWSFrame(Protocol.Opcode.Text, message, fin = true)
+              sendWSCloseFrame(Protocol.CloseCodes.Regular, mask = true)
+              expectWSCloseFrame(Protocol.CloseCodes.Regular)
+            } finally {
+              closeNetworkInput()
+              responses.sendComplete()
+              netOut.cancel()
+            }
           }
         }
       }
