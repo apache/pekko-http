@@ -238,7 +238,11 @@ private[http] object Handshake {
         key,
         SecWebSocketVersionHeader) ++ protocol ++ additionalHeaders
 
-      (HttpRequest(HttpMethods.GET, uri.toRelative, headers), key)
+      // The WebSocket resource name includes '?' only for a nonempty query (RFC 6455 section 3).
+      val relativeUri = uri.toRelative
+      val requestUri =
+        if (relativeUri.rawQueryString.contains("")) relativeUri.copy(rawQueryString = None) else relativeUri
+      (HttpRequest(HttpMethods.GET, requestUri, headers), key)
     }
 
     /** Lower-cased names of the extensions listed in `Sec-WebSocket-Extensions` headers; empty values list none. */
